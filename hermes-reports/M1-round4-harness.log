@@ -1,0 +1,48 @@
+cwd: /home/ubuntu/.hermes/cache/scratch/v0-m1-rotation-round4
+command: .venv/bin/python -m pytest -v --tb=short tests/test_headless_baseline.py
+HF_HUB_OFFLINE=1; HF_HUB_CACHE=fresh empty-cache
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /home/ubuntu/.hermes/cache/scratch/v0-m1-rotation-round4/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/ubuntu/.hermes/cache/scratch/v0-m1-rotation-round4
+configfile: pyproject.toml
+plugins: anyio-4.14.2, asyncio-1.4.0, xdist-3.8.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 32 items
+
+tests/test_headless_baseline.py::test_refusal_is_not_speech_evidence PASSED [  3%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/startup/progress-200-body0] PASSED [  6%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/openapi.json-200-body1] PASSED [  9%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/models-200-body2] PASSED [ 12%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/models-200-body3] PASSED [ 15%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/models-200-body4] PASSED [ 18%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/models-200-body5] PASSED [ 21%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/engines-200-body6] PASSED [ 25%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/engines-200-body7] PASSED [ 28%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/v1/audio/speech-200-body8] PASSED [ 31%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/v1/audio/speech-500-body9] PASSED [ 34%]
+tests/test_headless_baseline.py::test_bad_contract_fails[/v1/audio/speech-403-body10] PASSED [ 37%]
+tests/test_headless_baseline.py::test_dead_process_fails_before_http PASSED [ 40%]
+tests/test_headless_baseline.py::test_starting_is_retried PASSED         [ 43%]
+tests/test_headless_baseline.py::test_wait_has_deadline PASSED           [ 46%]
+tests/test_headless_baseline.py::test_no_evidence_overwrite PASSED       [ 50%]
+tests/test_headless_baseline.py::test_redirects_are_rejected PASSED      [ 53%]
+tests/test_headless_baseline.py::test_shutdown_requires_both_markers[-15-False-Application shutdown complete.\nFinished server process-True] PASSED [ 56%]
+tests/test_headless_baseline.py::test_shutdown_requires_both_markers[0-False-Application shutdown complete.\nFinished server process-True] PASSED [ 59%]
+tests/test_headless_baseline.py::test_shutdown_requires_both_markers[-15-False--False] PASSED [ 62%]
+tests/test_headless_baseline.py::test_shutdown_requires_both_markers[-9-True-Application shutdown complete.\nFinished server process-False] PASSED [ 65%]
+tests/test_headless_baseline.py::test_shutdown_requires_both_markers[1-False-Application shutdown complete.\nFinished server process-False] PASSED [ 68%]
+tests/test_headless_baseline.py::test_shutdown_requires_both_markers[0-False-Application shutdown complete.-False] PASSED [ 71%]
+tests/test_headless_baseline.py::test_parent_dotenv_is_rejected_without_reading PASSED [ 75%]
+tests/test_headless_baseline.py::test_empty_sentinel_shields_ancestor PASSED [ 78%]
+tests/test_headless_baseline.py::test_backend_sentinel_does_not_hide_project_env PASSED [ 81%]
+tests/test_headless_baseline.py::test_startup_failure_keeps_explicit_acceptance_flags[startup] PASSED [ 84%]
+tests/test_headless_baseline.py::test_startup_failure_keeps_explicit_acceptance_flags[spawn] PASSED [ 87%]
+tests/test_headless_baseline.py::test_startup_failure_keeps_explicit_acceptance_flags[interrupt] PASSED [ 90%]
+tests/test_headless_baseline.py::test_startup_failure_keeps_explicit_acceptance_flags[exit] PASSED [ 93%]
+tests/test_headless_baseline.py::test_dotenv_symlink_rejected[.env] PASSED [ 96%]
+tests/test_headless_baseline.py::test_dotenv_symlink_rejected[backend/.env] PASSED [100%]
+
+============================== 32 passed in 0.83s ==============================
+
+exit_code: 0

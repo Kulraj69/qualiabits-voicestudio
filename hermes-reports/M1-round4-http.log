@@ -1,0 +1,60 @@
+cwd: /home/ubuntu/.hermes/cache/scratch/v0-m1-rotation-round4
+command: .venv/bin/python scripts/headless_baseline.py --output /workspace/qualiabits-voicestudio/hermes-reports/M1-round4-http
+HF_HUB_OFFLINE=1; HF_HUB_CACHE=fresh empty-cache
+{
+  "scope": "offline_cpu_api_contract_only",
+  "m1_complete": false,
+  "api_contract_passed": true,
+  "speech_verified": false,
+  "gpu_verified": false,
+  "production_readiness_verified": false,
+  "ready_seconds": 8.222,
+  "startup_deadline_seconds": 120,
+  "checks": [
+    "startup_ready",
+    "api_routes",
+    "empty_model_catalog",
+    "engine_catalogs",
+    "en_license_refusal",
+    "hi_license_refusal",
+    "invalid_input_rejected"
+  ],
+  "model_count": 42,
+  "installed_model_count": 0,
+  "engine_counts": {
+    "tts": 19,
+    "asr": 12,
+    "llm": 2
+  },
+  "speech_attempts": [
+    {
+      "language": "en",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    },
+    {
+      "language": "hi",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    }
+  ],
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "server_exit_code": -15,
+  "startup_stall_warning": true,
+  "shutdown_verified": true,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/headless_baseline.py": "78b1fc27a598f8a1cf1fff7df90ad20b9884a6a6cdcbead898e77c46f591d4f3",
+    "tests/test_headless_baseline.py": "11b2ed647583c1aac8470270378bba2ada0d392d3a08697b2626068ab0c2b3e0"
+  },
+  "elapsed_seconds": 27.452
+}
+
+exit_code: 0

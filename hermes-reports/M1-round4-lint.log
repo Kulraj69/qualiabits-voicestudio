@@ -1,0 +1,6 @@
+cwd: /home/ubuntu/.hermes/cache/scratch/v0-m1-rotation-round4
+command: /workspace/qualiabits-voice/.venv/bin/ruff check scripts/headless_baseline.py tests/test_headless_baseline.py
+HF_HUB_OFFLINE=1; HF_HUB_CACHE=fresh empty-cache
+All checks passed!
+
+exit_code: 0

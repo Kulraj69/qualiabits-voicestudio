@@ -1,0 +1,23 @@
+........................................................................ [ 39%]
+...................................................x.................... [ 78%]
+......................................s                                  [100%]
+=============================== warnings summary ===============================
+tests/test_api.py::TestSRTExport::test_srt_export
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_api.py::TestStreamingTTS::test_generate_returns_streaming_response
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/pydub/utils.py:14: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+tests/test_engine_language_rejection.py::test_an_oom_still_reaches_the_oom_path
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/backend/api/routers/generation.py:949: RuntimeWarning: coroutine 'TestStreamingTTS.test_generate_returns_streaming_response.<locals>._get' was never awaited
+    gc.collect()
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/smoke/test_macos_hotkey_pump.py:10: Carbon is a macOS API
+XFAIL tests/test_api.py::TestStreamingTTS::test_generate_returns_streaming_response - TTS generation path routes through tts_backend engine registry now, not services.model_manager.get_model directly; patch target moved. Re-enable after updating to mock services.tts_backend.
+181 passed, 1 skipped, 1 xfailed, 3 warnings in 25.29s

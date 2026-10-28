@@ -1,0 +1,29 @@
+..........................F..                                            [100%]
+=================================== FAILURES ===================================
+_____________ test_startup_failure_keeps_explicit_acceptance_flags _____________
+tests/test_headless_baseline.py:171: in test_startup_failure_keeps_explicit_acceptance_flags
+    assert result["scope"] == "offline_cpu_api_contract_only"
+           ^^^^^^^^^^^^^^^
+E   KeyError: 'scope'
+----------------------------- Captured stdout call -----------------------------
+{
+  "api_contract_passed": false,
+  "speech_verified": false,
+  "gpu_verified": false,
+  "failure_type": "BaselineFailure",
+  "failure": "Startup failed",
+  "server_exit_code": -15,
+  "startup_stall_warning": false,
+  "production_readiness_verified": false,
+  "shutdown_verified": false,
+  "source_sha256": {
+    "backend/main.py": "75bb77250cfbf7c4fe0b9cff53de1f7a014395dfedb177bf01dff72437eb628e",
+    "uv.lock": "75bb77250cfbf7c4fe0b9cff53de1f7a014395dfedb177bf01dff72437eb628e",
+    "scripts/headless_baseline.py": "75bb77250cfbf7c4fe0b9cff53de1f7a014395dfedb177bf01dff72437eb628e",
+    "tests/test_headless_baseline.py": "75bb77250cfbf7c4fe0b9cff53de1f7a014395dfedb177bf01dff72437eb628e"
+  },
+  "elapsed_seconds": 0.001
+}
+=========================== short test summary info ============================
+FAILED tests/test_headless_baseline.py::test_startup_failure_keeps_explicit_acceptance_flags
+1 failed, 28 passed in 0.63s

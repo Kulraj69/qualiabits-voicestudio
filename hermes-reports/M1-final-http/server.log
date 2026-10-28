@@ -1,0 +1,206 @@
+INFO:     Started server process [152765]
+INFO:     Waiting for application startup.
+2026-10-28 18:30:18,928 INFO [omnivoice.api] Startup watchdog armed: thread dump if startup exceeds 300s (#632).
+INFO:     Application startup complete.
+INFO:     Uvicorn running on socket ('127.0.0.1', 41739) (Press CTRL+C to quit)
+INFO:     127.0.0.1:37282 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-10-28 18:30:19,008 INFO [omnivoice.api] Published 2 media-tool directories on PATH so dependencies can find ffmpeg/ffprobe (#1256)
+INFO:     127.0.0.1:37294 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37308 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37318 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37332 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37338 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37342 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37348 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37354 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37366 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37378 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37394 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37402 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-10-28 18:30:22,047 INFO [omnivoice.hf_progress] hf_progress: installed tqdm patch on huggingface_hub.utils.tqdm
+INFO:     127.0.0.1:37414 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37418 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37432 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-10-28 18:30:22,726 INFO [omnivoice.setup.models] Loaded 42 models from /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/backend/config/models.yaml
+INFO:     127.0.0.1:37440 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37452 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37466 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:37468 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-10-28 18:30:23,504 INFO [omnivoice.model] downloads: Xet disabled → legacy LFS (hf_xet 1.6.0 installed=True), high_perf=False
+2026-10-28 18:30:24,719 INFO [omnivoice.mcp] MCP app mounted at /mcp
+2026-10-28 18:30:24,721 INFO [omnivoice.api] No web UI build at /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/backend/../frontend/dist; "/" serves an explanation to other devices.
+2026-10-28 18:30:25,313 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.schemas
+2026-10-28 18:30:25,314 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.tables
+2026-10-28 18:30:25,314 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.types
+2026-10-28 18:30:25,314 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.constraints
+2026-10-28 18:30:25,314 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.defaults
+2026-10-28 18:30:25,314 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.comments
+2026-10-28 18:30:25,314 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.checkconstraint_byname
+2026-10-28 18:30:25,370 INFO [omnivoice.db.backup] Pre-migration DB backup written: /home/ubuntu/.hermes/cache/scratch/voicestudio-baseline-w7ktcbly/data/omnivoice.db.backup-0.5.7-1 (0.2 MB)
+2026-10-28 18:30:25,386 INFO [alembic.runtime.migration] Context impl SQLiteImpl.
+2026-10-28 18:30:25,386 INFO [alembic.runtime.migration] Will assume non-transactional DDL.
+2026-10-28 18:30:25,409 INFO [alembic.runtime.migration] Running upgrade  -> 0001_phase1_settings, Phase 1: settings table for encrypted HF token persistence
+2026-10-28 18:30:25,417 INFO [alembic.runtime.migration] Running upgrade 0001_phase1_settings -> 0002_voice_profile_demo_fields, Phase 3: voice_profile description + is_demo columns
+2026-10-28 18:30:25,424 INFO [alembic.runtime.migration] Running upgrade 0002_voice_profile_demo_fields -> 0003_voice_profile_consent, Parity program Wave 0.2: consent-locked voice profiles
+2026-10-28 18:30:25,431 INFO [alembic.runtime.migration] Running upgrade 0003_voice_profile_consent -> 0004_mcp_client_bindings, Parity program Wave 2.2: per-agent MCP voice bindings
+2026-10-28 18:30:25,436 INFO [alembic.runtime.migration] Running upgrade 0004_mcp_client_bindings -> 0005_unified_profiles, Voice Studio unification: profile `kind` discriminator + design params
+2026-10-28 18:30:25,442 INFO [alembic.runtime.migration] Running upgrade 0005_unified_profiles -> 0006_strip_object_object_instruct, Heal voice_profiles.instruct poisoned with the "[object Object]" sentinel.
+2026-10-28 18:30:25,447 INFO [alembic.runtime.migration] Running upgrade 0006_strip_object_object_instruct -> 0007_rebuild_poisoned_design_instruct, Rebuild design-profile instructs poisoned with prose / "[object Object]".
+2026-10-28 18:30:25,454 INFO [alembic.runtime.migration] Running upgrade 0007_rebuild_poisoned_design_instruct -> 0008_pronunciation_dictionary, Expressive-TTS Spec 01 Phase 1: user pronunciation dictionary
+2026-10-28 18:30:25,460 INFO [alembic.runtime.migration] Running upgrade 0008_pronunciation_dictionary -> 0009_generation_history_starred, Generation takes: starred flag on generation_history
+2026-10-28 18:30:25,467 INFO [alembic.runtime.migration] Running upgrade 0009_generation_history_starred -> 0010_remote_worker_schema, Remote worker control-plane schema.
+2026-10-28 18:30:25,476 INFO [alembic.runtime.migration] Running upgrade 0010_remote_worker_schema -> 0011_remote_attempt_deadlines, Retain the dispatch-time deadline policy across worker/control-plane loss.
+2026-10-28 18:30:25,483 INFO [alembic.runtime.migration] Running upgrade 0011_remote_attempt_deadlines -> 0012_call_sessions, Phone call agent: persisted call sessions
+2026-10-28 18:30:25,488 INFO [alembic.runtime.migration] Running upgrade 0012_call_sessions -> 0013_generation_history_design_recipe, Keep the inputs needed to recreate designed-voice generations.
+2026-10-28 18:30:25,494 INFO [alembic.runtime.migration] Running upgrade 0013_generation_history_design_recipe -> 0014_cloud_sync, VoiceStudio Cloud settings sync tables (S1)
+2026-10-28 18:30:25,500 INFO [alembic.runtime.migration] Running upgrade 0014_cloud_sync -> 0015_voice_sync_prep, Prepare voice profiles for consent-aware synchronization.
+2026-10-28 18:30:25,509 INFO [alembic.runtime.migration] Running upgrade 0015_voice_sync_prep -> 0016_profile_design_recipe, Persist the full native Voice Design recipe on saved voice profiles.
+2026-10-28 18:30:25,515 INFO [alembic.runtime.migration] Running upgrade 0016_profile_design_recipe -> 0017_job_events_unique_seq, job_events: one row per (job_id, seq)
+2026-10-28 18:30:25,547 INFO [core.onboarding] 🎉 Seeded demo voice profile 'Demo Voice'
+2026-10-28 18:30:25,553 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager started
+2026-10-28 18:30:25,554 INFO [omnivoice.api] MCP server mounted at /mcp
+2026-10-28 18:30:25,725 INFO [omnivoice.api] Deferred startup complete — all routes live.
+INFO:     127.0.0.1:37508 - "GET /startup/progress HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37510 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37524 - "GET /models HTTP/1.1" 200 OK
+2026-10-28 18:30:29,999 INFO [omnivoice.model] Preload skipped: the OmniVoice model licence is not accepted yet.
+INFO:     127.0.0.1:38926 - "GET /engines HTTP/1.1" 200 OK
+2026-10-28 18:30:36,523 WARNING [omnivoice.loop_stall] Event loop has not run for 4.3s; /health cannot answer. Stacks of all threads follow - the main thread's frame is the blocking call.
+Thread 0x000070acdc9ff6c0 (most recent call first):
+  File "/usr/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/lib/python3.12/queue.py", line 171 in get
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1022 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000070ad30db36c0 (most recent call first):
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 89 in _worker
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000070ad2b7fe6c0 (most recent call first):
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 89 in _worker
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Current thread 0x000070ad2bfff6c0 (most recent call first):
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/backend/core/loop_stall_monitor.py", line 50 in _dump_threads
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/backend/core/loop_stall_monitor.py", line 75 in _run
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000070ad3498a080 (most recent call first):
+  File "<frozen importlib._bootstrap_external>", line 1186 in get_data
+  File "<frozen importlib._bootstrap_external>", line 1087 in get_code
+  File "<frozen importlib._bootstrap_external>", line 991 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/scipy/stats/_resampling.py", line 26 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/scipy/stats/_stats_py.py", line 57 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/scipy/stats/__init__.py", line 600 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/utils/fixes.py", line 16 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/utils/_array_api.py", line 23 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py", line 24 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/utils/_param_validation.py", line 17 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/utils/_chunking.py", line 11 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/utils/__init__.py", line 9 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1310 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/base.py", line 20 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/sklearn/__init__.py", line 70 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1310 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/transformers/generation/candidate_generator.py", line 31 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/transformers/generation/utils.py", line 54 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1387 in _gcd_import
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90 in import_module
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/transformers/utils/import_utils.py", line 2767 in _get_module
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/transformers/utils/import_utils.py", line 2535 in __getattr__
+  File "<frozen importlib._bootstrap>", line 1412 in _handle_fromlist
+  File "/home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/transformers/models/auto/auto_factory.py", line 42 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  ...
+INFO:     127.0.0.1:38930 - "POST /v1/audio/speech HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:47620 - "POST /v1/audio/speech HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:47622 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-10-28 18:30:38,860 INFO [omnivoice.api] Shutdown: cleaning up…
+2026-10-28 18:30:38,861 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager shutting down
+2026-10-28 18:30:39,876 INFO [omnivoice.api] Shutdown: done.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [152765]

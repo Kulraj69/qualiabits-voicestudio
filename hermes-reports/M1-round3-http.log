@@ -1,0 +1,55 @@
+{
+  "scope": "offline_cpu_api_contract_only",
+  "m1_complete": false,
+  "api_contract_passed": true,
+  "speech_verified": false,
+  "gpu_verified": false,
+  "production_readiness_verified": false,
+  "ready_seconds": 8.619,
+  "startup_deadline_seconds": 120,
+  "checks": [
+    "startup_ready",
+    "api_routes",
+    "empty_model_catalog",
+    "engine_catalogs",
+    "en_license_refusal",
+    "hi_license_refusal",
+    "invalid_input_rejected"
+  ],
+  "model_count": 42,
+  "installed_model_count": 0,
+  "engine_counts": {
+    "tts": 19,
+    "asr": 12,
+    "llm": 2
+  },
+  "speech_attempts": [
+    {
+      "language": "en",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    },
+    {
+      "language": "hi",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    }
+  ],
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "server_exit_code": -15,
+  "startup_stall_warning": true,
+  "shutdown_verified": true,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/headless_baseline.py": "d13e67a122f6e8ac892b6205ef92a88446059d0ab15e31e36cf1de89e24960ef",
+    "tests/test_headless_baseline.py": "277f690b2f01a536eae7159c9b6cf81611cc30ab982b2a07dad42e6bd9ef2750"
+  },
+  "elapsed_seconds": 24.065
+}

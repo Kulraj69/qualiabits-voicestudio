@@ -1,0 +1,49 @@
+.............F.......................................................... [ 40%]
+...............................................x........................ [ 80%]
+..................................s                                      [100%]
+=================================== FAILURES ===================================
+__________________________ test_no_evidence_overwrite __________________________
+tests/test_headless_baseline.py:93: in test_no_evidence_overwrite
+    baseline.run(tmp_path)
+scripts/headless_baseline.py:143: in run
+    require_clean_checkout(root)
+scripts/headless_baseline.py:74: in require_clean_checkout
+    require(not (directory / ".env").exists(), "Use a clean checkout without .env files")
+scripts/headless_baseline.py:61: in require
+    raise BaselineFailure(message)
+E   headless_baseline.BaselineFailure: Use a clean checkout without .env files
+=============================== warnings summary ===============================
+tests/test_api.py::TestSRTExport::test_srt_export
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_api.py::TestStreamingTTS::test_generate_returns_streaming_response
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/pydub/utils.py:300: SyntaxWarning: invalid escape sequence '\('
+    m = re.match('([su]([0-9]{1,2})p?) \(([0-9]{1,2}) bit\)$', token)
+
+tests/test_api.py::TestStreamingTTS::test_generate_returns_streaming_response
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/pydub/utils.py:301: SyntaxWarning: invalid escape sequence '\('
+    m2 = re.match('([su]([0-9]{1,2})p?)( \(default\))?$', token)
+
+tests/test_api.py::TestStreamingTTS::test_generate_returns_streaming_response
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/pydub/utils.py:310: SyntaxWarning: invalid escape sequence '\('
+    elif re.match('(flt)p?( \(default\))?$', token):
+
+tests/test_api.py::TestStreamingTTS::test_generate_returns_streaming_response
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/pydub/utils.py:314: SyntaxWarning: invalid escape sequence '\('
+    elif re.match('(dbl)p?( \(default\))?$', token):
+
+tests/test_api.py::TestStreamingTTS::test_generate_returns_streaming_response
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/.venv/lib/python3.12/site-packages/pydub/utils.py:14: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+tests/test_engine_language_rejection.py::test_an_oom_still_reaches_the_oom_path
+  /home/ubuntu/.hermes/cache/scratch/v0-m1-clean-round2/backend/api/routers/generation.py:949: RuntimeWarning: coroutine 'TestStreamingTTS.test_generate_returns_streaming_response.<locals>._get' was never awaited
+    gc.collect()
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_headless_baseline.py::test_no_evidence_overwrite - headless...
+1 failed, 176 passed, 1 skipped, 1 xfailed, 7 warnings in 51.74s

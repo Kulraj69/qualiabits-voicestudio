@@ -1,0 +1,45 @@
+{
+  "baseline_passed": true,
+  "speech_verified": false,
+  "gpu_verified": false,
+  "scope": "offline_cpu_api_contract_only",
+  "m1_complete": false,
+  "checks": [
+    "startup_ready",
+    "api_routes",
+    "empty_model_catalog",
+    "engine_catalogs",
+    "en_license_refusal",
+    "hi_license_refusal",
+    "invalid_input_rejected"
+  ],
+  "model_count": 42,
+  "installed_model_count": 0,
+  "engine_counts": {
+    "tts": 19,
+    "asr": 12,
+    "llm": 2
+  },
+  "speech_attempts": [
+    {
+      "language": "en",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    },
+    {
+      "language": "hi",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    }
+  ],
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "server_exit_code": -15,
+  "shutdown_verified": true,
+  "elapsed_seconds": 26.413
+}
