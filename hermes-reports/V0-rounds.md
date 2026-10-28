@@ -130,3 +130,10 @@ the bounded M1 GPU run and listening check; supply configuration privately."
 
 Do not start M2 while M1 is blocked. No GPU provisioned, model weights fetched,
 terms accepted, provider call, message, deployment or public demo upload.
+
+Publication: e7a10dc36bdda2221a34a0326dc726bfc6270073 pushed to existing fork
+work/m1-headless; exact remote SHA read back and matched. Subsequent remote
+clone/frozen install passed, first cold HTTP diagnostic timed out, unchanged
+retry passed; both shut down. The cold-start path remains unreliable, not
+waived by the earlier review. Updated architecture limitations; no code change.
+Both remote-run logs are in /workspace/qualiabits-voice/hermes-reports/.

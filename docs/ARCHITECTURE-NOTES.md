@@ -137,6 +137,13 @@ It is not a process supervisor: SIGKILL, repeated interrupts during cleanup,
 or filesystem/socket setup failures need not yield structured evidence. Do not
 use this harness to manage a paid GPU instance or production lifecycle.
 
+Post-push remote-clone check at `e7a10dc36bdda2221a34a0326dc726bfc6270073`:
+frozen install passed, but the first cold HTTP run timed out after readiness.
+The unchanged clone passed when rerun to a new evidence directory. Both runs
+verified shutdown. This is an unresolved intermittent startup-responsiveness
+finding, not a reliably passing cold-start path. Logs are retained in the
+agents repository at `hermes-reports/M1-remote-clone{,-retry}.log`.
+
 ## Next gated M1 step
 
 This host has no NVIDIA device. Boto3 found an IAM instance role, but
