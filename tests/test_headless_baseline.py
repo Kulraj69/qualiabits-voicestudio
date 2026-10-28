@@ -136,7 +136,7 @@ def test_backend_sentinel_does_not_hide_project_env(tmp_path):
         baseline.require_clean_checkout(tmp_path)
 
 
-@pytest.mark.parametrize("failure", ["startup", "spawn", "interrupt", "exit"])
+@pytest.mark.parametrize("failure", ["startup", "spawn", "interrupt", "exit", "inspection"])
 def test_startup_failure_keeps_explicit_acceptance_flags(tmp_path, monkeypatch, failure):
     root = tmp_path / "checkout"
     (root / "scripts").mkdir(parents=True)
@@ -170,6 +170,8 @@ def test_startup_failure_keeps_explicit_acceptance_flags(tmp_path, monkeypatch, 
     monkeypatch.setattr(baseline.subprocess, "Popen", spawn)
 
     def fail(*args):
+        if failure == "inspection":
+            return {"status": "ok", "device": "cpu"}
         if failure == "interrupt":
             raise KeyboardInterrupt
         if failure == "exit":
@@ -177,6 +179,12 @@ def test_startup_failure_keeps_explicit_acceptance_flags(tmp_path, monkeypatch, 
         raise baseline.BaselineFailure("Startup failed")
 
     monkeypatch.setattr(baseline, "wait_ready", fail)
+    if failure == "inspection":
+        def timed_out(base, path, payload=None, **kwargs):
+            if path == "/v1/audio/speech":
+                raise TimeoutError("PRIVATE fixture exception text")
+            return responses(base, path, payload)
+        monkeypatch.setattr(baseline, "request", timed_out)
     output = tmp_path / "evidence"
     if failure in ("interrupt", "exit"):
         with pytest.raises(KeyboardInterrupt if failure == "interrupt" else SystemExit):
@@ -191,6 +199,58 @@ def test_startup_failure_keeps_explicit_acceptance_flags(tmp_path, monkeypatch, 
     assert result["gpu_verified"] is False
     assert result["api_contract_passed"] is False
     assert result["production_readiness_verified"] is False
+    if failure == "inspection":
+        assert result["checks"] == ["startup_ready", "api_routes", "empty_model_catalog", "engine_catalogs"]
+        assert result["model_count"] == 1
+        assert result["speech_attempts"] == []
+        assert result["requests"][-1]["path"] == "/v1/audio/speech"
+        assert result["requests"][-1]["failure_type"] == "TimeoutError"
+        assert "PRIVATE" not in (output / "result.json").read_text()
+
+
+def test_request_journal_contains_only_metadata(monkeypatch):
+    monkeypatch.setattr(baseline, "request", responses)
+    result = baseline.inspect_api("unused")
+    rows = result["requests"]
+    assert len(rows) == 7
+    assert [r["http_status"] for r in rows] == [200, 200, 200, 200, 403, 403, 400]
+    assert [r["method"] for r in rows] == ["GET"] * 4 + ["POST"] * 3
+    for row in rows:
+        assert set(row) == {"method", "path", "elapsed_seconds", "http_status"}
+        assert row["elapsed_seconds"] >= 0
+
+
+@pytest.mark.parametrize("failed_index", range(7))
+@pytest.mark.parametrize("exception", [TimeoutError, KeyboardInterrupt])
+def test_every_request_failure_retains_prior_evidence(monkeypatch, failed_index, exception):
+    calls = []
+    def failing(base, path, payload=None, **kwargs):
+        calls.append(path)
+        if len(calls) == failed_index + 1:
+            raise exception("PRIVATE fixture detail")
+        return responses(base, path, payload)
+    monkeypatch.setattr(baseline, "request", failing)
+    result = {}
+    with pytest.raises(exception):
+        baseline.inspect_api("unused", result)
+    assert len(calls) == failed_index + 1  # no hidden retry or later requests
+    assert len(result["checks"]) == failed_index
+    assert len(result["requests"]) == failed_index + 1
+    last = result["requests"][-1]
+    assert last["failure_type"] == exception.__name__
+    assert last["elapsed_seconds"] >= 0
+    assert "http_status" not in last
+    assert "PRIVATE" not in baseline.json.dumps(result)
+    assert result["m1_complete"] is False
+
+
+def test_contract_failure_retains_response_status(monkeypatch):
+    monkeypatch.setattr(baseline, "request", lambda *a, **k: (500, {}))
+    result = {}
+    with pytest.raises(baseline.BaselineFailure):
+        baseline.inspect_api("unused", result)
+    assert result["requests"][0]["http_status"] == 500
+    assert result["checks"] == []
 
 
 @pytest.mark.parametrize("location", [".env", "backend/.env"])

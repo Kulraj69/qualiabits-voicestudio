@@ -38,6 +38,14 @@ the 120-second readiness bound, loop-stall warnings, source hashes and orderly
 shutdown. Loop stalls warn rather than fail the API contract; this is not a
 production responsiveness acceptance test. Model/engine identities must be
 present and unique, but are not inferred to be usable.
+The `requests` journal records each post-readiness request's method, fixed
+path, elapsed seconds and HTTP status or exception type. Completed checks and
+catalog counts survive a later request failure. No request/response bodies or
+exception text are copied into this journal. A failed HTTP/JSON read may have
+no status in the journal even if the server later logs a response. Timings are
+client observations, not synthesis latency; health polling is not journaled.
+The existing 15-second socket timeout is unchanged, with no inspection retry
+or warmup; it is not a hard total deadline for a slow-drip response body.
 This is not a production launcher. The exclusive-create command makes an empty
 `.env` sentinel that prevents upstream dotenv discovery from reading ancestor
 configuration. It refuses to overwrite an existing file. Use a clean checkout;
@@ -143,6 +151,21 @@ The unchanged clone passed when rerun to a new evidence directory. Both runs
 verified shutdown. This is an unresolved intermittent startup-responsiveness
 finding, not a reliably passing cold-start path. Logs are retained in the
 agents repository at `hermes-reports/M1-remote-clone{,-retry}.log`.
+
+The retained failed server log narrows the post-readiness problem: catalogs
+returned before the first speech request; the main-thread stall dump includes
+torch distributed/dynamo and SymPy imports, then speech eventually logs 403.
+The dump truncates before the initiating application frame. This is evidence
+of blocking imports, not proof of their full call chain or a backend fix.
+I1's unchanged-backend run returned seven responses; `/engines` took 8.838s
+and the first speech refusal took 8.858s (`M1-I1-http/result.json`). This is a
+warm installed checkout, not a cold-machine benchmark. No GPU/audio acceptance.
+I2's fresh-source targeted suite passed 200 tests (1 xfailed, 7 warnings);
+lint and real HTTP passed. Tests ran before HTTP: not a cold-start check.
+`M1-I2-manifest.json` records the source-copy hashes and unchanged backend/base
+comparison; the result's four hashes alone do not prove source integrity.
+The second independent review found the evidence-loss fix correct but failed
+the full M1 rubric. Startup imports, speech/GPU and model rights remain open.
 
 ## Next gated M1 step
 

@@ -1,0 +1,56 @@
+Review result: FAIL
+
+Diagnostic-only review
+
+The partial-evidence/request-metadata change is directionally correct and honest. The earlier regression is visible in `hermes-reports/M1-I1-before.log`: 2 failures caused by missing `checks`/`requests` on inspection failure. The current test log shows that regression fixed: 34 passed. Lint also passed. The real HTTP run recorded seven requests, partial timings, sanitized metadata, CPU mode, both license refusals, and clean shutdown.
+
+Diagnostic score
+
+- Originality: 1/5
+- Taste: 3/5
+- Human feel: 4/5
+- Technical depth: 4/5
+- Criteria fit: 2/5
+- Reviewer path: 3/5
+- Honesty: 5/5
+
+Diagnostic result: FAIL. It is a useful bounded API-contract diagnostic, not a speech product or M1 acceptance test.
+
+Five damaging flaws
+
+1. No actual English or Hindi speech was generated — owner gate, not a diagnostic bug.
+   - `scripts/headless_baseline.py:161-170`
+   - Both requests intentionally expect HTTP 403 `model_licence_required`; `result.json` records `audio_generated: false`.
+   - This cannot support M1's real-speech requirement.
+
+2. No approved GPU was tested — owner gate, not a diagnostic bug.
+   - `scripts/headless_baseline.py:201-204,216-217`
+   - The harness requires CPU mode and permanently records `gpu_verified: false`.
+   - The architecture plan confirms that no g5/g6 spot target was provisioned or authorized: `docs/ARCHITECTURE-NOTES.md:164-179`.
+
+3. Model and tokenizer rights remain unresolved — owner gate, not a diagnostic bug.
+   - `docs/ARCHITECTURE-NOTES.md:115-121`
+   - The available OmniVoice weights are identified as noncommercial and the tokenizer terms are unresolved. The 403 refusal is therefore not evidence that a commercially usable English/Hindi engine exists.
+
+4. Source integrity evidence is incomplete — fixable diagnostic weakness.
+   - `scripts/headless_baseline.py:246-249`
+   - Only `backend/main.py`, `uv.lock`, the diagnostic script, and its test file are hashed. Other backend modules, configuration, migrations, and engine implementations can differ without appearing in `result.json`. The fresh-copy manifest helps, but the diagnostic result alone does not establish that the tested backend was unchanged.
+
+5. Some failures can produce no structured evidence — fixable diagnostic weakness.
+   - `scripts/headless_baseline.py:182-186,196-205`
+   - Output-directory creation, temporary-state setup, socket creation, and parts of process setup occur before the protected evidence-writing lifecycle is established. A filesystem or socket setup failure can terminate the run without `result.json`. This is separate from the already-fixed partial-inspection failure.
+   - A related limitation remains documented rather than solved: the 15-second request timeout is not a hard total inspection deadline, and a slow-drip response can exceed the intended diagnostic window (`scripts/headless_baseline.py:36-48`; `docs/ARCHITECTURE-NOTES.md:47-48`).
+
+Whole M1 score
+
+- Originality: 1/5
+- Taste: 2/5
+- Human feel: 3/5
+- Technical depth: 2/5
+- Criteria fit: 1/5
+- Reviewer path: 2/5
+- Honesty: 5/5
+
+Whole M1 result: FAIL.
+
+The HTTP result proves only a CPU API-contract run: `api_contract_passed: true`, `speech_verified: false`, `gpu_verified: false`, and `m1_complete: false`. The startup stall warning and slow `/engines`/speech refusals are valid evidence, not reasons to demand a backend change in this unchanged-server diagnostic. M1 would need the owner-approved spot GPU, a cleared English/Hindi-capable model stack, nonempty decoded audio from both API calls, and a listening check with recorded device/engine evidence.

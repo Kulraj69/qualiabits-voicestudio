@@ -1,0 +1,5 @@
+cwd: /home/ubuntu/.hermes/cache/scratch/m1-investigation-i2
+command: /workspace/qualiabits-voice/.venv/bin/ruff check scripts/headless_baseline.py tests/test_headless_baseline.py
+All checks passed!
+
+exit_code: 0

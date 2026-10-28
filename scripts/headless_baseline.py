@@ -103,19 +103,39 @@ def wait_ready(base, process, seconds=120):
     raise BaselineFailure("Backend did not become ready within startup deadline")
 
 
-def inspect_api(base):
-    result = {"scope": "offline_cpu_api_contract_only", "m1_complete": False,
-              "speech_verified": False, "gpu_verified": False, "checks": []}
-    status, progress = request(base, "/startup/progress")
+def inspect_api(base, result=None):
+    # Mutate the caller's evidence so a later failure cannot erase earlier checks.
+    if result is None:
+        result = {}
+    result.update({"scope": "offline_cpu_api_contract_only", "m1_complete": False,
+                   "speech_verified": False, "gpu_verified": False, "checks": [],
+                   "requests": []})
+
+    def measured_request(path, payload=None):
+        row = {"method": "GET" if payload is None else "POST", "path": path}
+        result["requests"].append(row)
+        started = time.monotonic()
+        try:
+            status, body = request(base, path, payload)
+            row["http_status"] = status
+            return status, body
+        except BaseException as exc:
+            # Includes interruption, but never captures arbitrary exception text.
+            row["failure_type"] = type(exc).__name__
+            raise
+        finally:
+            row["elapsed_seconds"] = round(time.monotonic() - started, 3)
+
+    status, progress = measured_request("/startup/progress")
     require(status == 200 and progress.get("status") == "ready", "Startup is not ready")
     result["checks"].append("startup_ready")
-    status, schema = request(base, "/openapi.json")
+    status, schema = measured_request("/openapi.json")
     paths = schema.get("paths", {})
     require(status == 200 and all(p in paths for p in (
         "/health", "/models", "/engines", "/v1/audio/speech", "/v1/audio/transcriptions"
     )), "Required API routes missing")
     result["checks"].append("api_routes")
-    status, models = request(base, "/models")
+    status, models = measured_request("/models")
     rows = models.get("models")
     if status != 200 or not isinstance(rows, list) or not rows:
         raise BaselineFailure("Model catalog missing")
@@ -126,7 +146,7 @@ def inspect_api(base):
     result["model_count"] = len(rows)
     result["installed_model_count"] = 0
     result["checks"].append("empty_model_catalog")
-    status, engines = request(base, "/engines")
+    status, engines = measured_request("/engines")
     require(status == 200 and all(isinstance(engines.get(k), dict) and
             isinstance(engines[k].get("backends"), list) and engines[k]["backends"]
             for k in ("tts", "asr", "llm")), "Engine catalogs missing")
@@ -139,7 +159,7 @@ def inspect_api(base):
     result["checks"].append("engine_catalogs")
     result["speech_attempts"] = []
     for language, text in (("en", "This is a local speech check."), ("hi", "यह स्थानीय आवाज़ की जाँच है।")):
-        status, body = request(base, "/v1/audio/speech", {
+        status, body = measured_request("/v1/audio/speech", {
             "model": "omnivoice", "voice": "alloy", "input": text,
             "language": language, "response_format": "wav",
         })
@@ -149,7 +169,7 @@ def inspect_api(base):
         result["speech_attempts"].append({"language": language, "http_status": status,
                                           "error_code": error["code"], "audio_generated": False})
         result["checks"].append(f"{language}_license_refusal")
-    status, body = request(base, "/v1/audio/speech", {"model": "omnivoice"})
+    status, body = measured_request("/v1/audio/speech", {"model": "omnivoice"})
     require(status == 400 and body.get("error", {}).get("code") == "invalid_value",
             "Missing input did not return a validation error")
     result["checks"].append("invalid_input_rejected")
@@ -194,8 +214,8 @@ def run(output):
                 result["ready_seconds"] = round(time.monotonic() - started, 3)
                 result["startup_deadline_seconds"] = 120
                 require(health.get("device") == "cpu", "This diagnostic requires CPU mode")
-                result.update(inspect_api(base))
                 result["health"] = health
+                inspect_api(base, result)
                 result["api_contract_passed"] = True
             except Exception as exc:  # noqa: BLE001 - report failure and always stop owned backend
                 # Never copy response bodies, request payloads or arbitrary exception text.

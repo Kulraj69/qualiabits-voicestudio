@@ -137,3 +137,91 @@ clone/frozen install passed, first cold HTTP diagnostic timed out, unchanged
 retry passed; both shut down. The cold-start path remains unreliable, not
 waived by the earlier review. Updated architecture limitations; no code change.
 Both remote-run logs are in /workspace/qualiabits-voice/hermes-reports/.
+
+## Rotation slot 3 — M1 timeout investigation plan (2026-10-29)
+
+Last rotation entry is hackathon; next is the second V0-build slot. M1's
+definition of done is unchanged: approved spot GPU, actual English/Hindi API
+audio, architecture notes, tests and passing review. M1 remains blocked on
+owner runtime/model approval; no M2 work, no provisioning or acceptance.
+
+New bounded investigation, two review rounds (I1/I2), not a claim that prior
+failed M1 reviews passed. Preserve unchanged backend baseline. The old cold
+server log shows catalogs returned before a main-thread torch/SymPy import
+stall and eventual speech 403, after the client timeout. It does not identify
+the full initiating stack. The harness discarded completed checks on any
+inspection exception, leaving only TimeoutError; fix that evidence-loss class.
+
+Plan: add per-request elapsed time, method/path, response status or sanitized
+exception type, and preserve partial checks. No response bodies/payloads/error
+messages in the request journal. No larger timeouts, retries or warmup. Test
+failure-before/fix-after with injected timeout, then run real unchanged server.
+I1 cheap+ review reads source, tests, logs and rubric; fix concrete findings.
+I2 uses a fresh source copy/frozen install, adversarial tests and real HTTP,
+then cheap+ review. Publish only diagnostic/evidence changes to the existing
+fork branch, verify remote SHA, update canonical log/queue/summary/rotation.
+Targets: technical correctness, honest evidence and reviewer reproducibility;
+no audio/UI/GPU/whole-product pass from a negative API diagnostic.
+
+### I1 — evidence-loss regression fixed; real API run
+
+`HF_HUB_OFFLINE=1 HF_HUB_CACHE=$TMPDIR/m1-investigation-empty-cache
+.venv/bin/python -m pytest -q --tb=short tests/test_headless_baseline.py`
+first reproduced 2 failed, 32 passed (M1-I1-before.log); after fix 34 passed
+(M1-I1-tests.log). Ruff check of script/tests passed (M1-I1-lint.log).
+`.venv/bin/python scripts/headless_baseline.py --output hermes-reports/M1-I1-http`
+exit 0; seven real HTTP responses, CPU, both languages 403, no audio, shutdown
+verified. `/engines` 8.838s and first speech refusal 8.858s; startup stall true.
+These are observations from this installed checkout, not a latency benchmark.
+
+Actual cheap+ review M1-I1-review.txt: diagnostic 1/3/4/4/2/3/5; whole M1
+1/2/3/2/1/2/5. Both FAIL. Model recorded in M1-I1-usage.json. Owner GPU,
+speech and model-rights gates cannot be fixed with CPU harness changes.
+
+Review fixes/triage for I2: add timeout and interrupt injection at every one
+of the seven inspection requests, no hidden retry, plus wrong-status metadata.
+Address source-integrity weakness with a fresh-copy full tracked-file manifest
+and comparison of all baseline tracked files against origin/main; the four
+in-result hashes alone never establish unchanged backend. Retain manifest with
+the evidence. Do not add Git as a runtime requirement to the diagnostic.
+
+Preflight failure disagreement: an existing/non-writable output destination
+cannot safely receive result.json, and pre-child socket/temp failures own no
+server. Documented non-supervisor boundary remains intentional; do not clobber
+evidence or claim those errors yield JSON. A hard slow-drip wall-clock bound
+would require a separate supervised HTTP mechanism; current socket timeout
+limitation stays explicit, not silently treated as a total deadline or fixed.
+
+### I2 — fresh source, adversarial evidence checks, final review
+
+Fresh copy `/home/ubuntu/.hermes/cache/scratch/m1-investigation-i2`; frozen
+CPU/dev install exit 0. Exact cwd/commands/status in M1-I2-{install,tests,lint,http}.log.
+README targeted command: 200 passed, 1 xfailed, 7 warnings in 48.67s. Includes
+all harness tests and upstream targeted tests, not the whole upstream suite.
+Ruff passed. Actual unchanged API: seven requests, both speech requests 403,
+no audio, CPU, shutdown verified. `/engines` 8.065s, first speech refusal 5.786s.
+Startup-stall warning persists. Tests preceded HTTP; this is not a cold run.
+
+M1-I2-manifest.json contains 4,727 source-copy hashes. Parent verification
+found zero fresh-copy mismatches after tests. Backend, omnivoice, uv.lock and
+pyproject.toml diff is empty against fetched origin/main at
+9680f4e43b2b8c765bcd1082ef0e1a181346d885. Four result hashes alone are not an
+integrity proof. Reports/docs appended after this snapshot naturally differ.
+
+Actual cheap+ M1-I2-review.txt (gpt-5-6-luna, completed, billing unknown):
+diagnostic scores 1/3/4/5/2/4/5; whole M1 1/2/3/2/1/2/5. FAIL for both rubric
+gates. Explicit assessment: evidence-loss fix correct for its declared scope.
+The review's shortened base string at line 38 has a typo; the full manifest
+and verified base above are authoritative. No new code finding; remaining
+non-supervisor/slow-drip limits and preflight disagreement are recorded in I1.
+
+Stop: M1 remains blocked, not done. No backend timeout fix, reliable cold-start
+claim, speech, GPU or production acceptance. Do not repeat CPU-only rounds as
+a substitute for the gate or start M2. Next run needs owner-cleared GPU/model
+evidence, or an explicitly changed milestone. No M2/hackathon work, model
+download/acceptance, provisioning, provider call, message or demo upload.
+Exact owner action remains: provide an approved g5/g6 target with scoped
+access, automatic idle shutdown and hard spending limit; select and clear
+English/Hindi engine weights/tokenizer/output terms, personally accept required
+terms, then approve a bounded M1 GPU run and listening check. Supply config
+privately. The rotation advances to V0-growth after this V0-build slot.

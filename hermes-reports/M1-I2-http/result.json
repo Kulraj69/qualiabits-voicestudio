@@ -1,0 +1,99 @@
+{
+  "scope": "offline_cpu_api_contract_only",
+  "m1_complete": false,
+  "api_contract_passed": true,
+  "speech_verified": false,
+  "gpu_verified": false,
+  "production_readiness_verified": false,
+  "ready_seconds": 8.346,
+  "startup_deadline_seconds": 120,
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "checks": [
+    "startup_ready",
+    "api_routes",
+    "empty_model_catalog",
+    "engine_catalogs",
+    "en_license_refusal",
+    "hi_license_refusal",
+    "invalid_input_rejected"
+  ],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/startup/progress",
+      "http_status": 200,
+      "elapsed_seconds": 0.021
+    },
+    {
+      "method": "GET",
+      "path": "/openapi.json",
+      "http_status": 200,
+      "elapsed_seconds": 1.095
+    },
+    {
+      "method": "GET",
+      "path": "/models",
+      "http_status": 200,
+      "elapsed_seconds": 1.692
+    },
+    {
+      "method": "GET",
+      "path": "/engines",
+      "http_status": 200,
+      "elapsed_seconds": 8.065
+    },
+    {
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "http_status": 403,
+      "elapsed_seconds": 5.786
+    },
+    {
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "http_status": 403,
+      "elapsed_seconds": 0.013
+    },
+    {
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "http_status": 400,
+      "elapsed_seconds": 0.003
+    }
+  ],
+  "model_count": 42,
+  "installed_model_count": 0,
+  "engine_counts": {
+    "tts": 19,
+    "asr": 12,
+    "llm": 2
+  },
+  "speech_attempts": [
+    {
+      "language": "en",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    },
+    {
+      "language": "hi",
+      "http_status": 403,
+      "error_code": "model_licence_required",
+      "audio_generated": false
+    }
+  ],
+  "server_exit_code": -15,
+  "startup_stall_warning": true,
+  "shutdown_verified": true,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/headless_baseline.py": "a96d6f2a6796eeff91e44accc83c08776bfc61faf206fec4f3c1178fdc7dc5d1",
+    "tests/test_headless_baseline.py": "b3a3b5e95e63280eeef9086ec9971f6059bc5e0311715b9b0e37993fd872dbda"
+  },
+  "elapsed_seconds": 26.396
+}

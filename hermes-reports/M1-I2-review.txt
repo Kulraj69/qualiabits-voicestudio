@@ -1,0 +1,85 @@
+Strict I2 judge review: FAIL
+
+Diagnostic scores
+
+- Originality: 1/5
+- Taste: 3/5
+- Human feel: 4/5
+- Technical depth: 5/5
+- Criteria fit: 2/5
+- Reviewer path: 4/5
+- Honesty: 5/5
+
+Diagnostic result: FAIL. This is a technically careful, bounded CPU API-contract diagnostic, not a speech demonstration or M1 acceptance test.
+
+Whole M1 scores
+
+- Originality: 1/5
+- Taste: 2/5
+- Human feel: 3/5
+- Technical depth: 2/5
+- Criteria fit: 1/5
+- Reviewer path: 2/5
+- Honesty: 5/5
+
+Whole M1 result: FAIL. The evidence correctly says M1 is incomplete; no done claim is supported.
+
+Evidence reviewed
+
+- I2 targeted suite: 200 passed, 1 expected failure, 7 warnings, exit 0.
+- Ruff: passed, exit 0.
+- HTTP result: seven post-readiness requests; API contract passed; English and Hindi both returned 403 `model_licence_required`; malformed speech request returned 400 `invalid_value`; CPU device; startup stall warning; orderly shutdown; no audio.
+- Startup: 8.346 seconds.
+- `/engines`: 8.065 seconds.
+- First speech refusal: 5.786 seconds.
+- Fresh-copy tests ran before the HTTP run. Therefore this HTTP result is not cold-start evidence.
+- Manifest: 4,727 SHA-256 entries. All entries match both the working checkout and `/home/ubuntu/.hermes/cache/scratch/m1-investigation-i2`.
+- `backend`, `omnivoice`, `uv.lock`, and `pyproject.toml` show no diff from `origin/main`; fresh-copy files also match `origin/main` for those targets.
+- Manifest base: `9680f4e43b2f...346d885`.
+
+Five damaging flaws
+
+1. No English or Hindi speech was generated — owner gate, not an I2 diagnostic defect.
+   - `scripts/headless_baseline.py:161-170`
+   - Both synthesis attempts intentionally expect license refusal.
+   - `speech_verified: false`; no WAV or decoded audio exists.
+   - M1’s actual speech requirement remains unmet.
+
+2. No approved GPU was tested — owner gate, not an I2 diagnostic defect.
+   - `scripts/headless_baseline.py:201-204,216-217`
+   - The run requires CPU and permanently records `gpu_verified: false`.
+   - No approved g5/g6 target, runtime access, device evidence, or GPU shutdown evidence exists.
+
+3. Model, tokenizer, and commercial-use rights remain unresolved — owner gate, not an I2 diagnostic defect.
+   - `docs/ARCHITECTURE-NOTES.md:115-121,164-179`
+   - The available OmniVoice weights are identified as noncommercial and tokenizer terms remain unresolved.
+   - A 403 refusal proves only that synthesis was not authorized; it does not establish a commercially usable English/Hindi stack.
+
+4. Cold-start responsiveness remains unreliable — in-scope diagnostic limitation/finding.
+   - `docs/ARCHITECTURE-NOTES.md:148-159`
+   - The prior remote clone timed out after readiness, while a rerun passed.
+   - I2 was run from a fresh source copy but after its tests and is explicitly not cold. It does not resolve the intermittent cold-start issue.
+   - The current result’s `startup_stall_warning: true` is valid evidence, not a production readiness pass.
+
+5. The harness still has a non-supervisor boundary and slow-drip timeout gap — in-scope diagnostic weakness, documented but not fixed.
+   - `scripts/headless_baseline.py:182-186,196-205`
+   - Output creation, temporary-state setup, socket setup, and some process-start failures can occur without structured `result.json`.
+   - The 15-second per-request socket timeout is not a hard total inspection deadline; a slow-drip response can exceed the intended window.
+   - Repeated interrupts during cleanup and SIGKILL paths are outside the guarantee.
+
+Evidence-loss fix assessment
+
+The evidence-loss fix itself is correct for its declared scope.
+
+- `inspect_api()` initializes scope, acceptance flags, checks, and request storage before inspection begins.
+- Each request is journaled before execution.
+- `finally` records elapsed time even for timeout and interrupt failures.
+- Only HTTP status or exception type is retained; payloads, response bodies, and exception text are excluded.
+- Completed checks and catalog data survive a later request failure.
+- The test matrix covers all seven request positions with both `TimeoutError` and `KeyboardInterrupt`, with no hidden retries.
+- Validation failure preserves the received HTTP status.
+- The tests explicitly verify that private exception text is not written.
+
+The fix does not make the harness a supervisor, does not solve cold-start stalls, does not impose a hard slow-drip deadline, and does not establish speech, GPU, licensing, or production readiness. Those limitations are appropriately documented rather than misrepresented.
+
+What would make it win: an owner-approved GPU run using a cleared English/Hindi-capable model stack, nonempty decoded audio from both API calls, an intelligibility check, recorded engine/device/revision/timing evidence, and a reliable cold-start path.
