@@ -46,19 +46,35 @@ class Wire:
     """Stands in for the network: scripted engine catalogue and speech responses."""
 
     def __init__(self, speech, active="kittentts", env_override=True,
-                 backends=("kittentts", "omnivoice")):
+                 backends=("kittentts", "omnivoice"), required=False, accepted=None):
         self.speech = speech
         self.active = active
         self.env_override = env_override
         self.backends = backends
+        self.required = required
+        self.accepted = (not required) if accepted is None else accepted
         self.seen: list[dict] = []
 
     def request(self, base, path, payload=None, **kwargs):
-        assert path == "/engines", path
-        return 200, {"tts": {
-            "active": self.active, "env_override": self.env_override,
-            "backends": [{"id": b} for b in self.backends],
-        }}
+        if path == "/engines":
+            return 200, {"tts": {
+                "active": self.active, "env_override": self.env_override,
+                "backends": [{"id": b} for b in self.backends],
+            }}
+        if path == "/models":
+            return 200, {"models": [{
+                "repo_id": "KittenML/kitten-tts-mini-0.8", "engines": ["kittentts"],
+                "installed": True, "size_gb": 0.08,
+            }]}
+        if path.startswith("/models/licenses/acceptance/"):
+            return 200, {"license": "apache-2.0", "category": "commercial",
+                         "required": self.required, "accepted": self.accepted,
+                         "state": "not_required" if not self.required else "not_accepted"}
+        if path.startswith("/models/licenses/details/"):
+            return 200, {"info": {"registry_version": "test-registry",
+                                  "readiness": "not_verified",
+                                  "blockers": ["terms_unverified"]}}
+        raise AssertionError(path)
 
     def request_audio(self, base, path, payload: dict | None = None, **kwargs):
         assert path == "/v1/audio/speech", path
@@ -220,6 +236,49 @@ def test_a_silent_warm_response_fails_the_probe(monkeypatch, tmp_path):
 
     monkeypatch.setattr(probe, "request", Wire({}).request)
     monkeypatch.setattr(probe, "request_audio", ra)
+    with pytest.raises(probe.ProbeFailure):
+        probe.probe("http://x", _result(tmp_path), "kittentts", "hello", None, "v")
+
+
+def test_build_env_sets_the_cache_it_was_given(tmp_path):
+    """Regression: --hf-cache was ignored, so weights landed in ~/.cache."""
+    cache = tmp_path / "given-cache"
+    env = probe.build_env("/state", "kittentts", cache)
+    assert env["HF_HUB_CACHE"] == str(cache)
+    assert "HF_HUB_OFFLINE" not in env
+    assert env["OMNIVOICE_TTS_BACKEND"] == "kittentts"
+    for key in ("OMNIVOICE_DATA_DIR", "OMNIVOICE_ENV_FILE", "OMNIVOICE_CACHE_DIR", "HOME"):
+        assert env[key].startswith("/state"), key
+
+
+def test_build_env_without_a_cache_is_offline_but_still_hermetic():
+    env = probe.build_env("/state", "kittentts", None)
+    assert env["HF_HUB_OFFLINE"] == "1"
+    assert env["HF_HUB_CACHE"].startswith("/state")
+    assert not any(k in env for k in ("SARVAM_API_KEY", "AZURE_OPENAI_API_KEY", "VAPI_API_KEY"))
+
+
+def test_host_metadata_names_the_box():
+    host = probe.host_metadata()
+    assert host["cpu_count"] and isinstance(host["cpu_count"], int)
+    assert host["python"].startswith("3.")
+    assert host["platform"]
+
+
+def test_licence_provenance_is_recorded_and_gate_free(monkeypatch, tmp_path):
+    wire_up(monkeypatch, Wire({"en": AUDIO, "hi": CLIENT_REFUSAL}))
+    result = _result(tmp_path)
+    probe.probe("http://x", result, "kittentts", "hello", "नमस्ते", "v")
+    entry = result["licence_provenance"][0]
+    assert entry["repo_id"] == "KittenML/kitten-tts-mini-0.8"
+    assert entry["required"] is False and entry["accepted"] is True
+    assert entry["category"] == "commercial"
+    assert "licence_required_is_false" in result["checks"]
+    assert result["host"]["cpu_count"]
+
+
+def test_a_gated_model_fails_the_provenance_check(monkeypatch, tmp_path):
+    wire_up(monkeypatch, Wire({"en": AUDIO, "hi": AUDIO}, required=True))
     with pytest.raises(probe.ProbeFailure):
         probe.probe("http://x", _result(tmp_path), "kittentts", "hello", None, "v")
 

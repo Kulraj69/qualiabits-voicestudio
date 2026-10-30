@@ -1,0 +1,147 @@
+{
+  "hf_cache_pre_populated": false,
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "ready_seconds": 9.648,
+  "scope": "cpu_english_speech_smoke_ungated_engine",
+  "engine": "kittentts",
+  "m1_complete": false,
+  "gpu_verified": false,
+  "hindi_verified": false,
+  "intelligibility_verified": false,
+  "speech_produced": true,
+  "checks": [
+    "ungated_engine_is_active",
+    "english_audio_returned",
+    "warm_request_returned_audio",
+    "hindi_refused_as_client_error",
+    "hindi_attempt_recorded"
+  ],
+  "requests": [
+    {
+      "label": "english",
+      "engine": "kittentts",
+      "language": "en",
+      "elapsed_seconds": 32.166,
+      "http_status": 200,
+      "headers": {
+        "content-disposition": "inline; filename=\"speech.wav\"; filename*=UTF-8''speech.wav",
+        "content-length": "274936",
+        "content-type": "audio/wav",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "audio_sha256": "2b1785898f3055a6d7aaa6cfa837ab39e8fae9bf7098a2c8df3a3ee33fb2e555",
+      "audio_bytes": 274936,
+      "audio_file": "english.wav",
+      "audio": {
+        "audio_format": 1,
+        "channels": 1,
+        "sample_rate": 24000,
+        "byte_rate": 48000,
+        "bits_per_sample": 16,
+        "data_bytes": 274892,
+        "data_truncated": false,
+        "frames": 137446,
+        "duration_seconds": 5.727,
+        "peak": 0.799683,
+        "rms": 0.184212,
+        "non_silent": true
+      },
+      "audio_generated": true,
+      "audio_valid": true
+    },
+    {
+      "label": "english_warm",
+      "engine": "kittentts",
+      "language": "en",
+      "elapsed_seconds": 18.961,
+      "http_status": 200,
+      "headers": {
+        "content-disposition": "inline; filename=\"speech.wav\"; filename*=UTF-8''speech.wav",
+        "content-length": "274830",
+        "content-type": "audio/wav",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "audio_sha256": "e8851d09686ad79e87d4b6c1dd6266890a1097b5bf3c22b96a3f5327668bd228",
+      "audio_bytes": 274830,
+      "audio_file": "english_warm.wav",
+      "audio": {
+        "audio_format": 1,
+        "channels": 1,
+        "sample_rate": 24000,
+        "byte_rate": 48000,
+        "bits_per_sample": 16,
+        "data_bytes": 274786,
+        "data_truncated": false,
+        "frames": 137393,
+        "duration_seconds": 5.725,
+        "peak": 0.789795,
+        "rms": 0.18013,
+        "non_silent": true
+      },
+      "audio_generated": true,
+      "audio_valid": true
+    },
+    {
+      "label": "hindi",
+      "engine": "kittentts",
+      "language": "hi",
+      "elapsed_seconds": 0.013,
+      "http_status": 400,
+      "headers": {
+        "content-length": "477",
+        "content-type": "application/json",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "error_code": null,
+      "audio_generated": false
+    }
+  ],
+  "model_terms_accepted_by_probe": 0,
+  "active_tts_backend": "kittentts",
+  "env_override": true,
+  "english_audio": {
+    "audio_format": 1,
+    "channels": 1,
+    "sample_rate": 24000,
+    "byte_rate": 48000,
+    "bits_per_sample": 16,
+    "data_bytes": 274892,
+    "data_truncated": false,
+    "frames": 137446,
+    "duration_seconds": 5.727,
+    "peak": 0.799683,
+    "rms": 0.184212,
+    "non_silent": true
+  },
+  "english_cold_seconds": 32.166,
+  "english_warm_seconds": 18.961,
+  "hindi_attempt": {
+    "label": "hindi",
+    "engine": "kittentts",
+    "language": "hi",
+    "elapsed_seconds": 0.013,
+    "http_status": 400,
+    "headers": {
+      "content-length": "477",
+      "content-type": "application/json",
+      "x-omnivoice-backend": "0.5.7"
+    },
+    "error_code": null,
+    "audio_generated": false
+  },
+  "server_exit_code": -15,
+  "startup_stall_warning": false,
+  "shutdown_verified": true,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "backend/services/tts_backend.py": "e3bebf0b4d77b816b03feecf0d3496220bedf17c6a6670458ab4214e338bf66a",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/m1_speech_probe.py": "17f17c80cc75b8556dc4e60b851b8d01bf4dd7a13f5c7637a7c26e9116dc65fc",
+    "tests/test_m1_speech_probe.py": "f98da69d5e068153e2198b5ad556041217c9ce412160133d8c68cd88f694db0b"
+  },
+  "elapsed_seconds": 80.398
+}

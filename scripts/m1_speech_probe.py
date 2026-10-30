@@ -28,6 +28,7 @@ import hashlib
 import json
 import math
 import os
+import platform
 import signal
 import socket
 import struct
@@ -224,6 +225,47 @@ def clean_shutdown(returncode, forced: bool, log_text: str) -> bool:
             and "Finished server process" in log_text)
 
 
+def host_metadata() -> dict:
+    """What the timings below were measured on."""
+    cpu_model = None
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                cpu_model = line.split(":", 1)[1].strip()
+                break
+    except OSError:
+        cpu_model = None
+    return {
+        "platform": platform.platform(), "machine": platform.machine(),
+        "cpu_model": cpu_model, "cpu_count": os.cpu_count(),
+        "python": platform.python_version(),
+    }
+
+
+def build_env(state: str, engine: str, hf_cache: Path | None) -> dict:
+    """Minimal environment for the backend: no provider credentials, own caches.
+
+    ``HF_HUB_CACHE`` must be set, not just inferred: the first caller of this
+    probe passed ``--hf-cache`` and the model still landed in the default
+    ``~/.cache/huggingface``, because the path was only used to decide the
+    offline flag.
+    """
+    cache = str(hf_cache) if hf_cache is not None else str(Path(state) / "hf-cache")
+    env = {
+        "PATH": os.environ.get("PATH", os.defpath), "HOME": state,
+        "TMPDIR": state, "HF_HUB_DISABLE_TELEMETRY": "1",
+        "HF_HUB_CACHE": cache,
+        "OMNIVOICE_DATA_DIR": str(Path(state) / "data"),
+        "OMNIVOICE_ENV_FILE": str(Path(state) / "user-env"),
+        "OMNIVOICE_CACHE_DIR": str(Path(state) / "cache"),
+        "OMNIVOICE_TTS_BACKEND": engine,
+    }
+    if hf_cache is None:
+        # No writable cache was offered, so the weights cannot be fetched.
+        env["HF_HUB_OFFLINE"] = "1"
+    return env
+
+
 def check_engine_identity(base: str, result: dict, engine: str) -> None:
     """The running engine must be the ungated one, and say so itself.
 
@@ -247,6 +289,60 @@ def check_engine_identity(base: str, result: dict, engine: str) -> None:
     ids = [entry.get("id") for entry in tts["backends"] if isinstance(entry, dict)]
     require(engine in ids, "Requested engine is missing from the engine catalogue")
     result["checks"].append("ungated_engine_is_active")
+
+
+def check_licence_provenance(base: str, result: dict, engine: str) -> None:
+    """Record why this engine needs no acceptance, from the API itself.
+
+    The claim "no owner acceptance was needed" must travel with the evidence, not
+    live only in prose. ``/models`` names the repository this engine loads;
+    ``/models/licenses/acceptance/<repo>`` reports the declared licence and
+    whether acceptance is required.
+    """
+    status, catalog = request(base, "/models", timeout=180.0)
+    require(status == 200, "Model catalogue is not readable")
+    rows = catalog.get("models")
+    if not isinstance(rows, list) or not rows:
+        raise ProbeFailure("Model catalogue is empty")
+    mine = [row for row in rows
+            if isinstance(row, dict) and engine in (row.get("engines") or [])]
+    require(mine, f"No catalogue model is registered for engine {engine!r}")
+    provenance = []
+    for row in mine:
+        repo = row.get("repo_id")
+        if not isinstance(repo, str) or not repo:
+            raise ProbeFailure("Catalogue row has no repo_id")
+        entry: dict[str, Any] = {
+            "repo_id": repo, "installed": row.get("installed"),
+            "size_gb": row.get("size_gb"),
+        }
+        for key, path in (
+            ("acceptance", "/models/licenses/acceptance/"),
+            ("disclosure", "/models/licenses/details/"),
+        ):
+            code, body = request(base, path + repo, timeout=120.0)
+            if code != 200 or not isinstance(body, dict):
+                entry[f"{key}_readable"] = False
+                continue
+            entry[f"{key}_readable"] = True
+            if key == "acceptance":
+                entry.update({k: body.get(k) for k in
+                              ("license", "category", "required", "accepted", "state")})
+            else:
+                raw_info = body.get("info")
+                info: dict = raw_info if isinstance(raw_info, dict) else {}
+                entry["registry_version"] = info.get("registry_version")
+                entry["readiness"] = info.get("readiness")
+                entry["blockers"] = info.get("blockers")
+        provenance.append(entry)
+    result["licence_provenance"] = provenance
+    require(any(entry.get("required") is False for entry in provenance),
+            "No model registered for this engine is free of the acceptance gate")
+    for entry in provenance:
+        if entry.get("required") is False:
+            require(entry.get("accepted") is True,
+                    "An ungated model reported itself as not accepted")
+    result["checks"].append("licence_required_is_false")
 
 
 def synthesise(base: str, result: dict, engine: str, text: str, language: str,
@@ -301,8 +397,15 @@ def probe(base: str, result: dict, engine: str, english: str, hindi: str | None,
         "m1_complete": False, "gpu_verified": False, "hindi_verified": False,
         "intelligibility_verified": False, "speech_produced": False, "checks": [],
         "requests": [], "model_terms_accepted_by_probe": 0,
+        "host": host_metadata(),
+        "timing_note": ("elapsed_seconds are client-observed, end-to-end HTTP times "
+                        "for one /v1/audio/speech request. On a cold cache they "
+                        "include the model download, the model load and the "
+                        "AudioSeal watermark checkpoint. They are not "
+                        "synthesis-only latency and not a benchmark."),
     })
     check_engine_identity(base, result, engine)
+    check_licence_provenance(base, result, engine)
     row = synthesise(base, result, engine, english, "en", voice, "english")
     require(row.get("http_status") == 200, "Ungated engine did not return audio")
     require(row.get("audio_valid") is True, "Returned audio is not a valid WAV stream")
@@ -349,16 +452,7 @@ def run(output: Path, engine: str, english: str, hindi: str | None, voice: str,
     result["hf_cache_pre_populated"] = bool(
         hf_cache is not None and hf_cache.is_dir() and any(hf_cache.iterdir()))
     with tempfile.TemporaryDirectory(prefix="voicestudio-speech-probe-") as state:
-        env = {
-            "PATH": os.environ.get("PATH", os.defpath), "HOME": state,
-            "TMPDIR": state, "HF_HUB_DISABLE_TELEMETRY": "1",
-            "OMNIVOICE_DATA_DIR": str(Path(state) / "data"),
-            "OMNIVOICE_ENV_FILE": str(Path(state) / "user-env"),
-            "OMNIVOICE_CACHE_DIR": str(Path(state) / "cache"),
-            "OMNIVOICE_TTS_BACKEND": engine,
-        }
-        if hf_cache is None:
-            env["HF_HUB_OFFLINE"] = "1"
+        env = build_env(state, engine, hf_cache)
         with socket.socket() as listener, (output / "server.log").open("w") as log:
             listener.bind(("127.0.0.1", 0))
             listener.listen()

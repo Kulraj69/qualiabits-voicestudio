@@ -178,21 +178,29 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
 cd qualiabits-voicestudio
 uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
 python3 -c "from pathlib import Path; Path('.env').open('x').close()"
-.venv/bin/python scripts/m1_speech_probe.py --output /tmp/m1-speech --hf-cache ~/.cache/hf-voice
+out=$(mktemp -d)/m1-speech        # the probe refuses an existing output directory
+.venv/bin/python scripts/m1_speech_probe.py --output "$out" --hf-cache ~/.cache/hf-voice
 ```
 
-First run downloads the ~80 MB ONNX model; `--hf-cache` is what allows that.
-Without it the probe runs offline and fails for missing weights.
+First run fetches two checkpoints, both into the directories named here:
+~78 MB for the KittenTTS ONNX graph (into `--hf-cache`, which is passed through as
+`HF_HUB_CACHE`) and ~59 MB for the AudioSeal watermark checkpoint
+`facebook/audioseal` (into the run's own temporary state directory, so it is
+re-fetched on every run). Without `--hf-cache` the probe runs offline and fails
+for missing weights.
 
-See in `/tmp/m1-speech/result.json`: exit code 0, `"speech_produced": true`,
-`"active_tts_backend": "kittentts"`, `"env_override": true`, an `english_audio`
-block with `"sample_rate": 24000` and `"non_silent": true`, and `"hindi_attempt"`
-with `"http_status": 400` — the engine is English-only and says so. Listen to
-`/tmp/m1-speech/audio/english.wav`.
+See in `"$out"/result.json`: exit code 0, `"speech_produced": true`,
+`"active_tts_backend": "kittentts"`, `"env_override": true`, a
+`"licence_provenance"` entry showing `"license": "apache-2.0"`,
+`"category": "commercial"`, `"required": false`, an `english_audio` block with
+`"sample_rate": 24000` and `"non_silent": true`, and `"hindi_attempt"` with
+`"http_status": 400` — the engine is English-only and says so. Listen to
+`"$out"/audio/english.wav`.
 
-`english_cold_seconds` and `english_warm_seconds` are recorded separately: the
-first request pays for the model download, the ONNX load and the AudioSeal
-watermark checkpoint, so the cold number is not synthesis speed.
+`english_cold_seconds` and `english_warm_seconds` are end-to-end HTTP request
+times (client-observed), not synthesis-only latency: the first request pays for
+the model download, the ONNX load and the AudioSeal checkpoint. `host` records the
+box they were measured on.
 
 `m1_complete`, `gpu_verified`, `hindi_verified` and `intelligibility_verified`
 remain false in every run: no GPU, no Hindi audio, and nothing here listens to the

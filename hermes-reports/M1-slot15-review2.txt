@@ -1,0 +1,21 @@
+1. Originality: 3/5 — Escaping the default licence gate with a catalogue engine and proving real API audio is a useful diagnostic, but not a memorable product experience.
+2. Taste: 3/5 — The scope is disciplined and candid, but the evidence remains engineering-heavy, with no polished demo moment or concise result presentation.
+3. Human feel: 4/5 — The writing is specific, self-critical and avoids generic marketing language; the logs and owner-gated boundaries feel authentic.
+4. Technical depth: 5/5 — The unchanged HTTP path produced measurable non-silent WAV audio, verified engine attribution, tested malformed/silent/refusal paths, and fixed the 500-to-400 regression.
+5. Criteria fit: 3/5 — The claim is well evidenced as a CPU English-audio diagnostic, but it does not demonstrate a broader product, sponsor integration, or the blocked M1 outcome.
+6. Reviewer path: 3/5 — The new do-X-see-Y section is materially better, but the replay still depends on model downloads, slow first-run behavior, and evidence that is not fully present in the committed clone.
+7. Honesty: 5/5 — The artifacts explicitly mark GPU, Hindi, intelligibility, M1 completion and hosted service as unverified; the narrow English CPU claim is backed by real HTTP logs and WAV measurements.
+
+2. Five most damaging fixable flaws within this claim:
+
+- Fresh replay evidence is not committed: `git status --short --branch` shows `hermes-reports/M1-slot15-speech-r2b/` and its console report as untracked, so a stranger cloning the branch cannot inspect the strongest replay. Fix: commit the replay evidence or publish an immutable artifact URL and link it from `docs/ARCHITECTURE-NOTES.md`.
+- The documented download story is incomplete: `docs/ARCHITECTURE-NOTES.md:184-185` says the first run downloads approximately 80 MB, but `hermes-reports/M1-slot15-speech-r2b/server.log:67-72` shows an additional 56.1 MB AudioSeal download during the speech request. Fix: document every first-run download and cache location, or prefetch/cache AudioSeal so the stated path is accurate.
+- The reviewer command is not reliably reproducible on a second run: `scripts/m1_speech_probe.py:342-345` rejects an existing output directory, while `docs/ARCHITECTURE-NOTES.md:181` gives a fixed-looking `/tmp/m1-speech` path without explicitly requiring a new directory. Fix: show a unique output-directory command or make the command safely fail with a prominently documented cleanup step.
+- Licence attribution is not carried into the replay result: `hermes-reports/M1-slot15-speech-r2b/result.json:103-105` records only the selected engine and override, while the licence-category/registry proof exists only in tests and prose. Fix: record the resolved model repository, declared licence category, acceptance-required boolean, and registry revision in `result.json`.
+- The timing evidence is under-specified for comparison: `result.json:120-121` records 32.166 seconds cold and 18.961 seconds warm, but does not record CPU model, core count, model revision, or whether watermark loading/network activity was included; the server log confirms watermark download at `:21:45:44`. Fix: record host/device/package/model revision and label timings explicitly as end-to-end request latency including model and watermark initialization.
+
+Owner-gated, not a defect: GPU verification; Hindi audio; listening/ASR intelligibility; owner acceptance of any gated multilingual engine; hosted or multi-tenant service.
+
+3. This would pass if the committed branch contained a deterministic, fully documented fresh-clone replay with complete licence/download provenance and a concise presentation mapping this verified CPU-English result to each judging criterion.
+
+HONESTY VERDICT: no honesty flaw
