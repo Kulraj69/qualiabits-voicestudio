@@ -390,10 +390,11 @@ class TTSBackend(ABC):
             through its own per-engine logic (mlx-audio's per-model table,
             PocketTTS' own strict set, OmniVoice's 600-language zero-shot).
 
-        Raises ``ValueError`` with the engine display name, the requested
-        language, and the supported set so the rewrite in
+        Raises ``TTSInputError`` (a ``ValueError``) with the engine display name,
+        the requested language, and the supported set so the rewrite in
         ``_language_rejection_or`` (api/routers/generation.py:1055) turns
-        it into the standard "Engine X can't speak 'Y' …" message.
+        it into the standard "Engine X can't speak 'Y' …" message, and so
+        ``/v1/audio/speech`` answers 400 instead of its generic 500.
 
         3-letter ISO 639 codes (``cmn``, ``zho``, …) are intentionally
         NOT mapped to their 2-letter equivalent here: the convention
@@ -431,7 +432,14 @@ class TTSBackend(ABC):
             # Property with no instance state — fall back to the class attr.
             engine_name = getattr(type(self), "id", type(self).__name__)
         quoted = ", ".join(f"'{c}'" for c in supported)
-        raise ValueError(
+        # TTSInputError, not a bare ValueError: it IS a ValueError (so the
+        # native /generate route keeps its ValueError→400 mapping), but it also
+        # carries the typed identity /v1/audio/speech needs. That route maps
+        # TTSInputError → 400 in `_typed_speech_http_error`; a bare ValueError
+        # fell through to its generic 500, so an OpenAI-compatible client asking
+        # an English-only engine for Hindi got a server error instead of the
+        # actionable 400 the same refusal produces on /generate (#2104).
+        raise TTSInputError(
             f"The {engine_name} engine doesn't support language={language!r}. "
             f"Supported: {quoted}. Pick one of those, leave language as 'Auto', "
             f"or switch engine in Model Catalogue."
