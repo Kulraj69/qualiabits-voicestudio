@@ -1,0 +1,26 @@
+1. Scores
+
+Originality: 4/5 — A reproducible, evidence-preserving probe that disproves the assumption that the licence gate blocks every engine is distinctive and memorable.
+
+Taste: 4/5 — The scope, limitations, and rejected control are documented clearly, though the artifact remains mostly diagnostic rather than a polished product experience.
+
+Human feel: 5/5 — The writing is specific and candid about failures, non-claims, cache behavior, and owner dependencies; it avoids generic demo language.
+
+Technical depth: 5/5 — The real unmodified API is exercised on CPU, engine attribution and licence provenance are checked, WAV content is measured, shutdown is verified, and 45 regression tests pass.
+
+Criteria fit: 4/5 — The M1 definition-of-done table maps each item to evidence and explicitly records the incomplete GPU and Hindi items; no hackathon rules file exists, so no external criterion is silently invented.
+
+Reviewer path: 4/5 — The documented clone/install/probe command and retained replay artifacts let a stranger reproduce the result, although the CPU dependency/model setup is not instantaneous.
+
+Honesty: 5/5 — The result explicitly records CPU-only English output, no acceptance, no Hindi/GPU/intelligibility verification, and no production or legal conclusion.
+
+2. Remaining flaw fixable within the claim's scope
+
+- docs/ARCHITECTURE-NOTES.md:235-238 — The M1 evidence table still says “r5” and “4,765 hashed files.” Update it to reference the r6 result and state 4,769 hashed files + 1 recorded gitlink = 4,770 tracked entries.
+- docs/ARCHITECTURE-NOTES.md:213-215 — Change “SHA-256 for every tracked file” to “SHA-256 for every tracked file, with each gitlink recorded by commit,” matching the manifest’s actual reconciliation.
+
+Owner-gated, not a defect: approved GPU execution; Hindi-capable speech; listening or ASR intelligibility verification; legal/component licence clearance beyond the application’s acceptance gate; hosted or multi-tenant service behavior.
+
+3. This would pass if the two stale architecture-note references were corrected, with no broader claim added.
+
+4. HONESTY VERDICT: no honesty flaw — the reconciliation closes the earlier manifest-integrity flag, and the M1 mapping closes the earlier criteria-fit/evidence-mapping flag; the remaining stale “r5/4,765” documentation is an accuracy defect, not an unbacked claim in the stated scope.

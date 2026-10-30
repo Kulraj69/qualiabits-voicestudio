@@ -211,8 +211,9 @@ route encodes wav and flac through torchaudio (`backend/api/routers/openai_compa
 the ffmpeg requirement in the baseline section above belongs to the other formats.
 
 Each run also writes `manifest.json`: the commit, the branch, whether the worktree
-was dirty, and a SHA-256 for every tracked file, so "the API was unmodified" is
-checkable rather than asserted.
+was dirty, a SHA-256 for every tracked file, and each gitlink recorded by commit,
+so "the API was unmodified" is checkable rather than asserted. Every tracked entry
+appears exactly once and the totals must reconcile with `git ls-files -s`.
 
 `m1_complete`, `gpu_verified`, `hindi_verified` and `intelligibility_verified`
 remain false in every run: no GPU, no Hindi audio, and nothing here listens to the
@@ -232,11 +233,12 @@ architecture notes, pass tests and an independent review.
 
 ```text
 M1 item                          evidence                              status
-unchanged headless server        r5 result.json: commit, clean         done, on CPU
-                                 worktree, 4,765 hashed files
-English speech through the API   r5 english_audio: 24 kHz WAV, 5.7 s,  done
+unchanged headless server        r6 result.json: commit, clean         done, on CPU
+                                 worktree, 4,769 hashed files + 1
+                                 gitlink = 4,770 tracked entries
+English speech through the API   r6 english_audio: 24 kHz WAV, 5.7 s,  done
                                  peak 0.79, non-silent
-Hindi speech through the API     r5 hindi_attempt: 400, engine is      not done
+Hindi speech through the API     r6 hindi_attempt: 400, engine is      not done
                                  English-only (owner-gated model)
 approved spot GPU                this host is a t3a.medium with no     not done
                                  NVIDIA device node (owner-gated)
