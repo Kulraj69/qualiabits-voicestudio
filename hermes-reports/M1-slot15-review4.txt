@@ -1,0 +1,24 @@
+1. Originality — 4/5: The memorable idea is that the shipped acceptance gate is not universally blocking; a commercial-category KittenTTS engine produces real CPU audio through the unchanged API.
+
+2. Taste — 4/5: The scope, exclusions, evidence fields, cache caveat, and `do X -> see Y` path are unusually disciplined and focused.
+
+3. Human feel — 4/5: The writing is specific, candid, and technically grounded; it avoids claiming M1 completion, intelligibility, or legal clearance.
+
+4. Technical depth — 5/5: The real HTTP probe verifies engine attribution, licence-gate state, WAV structure, non-silence, shutdown, cache behavior, failure identity, and has 45 passing targeted tests.
+
+5. Criteria fit — 1/5: No official hackathon judging-criteria or sponsor-requirements file was provided or mapped to project evidence, so fit cannot be verified from the repository.
+
+6. Reviewer path — 4/5: The fresh-clone command is concrete and reproducible, and the replay artifacts include real audio, logs, hashes, cache limitations, and the torchaudio/ffmpeg explanation.
+
+7. Honesty — 4/5: The stated CPU-English-only claim is supported and its limits are explicit, but the integrity evidence has a tracked-submodule accounting gap: 4,765 hashed files versus 4,766 listed tracked entries.
+
+Remaining flaws fixable within the claim's scope:
+
+- `scripts/m1_speech_probe.py:365-375` — `git ls-files` includes the `omnivoice-gallery` gitlink, but the manifest hashes only regular files, producing `tracked_files_hashed: 4765` and `tracked_files_listed: 4766`; include gitlink entries with their recorded commit/mode or explicitly separate regular files from gitlinks and verify the submodule commit.
+- `docs/ARCHITECTURE-NOTES.md:170-225` — add a repository-local mapping to the official hackathon criteria and sponsor requirements, or include the authoritative rules file; otherwise criterion fit remains unverified.
+
+owner-gated, not a defect: GPU verification, Hindi audio, listening/intelligibility, legal/component clearance, owner approval, and the hosted service.
+
+This would pass when the official hackathon/sponsor criteria are evidenced and mapped, and the manifest accounts for the `omnivoice-gallery` gitlink without a tracked-entry mismatch.
+
+HONESTY VERDICT: The exact claim that the “unmodified API” is proven is not fully backed because the manifest omits the tracked `omnivoice-gallery` submodule entry from its hashes.

@@ -224,6 +224,34 @@ HF_HUB_OFFLINE=1 HF_HUB_CACHE=$TMPDIR/empty .venv/bin/python -m pytest -q \
   tests/test_m1_speech_probe.py tests/test_openai_speech_language_refusal_400.py
 ```
 
+## How this maps to M1's definition of done, and what it does not settle
+
+M1 as written in the queue: run unchanged VoiceStudio headless on an approved spot
+GPU, generate English and Hindi speech through its local API, log what breaks, write
+architecture notes, pass tests and an independent review.
+
+```text
+M1 item                          evidence                              status
+unchanged headless server        r5 result.json: commit, clean         done, on CPU
+                                 worktree, 4,765 hashed files
+English speech through the API   r5 english_audio: 24 kHz WAV, 5.7 s,  done
+                                 peak 0.79, non-silent
+Hindi speech through the API     r5 hindi_attempt: 400, engine is      not done
+                                 English-only (owner-gated model)
+approved spot GPU                this host is a t3a.medium with no     not done
+                                 NVIDIA device node (owner-gated)
+log what breaks                  V0-rounds.md slot 15: the 403 gate,   done
+                                 the cold stall, override precedence,
+                                 the 500 on an unsupported language
+architecture notes               this file                             done
+tests + independent review       45 targeted tests; four cheap+ judge   done
+                                 passes (V0-rounds.md)
+```
+
+The judge rubric's hackathon section scores a hackathon entry against that
+hackathon's own rules. This is a product milestone with no rules file, so "criteria
+fit" is measured against the M1 items above, not against a sponsor's criteria.
+
 ## Next gated M1 step
 
 This host has no NVIDIA device. Boto3 found an IAM instance role, but

@@ -362,17 +362,34 @@ def record_revision(root: Path, output: Path) -> dict:
     commit = git("rev-parse", "HEAD")
     branch = git("rev-parse", "--abbrev-ref", "HEAD")
     dirty = bool(git("status", "--porcelain"))
-    tracked = [name for name in git("ls-files").splitlines() if name]
-    hashes = {}
-    for name in tracked:
+    files: dict[str, str] = {}
+    gitlinks: dict[str, str] = {}
+    listed = 0
+    for line in git("ls-files", "-s").splitlines():
+        meta, _, name = line.partition("\t")
+        fields = meta.split()
+        if not name or len(fields) < 2:
+            continue
+        listed += 1
+        mode, object_id = fields[0], fields[1]
+        if mode == "160000":
+            # A submodule entry is a recorded commit, not a file on disk. It must
+            # be counted and named, or the totals silently disagree (a first
+            # version hashed 4,765 of 4,766 entries and called it complete).
+            gitlinks[name] = object_id
+            continue
         path = root / name
         if path.is_file():
-            hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+            files[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    require(len(files) + len(gitlinks) == listed,
+            "Manifest does not account for every tracked entry")
     (output / "manifest.json").write_text(json.dumps(
-        {"commit": commit, "branch": branch, "worktree_dirty": dirty, "files": hashes},
+        {"commit": commit, "branch": branch, "worktree_dirty": dirty,
+         "files": files, "gitlinks": gitlinks},
         indent=1, sort_keys=True) + "\n")
     return {"tested_commit": commit, "tested_branch": branch, "worktree_dirty": dirty,
-            "tracked_files_hashed": len(hashes), "tracked_files_listed": len(tracked)}
+            "tracked_files_hashed": len(files), "tracked_gitlinks": len(gitlinks),
+            "tracked_entries": listed}
 
 
 def synthesise(base: str, result: dict, engine: str, text: str, language: str,

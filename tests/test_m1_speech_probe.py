@@ -299,6 +299,13 @@ def test_revision_manifest_covers_the_tracked_tree(tmp_path):
     assert manifest["branch"]
     assert info["tracked_files_hashed"] > 1000
     assert len(manifest["files"]) == info["tracked_files_hashed"]
+    # Every tracked entry is either hashed or named as a gitlink: a first
+    # version reported 4,765 of 4,766 and the gap was a submodule.
+    assert (info["tracked_files_hashed"] + info["tracked_gitlinks"]
+            == info["tracked_entries"])
+    assert len(manifest["files"]) + len(manifest["gitlinks"]) == info["tracked_entries"]
+    assert "omnivoice-gallery" in manifest["gitlinks"]
+    assert len(manifest["gitlinks"]["omnivoice-gallery"]) == 40
     for name in ("backend/main.py", "scripts/m1_speech_probe.py"):
         assert name in manifest["files"]
 
