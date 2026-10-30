@@ -225,8 +225,14 @@ def clean_shutdown(returncode, forced: bool, log_text: str) -> bool:
 
 
 def check_engine_identity(base: str, result: dict, engine: str) -> None:
-    """The running engine must be the ungated one, and say so itself."""
-    status, engines = request(base, "/engines")
+    """The running engine must be the ungated one, and say so itself.
+
+    ``/engines`` probes every backend for availability and took 8.0-8.8 s on this
+    2-vCPU box, so the default 15 s request timeout is not enough headroom: a
+    fresh-install run timed out here (2026-10-30 21:39) and lost the whole round.
+    The catalogue read gets its own generous bound.
+    """
+    status, engines = request(base, "/engines", timeout=180.0)
     require(status == 200, "Engine catalogue is not readable")
     tts = engines.get("tts")
     if not isinstance(tts, dict) or not isinstance(tts.get("backends"), list):
@@ -379,7 +385,10 @@ def run(output: Path, engine: str, english: str, hindi: str | None, voice: str,
                 if process is not None:
                     process.terminate()
                     try:
-                        process.wait(timeout=20)
+                        # 30 s, not 15: a run that already hit a timeout leaves the
+                        # catalogue probe running, and uvicorn waits for it during
+                        # shutdown (a 15 s window killed the process mid-shutdown).
+                        process.wait(timeout=30)
                     except subprocess.TimeoutExpired:
                         process.kill()
                         process.wait(timeout=5)

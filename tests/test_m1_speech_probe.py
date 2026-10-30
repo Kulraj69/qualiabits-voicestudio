@@ -192,6 +192,23 @@ def test_client_error_on_the_language_attempt_is_recorded_as_a_check(monkeypatch
     assert result["hindi_verified"] is False
 
 
+def test_engine_catalogue_read_gets_a_generous_timeout(monkeypatch, tmp_path):
+    """Regression: the default 15 s timed out on a slow fresh install."""
+    seen = {}
+
+    def req(base, path, payload=None, timeout=15.0):
+        seen["timeout"] = timeout
+        return 200, {"tts": {"active": "kittentts", "env_override": True,
+                             "backends": [{"id": "kittentts"}]}}
+
+    monkeypatch.setattr(probe, "request", req)
+    result = _result(tmp_path)
+    result["checks"] = []
+    probe.check_engine_identity("http://x", result, "kittentts")
+    assert seen["timeout"] >= 120
+    assert result["checks"] == ["ungated_engine_is_active"]
+
+
 def test_a_silent_warm_response_fails_the_probe(monkeypatch, tmp_path):
     """The warm path is measured too; silence there is not a pass."""
     calls = {"n": 0}

@@ -1,0 +1,32 @@
+{
+  "hf_cache_pre_populated": false,
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "ready_seconds": 15.314,
+  "scope": "cpu_english_speech_smoke_ungated_engine",
+  "engine": "kittentts",
+  "m1_complete": false,
+  "gpu_verified": false,
+  "hindi_verified": false,
+  "intelligibility_verified": false,
+  "speech_produced": false,
+  "checks": [],
+  "requests": [],
+  "model_terms_accepted_by_probe": 0,
+  "failure_type": "TimeoutError",
+  "forced_shutdown": true,
+  "server_exit_code": -9,
+  "startup_stall_warning": true,
+  "shutdown_verified": false,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "backend/services/tts_backend.py": "e3bebf0b4d77b816b03feecf0d3496220bedf17c6a6670458ab4214e338bf66a",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/m1_speech_probe.py": "80a4a05322689eafe216e3130c7bb1d6dd1f54258c629b5c0bed442853e31713",
+    "tests/test_m1_speech_probe.py": "612b10c416a98b6d9f1e543919285ae05b8ff0a78c182779120d99cffb3c05be"
+  },
+  "elapsed_seconds": 50.522
+}
