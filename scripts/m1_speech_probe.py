@@ -304,6 +304,16 @@ def probe(base: str, result: dict, engine: str, english: str, hindi: str | None,
     result["speech_produced"] = True
     result["english_audio"] = row["audio"]
     result["checks"].append("english_audio_returned")
+    result["english_cold_seconds"] = row["elapsed_seconds"]
+    # A second request in the same process is the warm path: no download, no
+    # first-load. Recorded separately so the cold number is never quoted as
+    # synthesis speed.
+    warm = synthesise(base, result, engine, english, "en", voice, "english_warm")
+    require(warm.get("http_status") == 200 and warm.get("audio_valid") is True
+            and warm["audio"]["non_silent"] is True,
+            "Warm request did not return valid audible audio")
+    result["english_warm_seconds"] = warm["elapsed_seconds"]
+    result["checks"].append("warm_request_returned_audio")
     if hindi:
         row = synthesise(base, result, engine, hindi, "hi", voice, "hindi")
         result["hindi_attempt"] = row
@@ -330,6 +340,8 @@ def run(output: Path, engine: str, english: str, hindi: str | None, voice: str,
     started = time.monotonic()
     result: dict[str, Any] = {"_audio_dir": output / "audio"}
     result["_audio_dir"].mkdir()
+    result["hf_cache_pre_populated"] = bool(
+        hf_cache is not None and hf_cache.is_dir() and any(hf_cache.iterdir()))
     with tempfile.TemporaryDirectory(prefix="voicestudio-speech-probe-") as state:
         env = {
             "PATH": os.environ.get("PATH", os.defpath), "HOME": state,

@@ -167,6 +167,43 @@ comparison; the result's four hashes alone do not prove source integrity.
 The second independent review found the evidence-loss fix correct but failed
 the full M1 rubric. Startup imports, speech/GPU and model rights remain open.
 
+## Real English speech on CPU, no licence acceptance (do X -> see Y)
+
+The default model is noncommercial, so it stays gated until the owner accepts its
+terms personally. Three catalogue engines are licence-category `commercial` and
+need no acceptance; KittenTTS is already installed in the CPU venv and runs on CPU.
+
+```sh
+git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git
+cd qualiabits-voicestudio
+uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
+python3 -c "from pathlib import Path; Path('.env').open('x').close()"
+.venv/bin/python scripts/m1_speech_probe.py --output /tmp/m1-speech --hf-cache ~/.cache/hf-voice
+```
+
+First run downloads the ~80 MB ONNX model; `--hf-cache` is what allows that.
+Without it the probe runs offline and fails for missing weights.
+
+See in `/tmp/m1-speech/result.json`: exit code 0, `"speech_produced": true`,
+`"active_tts_backend": "kittentts"`, `"env_override": true`, an `english_audio`
+block with `"sample_rate": 24000` and `"non_silent": true`, and `"hindi_attempt"`
+with `"http_status": 400` — the engine is English-only and says so. Listen to
+`/tmp/m1-speech/audio/english.wav`.
+
+`english_cold_seconds` and `english_warm_seconds` are recorded separately: the
+first request pays for the model download, the ONNX load and the AudioSeal
+watermark checkpoint, so the cold number is not synthesis speed.
+
+`m1_complete`, `gpu_verified`, `hindi_verified` and `intelligibility_verified`
+remain false in every run: no GPU, no Hindi audio, and nothing here listens to the
+audio. Tests for the probe and for a refusal fix (an unsupported language used to
+answer 500 on `/v1/audio/speech`; it now answers 400):
+
+```sh
+HF_HUB_OFFLINE=1 HF_HUB_CACHE=$TMPDIR/empty .venv/bin/python -m pytest -q \
+  tests/test_m1_speech_probe.py tests/test_openai_speech_language_refusal_400.py
+```
+
 ## Next gated M1 step
 
 This host has no NVIDIA device. Boto3 found an IAM instance role, but

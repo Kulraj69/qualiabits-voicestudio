@@ -171,7 +171,9 @@ def test_real_audio_passes_but_never_claims_milestone_or_gpu(monkeypatch, tmp_pa
                  "intelligibility_verified"):
         assert result[flag] is False
     assert result["model_terms_accepted_by_probe"] == 0
-    assert [row["language"] for row in wire.seen] == ["en", "hi"]
+    assert [row["language"] for row in wire.seen] == ["en", "en", "hi"]
+    assert result["english_warm_seconds"] <= result["english_cold_seconds"] + 1.0
+    assert "warm_request_returned_audio" in result["checks"]
     assert result["hindi_attempt"]["language"] == "hi"
 
 
@@ -188,6 +190,21 @@ def test_client_error_on_the_language_attempt_is_recorded_as_a_check(monkeypatch
     probe.probe("http://x", result, "kittentts", "hello", "नमस्ते", "v")
     assert "hindi_refused_as_client_error" in result["checks"]
     assert result["hindi_verified"] is False
+
+
+def test_a_silent_warm_response_fails_the_probe(monkeypatch, tmp_path):
+    """The warm path is measured too; silence there is not a pass."""
+    calls = {"n": 0}
+
+    def ra(base, path, payload=None, **kwargs):
+        calls["n"] += 1
+        body = wav(silence()) if calls["n"] == 2 else wav(tone())
+        return 200, body, {"content-type": "audio/wav"}
+
+    monkeypatch.setattr(probe, "request", Wire({}).request)
+    monkeypatch.setattr(probe, "request_audio", ra)
+    with pytest.raises(probe.ProbeFailure):
+        probe.probe("http://x", _result(tmp_path), "kittentts", "hello", None, "v")
 
 
 def test_unknown_engine_is_refused_before_any_work():

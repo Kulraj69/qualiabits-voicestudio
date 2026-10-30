@@ -1,0 +1,17 @@
+1. Originality: 2/5 — A careful CPU speech/licence-gate probe is useful, but not a memorable product idea or novel user experience.
+2. Taste: 3/5 — The evidence naming and scope flags are disciplined, but the work is a large diagnostic harness with no polished product surface.
+3. Human feel: 4/5 — The narrow claims, rejected-control disclosure, and explicit limitations read specific and authentic; the code comments are somewhat overlong.
+4. Technical depth: 5/5 — Real API execution produced a valid 24 kHz mono WAV, engine attribution was checked, licence acceptance was avoided, failure paths are heavily tested, and the 500→400 regression was fixed.
+5. Criteria fit: 2/5 — It demonstrates backend reliability and honesty, but provides no evidence for user-facing product, GPU, Hindi, hosted service, or sponsor/hackathon-specific criteria.
+6. Reviewer path: 3/5 — The commands and committed evidence are reproducible for a technically prepared reviewer, but there is no concise README path from fresh clone to result and the run needs a prepared Python/uv environment plus model download.
+7. Honesty: 5/5 — The artifacts repeatedly mark `m1_complete`, GPU, Hindi, and intelligibility as false and explicitly limit the claim to CPU English audio.
+
+1. No Hindi audio was produced: `hermes-reports/M1-slot15-speech-r1c/result.json:55-66` records HTTP 400 and `audio_generated: false`; `server.log:69-70` confirms the refusal. Fix: complete a separate owner-approved multilingual-engine run and retain a valid Hindi WAV.
+2. No GPU evidence exists: `result.json:2-13` reports `device: cpu`, `gpu_verified: false`, and `m1_complete: false`. Fix: run the unchanged API on the approved GPU target and record device, engine, revision, and shutdown evidence.
+3. “Audio” is structurally verified, not intelligibility-verified: `scripts/m1_speech_probe.py:113-156` measures WAV structure and amplitude only, while `result.json:12-13` leaves `intelligibility_verified` false. Fix: add a human listening check or ASR comparison with its method and result recorded.
+4. The reviewer path is not product-ready: `scripts/m1_speech_probe.py:396-408` exposes a CLI, but the repository has no concise fresh-clone README workflow for this evidence run; the command also requires a prepared `.venv` and external model cache. Fix: add a short documented setup/run/expected-output path and an explicit offline-versus-download prerequisite.
+5. The demonstrated path is slow and not production-grade: `result.json:24-26` reports 28.581 seconds for English generation, and `server.log:60-68` shows cold model loading and watermark download before synthesis. Fix: measure and document warm/cold latency separately, then optimize or explicitly gate production use behind a warmed runtime.
+
+An owner-approved GPU run with cleared English/Hindi model rights, valid audio from both languages, an intelligibility check, and a concise fresh-clone reviewer path would make this pass.
+
+HONESTY VERDICT: no honesty flaw
