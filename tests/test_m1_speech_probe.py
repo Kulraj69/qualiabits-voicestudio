@@ -245,9 +245,11 @@ def test_build_env_sets_the_cache_it_was_given(tmp_path):
     cache = tmp_path / "given-cache"
     env = probe.build_env("/state", "kittentts", cache)
     assert env["HF_HUB_CACHE"] == str(cache)
+    # backend/main.py redirects HF_HUB_CACHE from this one, so it must match.
+    assert env["OMNIVOICE_CACHE_DIR"] == str(cache)
     assert "HF_HUB_OFFLINE" not in env
     assert env["OMNIVOICE_TTS_BACKEND"] == "kittentts"
-    for key in ("OMNIVOICE_DATA_DIR", "OMNIVOICE_ENV_FILE", "OMNIVOICE_CACHE_DIR", "HOME"):
+    for key in ("OMNIVOICE_DATA_DIR", "OMNIVOICE_ENV_FILE", "HOME"):
         assert env[key].startswith("/state"), key
 
 
@@ -255,6 +257,7 @@ def test_build_env_without_a_cache_is_offline_but_still_hermetic():
     env = probe.build_env("/state", "kittentts", None)
     assert env["HF_HUB_OFFLINE"] == "1"
     assert env["HF_HUB_CACHE"].startswith("/state")
+    assert env["OMNIVOICE_CACHE_DIR"].startswith("/state")
     assert not any(k in env for k in ("SARVAM_API_KEY", "AZURE_OPENAI_API_KEY", "VAPI_API_KEY"))
 
 

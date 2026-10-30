@@ -245,19 +245,22 @@ def host_metadata() -> dict:
 def build_env(state: str, engine: str, hf_cache: Path | None) -> dict:
     """Minimal environment for the backend: no provider credentials, own caches.
 
-    ``HF_HUB_CACHE`` must be set, not just inferred: the first caller of this
-    probe passed ``--hf-cache`` and the model still landed in the default
-    ``~/.cache/huggingface``, because the path was only used to decide the
-    offline flag.
+    ``OMNIVOICE_CACHE_DIR`` — not ``HF_HUB_CACHE`` — is what decides the model
+    cache: ``backend/main.py`` sets ``HF_HOME``/``HF_HUB_CACHE``/``TORCH_HOME``
+    from it whenever it is present, so a caller that passes ``--hf-cache`` and
+    only exports ``HF_HUB_CACHE`` still gets every weight in the per-run state
+    directory (a temporary directory that is deleted afterwards). Both variables
+    therefore point at the requested cache, and the directory is created by the
+    backend itself.
     """
-    cache = str(hf_cache) if hf_cache is not None else str(Path(state) / "hf-cache")
+    cache = str(hf_cache) if hf_cache is not None else str(Path(state) / "cache")
     env = {
         "PATH": os.environ.get("PATH", os.defpath), "HOME": state,
         "TMPDIR": state, "HF_HUB_DISABLE_TELEMETRY": "1",
         "HF_HUB_CACHE": cache,
         "OMNIVOICE_DATA_DIR": str(Path(state) / "data"),
         "OMNIVOICE_ENV_FILE": str(Path(state) / "user-env"),
-        "OMNIVOICE_CACHE_DIR": str(Path(state) / "cache"),
+        "OMNIVOICE_CACHE_DIR": cache,
         "OMNIVOICE_TTS_BACKEND": engine,
     }
     if hf_cache is None:
