@@ -1,0 +1,111 @@
+{
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "ready_seconds": 8.357,
+  "scope": "cpu_english_speech_smoke_ungated_engine",
+  "engine": "kittentts",
+  "m1_complete": false,
+  "gpu_verified": false,
+  "hindi_verified": false,
+  "intelligibility_verified": false,
+  "speech_produced": true,
+  "checks": [
+    "ungated_engine_is_active",
+    "english_audio_returned",
+    "hindi_refused_as_client_error",
+    "hindi_attempt_recorded"
+  ],
+  "requests": [
+    {
+      "label": "english",
+      "engine": "kittentts",
+      "language": "en",
+      "elapsed_seconds": 28.581,
+      "http_status": 200,
+      "headers": {
+        "content-disposition": "inline; filename=\"speech.wav\"; filename*=UTF-8''speech.wav",
+        "content-length": "274830",
+        "content-type": "audio/wav",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "audio_sha256": "76d199326e6ec6892fa5c5a82f64594235e894804740e9c0879bf7aaecc5ab2d",
+      "audio_bytes": 274830,
+      "audio_file": "english.wav",
+      "audio": {
+        "audio_format": 1,
+        "channels": 1,
+        "sample_rate": 24000,
+        "byte_rate": 48000,
+        "bits_per_sample": 16,
+        "data_bytes": 274786,
+        "data_truncated": false,
+        "frames": 137393,
+        "duration_seconds": 5.725,
+        "peak": 0.792877,
+        "rms": 0.18086,
+        "non_silent": true
+      },
+      "audio_generated": true,
+      "audio_valid": true
+    },
+    {
+      "label": "hindi",
+      "engine": "kittentts",
+      "language": "hi",
+      "elapsed_seconds": 0.028,
+      "http_status": 400,
+      "headers": {
+        "content-length": "477",
+        "content-type": "application/json",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "error_code": null,
+      "audio_generated": false
+    }
+  ],
+  "model_terms_accepted_by_probe": 0,
+  "active_tts_backend": "kittentts",
+  "env_override": true,
+  "english_audio": {
+    "audio_format": 1,
+    "channels": 1,
+    "sample_rate": 24000,
+    "byte_rate": 48000,
+    "bits_per_sample": 16,
+    "data_bytes": 274786,
+    "data_truncated": false,
+    "frames": 137393,
+    "duration_seconds": 5.725,
+    "peak": 0.792877,
+    "rms": 0.18086,
+    "non_silent": true
+  },
+  "hindi_attempt": {
+    "label": "hindi",
+    "engine": "kittentts",
+    "language": "hi",
+    "elapsed_seconds": 0.028,
+    "http_status": 400,
+    "headers": {
+      "content-length": "477",
+      "content-type": "application/json",
+      "x-omnivoice-backend": "0.5.7"
+    },
+    "error_code": null,
+    "audio_generated": false
+  },
+  "server_exit_code": -15,
+  "startup_stall_warning": false,
+  "shutdown_verified": true,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "backend/services/tts_backend.py": "e3bebf0b4d77b816b03feecf0d3496220bedf17c6a6670458ab4214e338bf66a",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/m1_speech_probe.py": "4d776736deedd9db3ebe61ec7f0588fef511a73ffc585ca5979a350bf6abea46",
+    "tests/test_m1_speech_probe.py": "ec5413706210ae447b64d8810db8370cc7139b93487310acb01f17e871bfbbf2"
+  },
+  "elapsed_seconds": 54.059
+}

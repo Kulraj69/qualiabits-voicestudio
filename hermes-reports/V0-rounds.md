@@ -225,3 +225,96 @@ access, automatic idle shutdown and hard spending limit; select and clear
 English/Hindi engine weights/tokenizer/output terms, personally accept required
 terms, then approve a bounded M1 GPU run and listening check. Supply config
 privately. The rotation advances to V0-growth after this V0-build slot.
+
+## Rotation slot 15 — V0-build — 2026-10-31 — M1 English speech produced on CPU
+
+STATUS: M1 partially unblocked; still NOT done (no GPU, no Hindi, no listening
+check). New evidence, not a repeat of the earlier CPU contract rounds.
+
+Plan before edits (targets from /workspace/devpost/JUDGE-RUBRIC.md): technical
+depth, honesty and reviewer reproducibility. Question this run answers: is the
+licence gate that refused both speech requests actually unavoidable, or is an
+engine in the shipped catalogue already usable without any owner acceptance?
+Definition of done for THIS slot: (1) prove, with the application's own
+acceptance logic, which engines are ungated; (2) produce real audio through the
+real unmodified API on CPU; (3) measure the audio rather than trust the status
+code; (4) fix what the run exposes; (5) two independent cheap+ reviews; (6) a
+fresh-copy replay. No claim of M1, GPU, Hindi or production acceptance.
+
+### Round 1 — the gate is not total
+
+`backend/config/model_licenses.json` declares 66 models; all 66 are gated (62
+`unreviewed`, 4 `noncommercial`, zero `commercial_use: true`). But acceptance is
+per-model, keyed on `license_category != "commercial"`
+(`services/model_acceptance._evaluate`), and 11 shipped TTS catalogue entries DO
+resolve to `commercial` — their declared licences are MIT/Apache-2.0/CC-BY. Using
+the application's own logic (`repos_for_engine` + `ensure_engine_accepted`):
+
+- `kittentts`  → KittenML/kitten-tts-mini-0.8, apache-2.0, `not_required` — ungated
+- `moss-tts-nano` → OpenMOSS-Team models, `commercial` — ungated
+- `cosyvoice-gguf` → Lourdle/…-GGUF, `commercial` — ungated
+- `omnivoice` (the default, and what earlier rounds requested) → k2-fsa/OmniVoice
+  `noncommercial` + `eustlb/higgs-audio-v2-tokenizer` `unknown` — GATED
+
+No terms were accepted, no key was used, nothing was paid for. `kittentts` 0.8.1
+was already installed in the frozen CPU venv (pyproject pins the wheel); its 80 MB
+ONNX weights are the only download.
+
+New artifacts (all committed on this branch):
+
+- `scripts/m1_speech_probe.py` — starts the real `backend.main:app` with empty
+  state and `OMNIVOICE_TTS_BACKEND=<ungated engine>`, asserts `GET /engines`
+  reports that engine as the active TTS backend with `env_override`, posts
+  English and Hindi to `/v1/audio/speech`, measures any returned WAV
+  (RIFF/WAVE, rate, duration, peak, RMS, truncation) and keeps honest flags
+  (`speech_produced`, never `m1_complete`/`gpu_verified`/`hindi_verified`).
+- `tests/test_m1_speech_probe.py` (19 tests) and
+  `tests/test_openai_speech_language_refusal_400.py` (3 tests).
+- Real evidence `hermes-reports/M1-slot15-speech-r1c/`:
+  `POST /v1/audio/speech` → **HTTP 200, 274,830 bytes, 24 kHz mono 16-bit WAV,
+  5.725 s, peak 0.793, RMS 0.181, non-silent**, 28.6 s wall on 2 vCPU (cold model
+  load), shutdown verified, `active_tts_backend: kittentts`, `env_override: true`.
+  Audio kept at `audio/english.wav`.
+
+Command and result lines (also `hermes-reports/M1-slot15-speech-r1c-console.txt`):
+
+```sh
+.venv/bin/python scripts/m1_speech_probe.py --output hermes-reports/M1-slot15-speech-r1c \
+  --hf-cache /home/ubuntu/.hermes/cache/scratch/m1-hf-cache     # exit 0
+HF_HUB_OFFLINE=1 HF_HUB_CACHE=$TMPDIR/m1-probe-empty-cache .venv/bin/python -m pytest -q \
+  tests/test_m1_speech_probe.py tests/test_openai_speech_language_refusal_400.py
+  tests/test_engine_language_rejection.py                        # 35 passed
+```
+
+Findings this run, and what was done about them:
+
+1. **Unsupported language answered 500.** Asking the English-only KittenTTS engine
+   for Hindi raised a bare `ValueError` from `TTSBackend._check_language`; the
+   native `/generate` route maps `ValueError → 400`, but
+   `/v1/audio/speech` only maps typed failures, so an OpenAI-compatible client got
+   `500 server_error` and a logged traceback instead of the actionable refusal.
+   FIXED: `_check_language` now raises `TTSInputError` (a `ValueError` subclass the
+   codebase already uses for bad caller input), so `/generate` is unchanged and the
+   compat route returns 400. Re-run proof: Hindi went 500 → **400**, with the
+   message "The KittenTTS … engine doesn't support language='hi'. Supported: 'en'…".
+2. **The backend override beats the per-request `model` field.** A first version of
+   the probe used a "gate control" (request `model: omnivoice` under
+   `OMNIVOICE_TTS_BACKEND=kittentts`) and got 200 + 98 KB of audio — real evidence
+   that the env override wins, and that an in-run refusal control is impossible.
+   That control was removed rather than reported as a pass; the gated refusal stays
+   proven by `scripts/headless_baseline.py` (default backend, 403
+   `model_licence_required`) and by unit tests. The change is recorded here because
+   a rejected first design that looked like a passing control is exactly the kind of
+   thing that must not be silently dropped.
+
+Still NOT true after this slot: no GPU, no Hindi audio, no listening or ASR check
+of the English WAV, no hosted/multi-tenant path (M2), no production acceptance.
+`m1_complete`, `gpu_verified`, `hindi_verified` and `intelligibility_verified` are
+all false in the evidence file.
+
+Needs-Kulraj (unchanged core, but the ask is now smaller): M1's *Hindi* leg and the
+production engine choice still need his call — either accept the noncommercial
+OmniVoice terms personally (2.4 GB, 229 languages incl. Hindi), or approve a
+permissively licensed multilingual engine on a GPU box (VoxCPM2 is `commercial`
+category but 5.0 GB, larger than this instance's free disk). CPU English audio no
+longer waits on that decision.

@@ -1,0 +1,93 @@
+{
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "ready_seconds": 8.303,
+  "scope": "cpu_english_speech_smoke_ungated_engine",
+  "engine": "kittentts",
+  "m1_complete": false,
+  "gpu_verified": false,
+  "hindi_verified": false,
+  "intelligibility_verified": false,
+  "speech_produced": true,
+  "checks": [
+    "english_audio_returned",
+    "hindi_attempt_recorded"
+  ],
+  "requests": [
+    {
+      "label": "english",
+      "engine": "kittentts",
+      "language": "en",
+      "elapsed_seconds": 34.243,
+      "http_status": 200,
+      "content_type": "audio/wav",
+      "audio_sha256": "c924daf15d3f4fd06ec8092e4d894bbf5f251b00e70b92bf7f6614f132f3d7b2",
+      "audio_bytes": 274938,
+      "audio_file": "english.wav",
+      "audio": {
+        "audio_format": 1,
+        "channels": 1,
+        "sample_rate": 24000,
+        "byte_rate": 48000,
+        "bits_per_sample": 16,
+        "data_bytes": 274894,
+        "data_truncated": false,
+        "frames": 137447,
+        "duration_seconds": 5.727,
+        "peak": 0.798737,
+        "rms": 0.183731,
+        "non_silent": true
+      },
+      "audio_generated": true,
+      "audio_valid": true
+    },
+    {
+      "label": "hindi",
+      "engine": "kittentts",
+      "language": "hi",
+      "elapsed_seconds": 0.024,
+      "http_status": 500,
+      "content_type": "application/json",
+      "error_code": null,
+      "audio_generated": false
+    }
+  ],
+  "probe_licensed_models_accepted": 0,
+  "english_audio": {
+    "audio_format": 1,
+    "channels": 1,
+    "sample_rate": 24000,
+    "byte_rate": 48000,
+    "bits_per_sample": 16,
+    "data_bytes": 274894,
+    "data_truncated": false,
+    "frames": 137447,
+    "duration_seconds": 5.727,
+    "peak": 0.798737,
+    "rms": 0.183731,
+    "non_silent": true
+  },
+  "hindi_attempt": {
+    "label": "hindi",
+    "engine": "kittentts",
+    "language": "hi",
+    "elapsed_seconds": 0.024,
+    "http_status": 500,
+    "content_type": "application/json",
+    "error_code": null,
+    "audio_generated": false
+  },
+  "server_exit_code": -15,
+  "startup_stall_warning": false,
+  "shutdown_verified": true,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/m1_speech_probe.py": "9dde5d828fa95787d0ffe3ab87dd15c8eaf52523fd39fe31f576839ae1df6ea2",
+    "tests/test_m1_speech_probe.py": "994726cd6429fcc731247c7a0e364bd73683f093d91690cc493ae88c56818cd0"
+  },
+  "elapsed_seconds": 43.979
+}
