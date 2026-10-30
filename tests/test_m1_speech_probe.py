@@ -1,5 +1,6 @@
 """Failure-injection tests for the CPU speech probe; no engine is mocked live."""
 import importlib.util
+import json
 import math
 import struct
 from pathlib import Path
@@ -284,6 +285,46 @@ def test_a_gated_model_fails_the_provenance_check(monkeypatch, tmp_path):
     wire_up(monkeypatch, Wire({"en": AUDIO, "hi": AUDIO}, required=True))
     with pytest.raises(probe.ProbeFailure):
         probe.probe("http://x", _result(tmp_path), "kittentts", "hello", None, "v")
+
+
+def test_revision_manifest_covers_the_tracked_tree(tmp_path):
+    """Five hashes are not proof the API was unmodified; the tree is hashed."""
+    root = Path(__file__).resolve().parents[1]
+    out = tmp_path / "evidence"
+    out.mkdir()
+    info = probe.record_revision(root, out)
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert len(info["tested_commit"]) == 40
+    assert manifest["commit"] == info["tested_commit"]
+    assert manifest["branch"]
+    assert info["tracked_files_hashed"] > 1000
+    assert len(manifest["files"]) == info["tracked_files_hashed"]
+    for name in ("backend/main.py", "scripts/m1_speech_probe.py"):
+        assert name in manifest["files"]
+
+
+def test_partial_cache_reuse_and_claim_basis_are_stated(monkeypatch, tmp_path):
+    """The evidence must say what the claim rests on, and its limits."""
+    wire_up(monkeypatch, Wire({"en": AUDIO, "hi": CLIENT_REFUSAL}))
+    result = _result(tmp_path)
+    probe.probe("http://x", result, "kittentts", "hello", "नमस्ते", "v")
+    assert "NOT a legal" in result["claim_basis"]
+    assert "partial reuse" in result["cache_reuse_scope"]
+    assert result["speech_produced"] is True
+
+
+def test_a_failure_records_its_identity_without_the_body(monkeypatch, tmp_path):
+    """A 400 must be provable from the result, not only from the server log."""
+    typed = (400, b'{"error": {"type": "invalid_request_error", "code": "invalid_value",'
+                   b' "param": "input", "message": "engine does not support language=hi"}}',
+             {"content-type": "application/json"})
+    wire_up(monkeypatch, Wire({"en": AUDIO, "hi": typed}))
+    result = _result(tmp_path)
+    probe.probe("http://x", result, "kittentts", "hello", "नमस्ते", "v")
+    row = result["hindi_attempt"]
+    assert (row["http_status"], row["error_type"], row["error_code"], row["error_param"]) == (
+        400, "invalid_request_error", "invalid_value", "input")
+    assert "message" not in row and "engine does not support" not in json.dumps(row)
 
 
 def test_unknown_engine_is_refused_before_any_work():

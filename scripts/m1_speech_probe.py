@@ -348,6 +348,33 @@ def check_licence_provenance(base: str, result: dict, engine: str) -> None:
     result["checks"].append("licence_required_is_false")
 
 
+def record_revision(root: Path, output: Path) -> dict:
+    """Prove which source produced this evidence.
+
+    Five file hashes are not proof that the API under test was unmodified, so the
+    whole tracked tree is hashed into ``manifest.json`` next to the result, with
+    the commit and whether the worktree was dirty when the run started.
+    """
+    def git(*args: str) -> str:
+        return subprocess.run(["git", *args], cwd=root, capture_output=True,
+                              text=True, check=True).stdout.strip()
+
+    commit = git("rev-parse", "HEAD")
+    branch = git("rev-parse", "--abbrev-ref", "HEAD")
+    dirty = bool(git("status", "--porcelain"))
+    tracked = [name for name in git("ls-files").splitlines() if name]
+    hashes = {}
+    for name in tracked:
+        path = root / name
+        if path.is_file():
+            hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    (output / "manifest.json").write_text(json.dumps(
+        {"commit": commit, "branch": branch, "worktree_dirty": dirty, "files": hashes},
+        indent=1, sort_keys=True) + "\n")
+    return {"tested_commit": commit, "tested_branch": branch, "worktree_dirty": dirty,
+            "tracked_files_hashed": len(hashes), "tracked_files_listed": len(tracked)}
+
+
 def synthesise(base: str, result: dict, engine: str, text: str, language: str,
                voice: str, label: str) -> dict:
     """One measured /v1/audio/speech request, with the audio measured if returned."""
@@ -369,7 +396,10 @@ def synthesise(base: str, result: dict, engine: str, text: str, language: str,
     if status != 200:
         try:
             error = json.loads(body).get("error", {})
+            # Sanitised failure identity only: never the body or the message text.
+            row["error_type"] = error.get("type")
             row["error_code"] = error.get("code")
+            row["error_param"] = error.get("param")
         except (ValueError, UnicodeError, AttributeError):
             row["error_code"] = None
         row["audio_generated"] = False
@@ -400,6 +430,16 @@ def probe(base: str, result: dict, engine: str, english: str, hindi: str | None,
         "m1_complete": False, "gpu_verified": False, "hindi_verified": False,
         "intelligibility_verified": False, "speech_produced": False, "checks": [],
         "requests": [], "model_terms_accepted_by_probe": 0,
+        "claim_basis": ("the application's own licence-acceptance gate only: the "
+                        "model this engine loads is declared licence category "
+                        "'commercial', so no acceptance is required. NOT a legal or "
+                        "component-clearance audit — the same registry still "
+                        "records readiness 'not_verified' with unresolved "
+                        "terms/closure blockers."),
+        "cache_reuse_scope": ("--hf-cache persists the engine's model weights. The "
+                              "AudioSeal watermark checkpoint is fetched into the "
+                              "per-run state directory every run, so a warm-cache "
+                              "replay is partial reuse, not a full cold-start skip."),
         "host": host_metadata(),
         "timing_note": ("elapsed_seconds are client-observed, end-to-end HTTP times "
                         "for one /v1/audio/speech request. On a cold cache they "
@@ -504,6 +544,10 @@ def run(output: Path, engine: str, english: str, hindi: str | None, voice: str,
                                  "uv.lock", "scripts/m1_speech_probe.py",
                                  "tests/test_m1_speech_probe.py")
                 }
+                try:
+                    result.update(record_revision(root, output))
+                except Exception as exc:  # noqa: BLE001 - evidence survives a git failure
+                    result["revision_unavailable"] = type(exc).__name__
                 result["elapsed_seconds"] = round(time.monotonic() - started, 3)
                 result.pop("_audio_dir")
                 (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")

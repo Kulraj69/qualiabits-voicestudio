@@ -1,0 +1,20 @@
+1. Originality: 3/5 — The licence-gate discovery plus real API audio evidence is memorable, but it is primarily a diagnostic rather than a distinctive product experience.
+2. Taste: 4/5 — The scope, caveats, evidence fields, and “do X → see Y” instructions are deliberate and restrained, though the surrounding documentation remains dense.
+3. Human feel: 4/5 — The writing is specific and candid, with no generic hype; some sections still read like exhaustive audit notes rather than a polished hackathon presentation.
+4. Technical depth: 5/5 — The probe exercises the unmodified backend, verifies engine attribution and licence provenance, measures WAV structure and signal levels, verifies shutdown, tests failure paths, and has 42 passing targeted tests.
+5. Criteria fit: 2/5 — The repository maps the CPU-English claim clearly, but it does not map the hackathon’s official judging criteria or sponsor-prize requirements to project evidence; no such rules evidence is present in the reviewed artifacts.
+6. Reviewer path: 4/5 — The fresh-clone instructions identify both downloads and cache locations, and r4/r4b prove cold and warm replay; the path remains Linux/POSIX-specific and requires a dependency install before the few-minute replay.
+7. Honesty: 5/5 — `result.json` explicitly records `m1_complete`, GPU, Hindi, and intelligibility as false; r4/r4b show real 200 WAV responses, the 400 Hindi refusal, CPU execution, licence provenance, and orderly shutdown.
+
+2. Most damaging fixable flaws within scope:
+- `hermes-reports/M1-slot15-speech-r4/result.json:115-134` and `r4b/result.json:115-134`: the provenance is application-registry evidence, but it also reports `readiness: "not_verified"` and blockers including `terms_unverified` and `component_closure_incomplete`. Add an explicit field such as `claim_basis: "application acceptance gate only"` and state in the documentation that this is not a complete legal/component-clearance audit.
+- `scripts/m1_speech_probe.py:501-505`: the evidence hashes only five files, so the result does not independently prove that the entire API/backend was unmodified. Record the tested commit SHA and a complete tracked-file manifest, or retain the existing fresh-clone manifest beside each replay.
+- `hermes-reports/M1-slot15-speech-r4/result.json:90-101`: the 400 Hindi response records `error_code: null`, despite `server.log` at `2026-10-30 22:13:24.560-22:13:24.560` showing the precise typed refusal. Parse and preserve a sanitized error code/message so the result itself proves that this was an unsupported-language client error rather than merely any 400.
+- `docs/ARCHITECTURE-NOTES.md:16-24`: the stated requirements say `ffmpeg` is required, while the replay claim describes a diagnostic with no GUI/account/GPU setup. Clarify whether ffmpeg is genuinely required for this probe and either make it explicit in the replay prerequisites or remove the unnecessary dependency.
+- `docs/ARCHITECTURE-NOTES.md:185-193`: the AudioSeal checkpoint is re-fetched into temporary state on every run, so the “warm-cache replay proves reuse” applies only to the KittenTTS cache, not the full cold-start path. Label the replay as partial cache reuse and document the resulting limitation more prominently.
+
+Owner-gated, not a defect: GPU verification, Hindi audio, listening/intelligibility verification, owner acceptance of gated models, and hosted/multi-tenant service behavior.
+
+3. This would pass after adding the official hackathon/sponsor-criteria evidence mapping and tightening the replay’s full-source provenance and registry-versus-legal-clearance wording.
+
+4. HONESTY VERDICT: no honesty flaw

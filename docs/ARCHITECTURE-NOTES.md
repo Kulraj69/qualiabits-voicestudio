@@ -203,7 +203,16 @@ See in `"$out"/result.json`: exit code 0, `"speech_produced": true`,
 `english_cold_seconds` and `english_warm_seconds` are end-to-end HTTP request
 times (client-observed), not synthesis-only latency: the first request pays for
 the model download, the ONNX load and the AudioSeal checkpoint. `host` records the
-box they were measured on.
+box they were measured on. The warm-cache replay is partial reuse — the AudioSeal
+checkpoint is still fetched — so it is not a full cold-start skip.
+
+ffmpeg is not needed for this probe: it asks for `response_format: wav`, and the
+route encodes wav and flac through torchaudio (`backend/api/routers/openai_compat.py:544-547`);
+the ffmpeg requirement in the baseline section above belongs to the other formats.
+
+Each run also writes `manifest.json`: the commit, the branch, whether the worktree
+was dirty, and a SHA-256 for every tracked file, so "the API was unmodified" is
+checkable rather than asserted.
 
 `m1_complete`, `gpu_verified`, `hindi_verified` and `intelligibility_verified`
 remain false in every run: no GPU, no Hindi audio, and nothing here listens to the
