@@ -318,3 +318,92 @@ OmniVoice terms personally (2.4 GB, 229 languages incl. Hindi), or approve a
 permissively licensed multilingual engine on a GPU box (VoxCPM2 is `commercial`
 category but 5.0 GB, larger than this instance's free disk). CPU English audio no
 longer waits on that decision.
+
+### Round 2 — a fresh clone, tested, and it failed
+
+Fresh clone of the branch into `$SCRATCH/m1-slot15-r2`, `uv sync --frozen
+--no-default-groups --group cpu --group dev` exit 0
+(`hermes-reports/M1-slot15-r2-install.log`), 36 targeted tests pass
+(`M1-slot15-r2-tests.log`). The real probe on that clone **failed**:
+`M1-slot15-speech-r2/result.json` shows `failure_type: TimeoutError`,
+`requests: []`, `forced_shutdown: true`, `server_exit_code: -9`.
+
+Cause: the probe's `GET /engines` identity check used the 15-second default
+timeout, and that route probes every backend for availability — the older harness
+had already measured it at 8.0-8.8 s on this box, so a loaded 2-vCPU instance left
+no headroom. The follow-on shutdown was then killed inside a 20-second window
+while uvicorn was still waiting on that request. Both numbers are now 180 s and
+30 s, with a regression test asserting the catalogue timeout is >= 120 s. This is
+exactly what a fresh-copy round is for: an 8.8 s call and a 15 s limit only fail on
+someone else's machine.
+
+### Round 3 — replay passes; the judge's five flaws fixed
+
+Fresh clone fast-forwarded, 42 tests pass, real replay `M1-slot15-speech-r2b`:
+English 200 (5.727 s WAV, peak 0.800, non-silent), warm second request 200,
+Hindi **400**, `active_tts_backend: kittentts`, `env_override: true`,
+`shutdown_verified: true`, `hf_cache_pre_populated: false`, all honesty flags
+false.
+
+Judge pass 2 (`M1-slot15-review2.txt`, gpt-5-6-luna cheap+) scored
+originality 3 / taste 3 / human feel 4 / technical depth 5 / criteria fit 3 /
+reviewer path 3 / honesty 5, and named five flaws; all five were fixed:
+
+1. Replay evidence uncommitted -> the evidence directories are committed here.
+2. Download story incomplete -> the doc now names both checkpoints (~78 MB
+   KittenTTS ONNX, ~59 MB AudioSeal) and their cache locations. Measuring them
+   found a real defect: `--hf-cache` was computed but never exported, and then
+   (after exporting `HF_HUB_CACHE`) still ineffective because
+   `backend/main.py:160-165` rewrites `HF_HOME`/`HF_HUB_CACHE`/`TORCH_HOME` from
+   `OMNIVOICE_CACHE_DIR`. `build_env()` now sets both, and the tests pin it.
+3. Reviewer command not re-runnable -> the doc uses `out=$(mktemp -d)/m1-speech`.
+4. Licence attribution not in the evidence -> `licence_provenance` is read from
+   `/models` and `/models/licenses/acceptance/<repo>` and written into
+   `result.json` (repo, declared licence, category, required/accepted, registry
+   version, readiness blockers).
+5. Timing under-specified -> `host` metadata plus a `timing_note`; cold and warm
+   are separate fields. Measured on this box: 32.9 s cold, 27.3 s warm *with* the
+   weights already cached (the difference is the download; the AudioSeal
+   checkpoint is still re-fetched), and 19.7 s warm *within* a run. KittenTTS on
+   2 vCPU runs roughly 0.3x realtime: it is a demo/light-narration tier, not a
+   phone-call latency tier.
+
+### Round 4/5 — remaining judge flaws and the last verification
+
+Judge pass 3 (`M1-slot15-review3.txt`) scored 3/4/4/5/2/4/5 and asked for three
+more things, all now in the evidence: `claim_basis` (the provenance is the
+application's acceptance gate, explicitly *not* legal or component clearance — the
+same registry reports readiness `not_verified` with unresolved terms/closure
+blockers), `cache_reuse_scope` (a warm-cache replay is partial reuse), and a
+failure identity in the journal (`error_type`/`error_code`/`error_param`, never
+the body or message). It also questioned the `ffmpeg` requirement: not on this
+path — `openai_compat.py:544-547` encodes wav/flac with torchaudio.
+
+Judge pass 4 (`M1-slot15-review4.txt`) scored 4/4/4/5/1/4/4 and **flagged
+honesty**: the manifest listed 4,766 tracked entries but hashed 4,765. That was
+real — `omnivoice-gallery` is a gitlink with no file to hash. `record_revision()`
+now uses `git ls-files -s`, records each gitlink by commit, requires the totals to
+reconcile, and a test asserts both. Final replay `M1-slot15-speech-r6` (fresh
+clone, frozen install, warm cache, commit `06b0341e2`, clean worktree):
+4,769 hashed + 1 gitlink = 4,770 tracked entries, English 200 (5.725 s, peak
+0.783), Hindi 400 (`invalid_request_error`, `param: input`), shutdown verified,
+all honesty flags false. A docs-only commit (`aa2b8d13c`) follows the evidence.
+
+Final judge pass 5 (`M1-slot15-review5.txt`) scored **4/4/5/5/4/4/5 with no
+honesty flaw** — every criterion at or above the rubric gate. The only remaining
+items it named were two stale "r5 / 4,765" references in the architecture note,
+fixed in `aa2b8d13c`.
+
+Disagreement recorded, per the self-loop: the rubric's hackathon criteria include
+"map each official judging criterion and sponsor-prize requirement from the
+hackathon's own rules file". There is no hackathon and no rules file here, so that
+criterion is measured against M1's own definition of done, which the architecture
+note now tabulates item by item. Four judge passes scored "criteria fit" 2-3 while
+that mapping lived only in the log; with the table in the doc it scored 4.
+
+### Exit state
+
+Branch `work/m1-headless`, HEAD `aa2b8d13c`, worktree clean. Nine commits this
+slot. 45 targeted tests pass in the last round. Advisory: the repo's own CI runs
+far more than these three files; only the touched suites plus the language
+rejection suite were run here.
