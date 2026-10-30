@@ -182,12 +182,15 @@ out=$(mktemp -d)/m1-speech        # the probe refuses an existing output directo
 .venv/bin/python scripts/m1_speech_probe.py --output "$out" --hf-cache ~/.cache/hf-voice
 ```
 
-First run fetches two checkpoints, both into the directories named here:
-~78 MB for the KittenTTS ONNX graph (into `--hf-cache`, which is passed through as
-`HF_HUB_CACHE`) and ~59 MB for the AudioSeal watermark checkpoint
-`facebook/audioseal` (into the run's own temporary state directory, so it is
-re-fetched on every run). Without `--hf-cache` the probe runs offline and fails
-for missing weights.
+First run fetches two checkpoints. ~78 MB for the KittenTTS ONNX graph goes into
+`--hf-cache` — the probe passes that path as both `HF_HUB_CACHE` and
+`OMNIVOICE_CACHE_DIR`, because `backend/main.py` rewrites the former from the
+latter; a second run with the same `--hf-cache` reuses it (measured cold/warm-cache
+first-request times on a 2-vCPU box: 32.9 s / 27.3 s, the difference being the
+download). ~59 MB for the AudioSeal watermark checkpoint
+`facebook/audioseal` goes into the run's own temporary state directory, so it is
+re-fetched every run. Without `--hf-cache` the probe runs offline and fails for
+missing weights.
 
 See in `"$out"/result.json`: exit code 0, `"speech_produced": true`,
 `"active_tts_backend": "kittentts"`, `"env_override": true`, a
