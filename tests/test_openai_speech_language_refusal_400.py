@@ -9,8 +9,8 @@ instead of the actionable message the desktop UI shows (#2104).
 The probe run that found it (real HTTP, unchanged backend, empty state):
 ``scripts/m1_speech_probe.py`` → English 200 + audio, Hindi 500 + traceback.
 """
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import pytest
 
