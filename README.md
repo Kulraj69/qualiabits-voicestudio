@@ -1,5 +1,7 @@
-> QualiaBits fork: M1 is incomplete and V0 is not live. Start with the
-> [headless baseline and architecture notes](docs/ARCHITECTURE-NOTES.md).
+> QualiaBits fork: M1 is incomplete and V0 is not live. What this fork does today
+> and how to check it: **[QualiaBits Voice](docs/QUALIABITS-VOICE.md)**. Start
+> with the [headless baseline and architecture notes](docs/ARCHITECTURE-NOTES.md)
+> for the internals.
 > The upstream feature descriptions below are not verification of this fork's
 > hosted service, GPU runtime or speech output. VoiceStudio attribution and
 > AGPL source remain intact.
