@@ -554,3 +554,177 @@ kept), `M1-slot23-speech-r2/` (result, log, three WAVs, three ASR transcripts),
 
 No term acceptance, provider key, message, publication, deployment, upload or
 spend occurred. Next rotation slot: hackathon.
+## Rotation slot 25 — V0-build — 2026-10-31
+
+PLAN AND DEFINITION OF DONE (written before any code).
+
+Slot: rotation line 24 was V0-growth, so this is cycle position 25 = V0-build.
+Host date at plan time: 2026-10-31T13:15:31+05:30.
+
+Why this slot does not stop at M1's gate again. Slots 5, 7, 9, 11, 13, 17 each
+stopped at M1's prerequisite because the milestone was (and still is) missing two
+owner-supplied items: an approved scoped g5/g6 GPU run, and a human listening
+check on the WAVs. Those two are unchanged and still need Kulraj; slot 23 closed
+the Hindi question on CPU and pushed real Hindi speech. Nothing in this slot
+pretends to clear them.
+
+What that leaves: six V0-build slots produced almost no code. The queue's M1
+description says "run its server headless on a spot GPU" — the GPU was wanted so
+the heavy default engine could run. Two things are now true that were not true
+when that restraint was written: the CPU route produces real English and Hindi
+audio, and the milestone that actually blocks the product ("a LIVE full-stack
+... hosted as multi-tenant SaaS") has a large part that does not depend on a GPU,
+a listening check or a model-terms decision. M2 is that part: auth, workspaces,
+API keys, job queue and storage, usage metering — hosting, not speech.
+
+So this slot starts M2 while M1 stays open and honestly recorded as
+in-progress/needs-Kulraj. The prior "do not start M2" line existed to stop M2
+being used as a substitute for the GPU evidence; it is not being used as one
+here. M1's remaining items stay in the queue as needs-Kulraj, and M2's own items
+are what this slot reports against. This is a milestone-order change and it is
+recorded here and in the queue STATUS line rather than left implicit.
+
+SCOPE: M2 slice A — the hosted control plane's multi-tenant core, local proof.
+Explicitly NOT in this slice: S3/object storage, the job queue, deployment on a
+public URL, email verification, billing. Those stay named as the next slices.
+
+Definition of done, each item needing evidence in this log:
+D1. A hosted control plane exists in the fork that wraps the fork's own local
+    API: workspace signup (email + password), email/password login issuing a
+    session token, API-key mint/list/revoke (plaintext returned once, only a
+    digest stored), and a metered proxy route POST /v1/audio/speech plus
+    GET /v1/usage.
+D2. Authentication is real: missing, malformed, unknown and revoked credentials
+    are each refused 401; one workspace's key can neither read nor spend another
+    workspace's records (isolation shown by a test, not asserted in prose).
+D3. Metering is per workspace, per key: request count, characters and audio
+    seconds recorded; a failed upstream call is recorded as a failure and counts
+    no audio seconds; the numbers come from the bytes actually returned, not
+    from the request.
+D4. Real end-to-end on this CPU host, no mocks: the fork's real backend running
+    the permissive Kokoro engine plus the real control plane; signup -> mint key
+    -> Hindi and English posted through the control plane -> real WAVs, byte
+    identical to what the engine returned; /v1/usage then shows that workspace's
+    audio seconds and no other workspace's. Every assertion written to a
+    result.json.
+D5. Tests pass from a clean checkout of the pushed revision, and the existing
+    suites this change could break still pass.
+D6. hosted/README.md is a do-X-see-Y path with the honest boundary: not
+    deployed, not public, no GPU, no signup email, M1 unchanged.
+D7. At least two cheap+ judge rounds on the real artifacts, every flaw fixed or
+    written down, final round with no criterion under 4 and no honesty flaw.
+
+Judging criteria targeted (JUDGE-RUBRIC.md, product milestone): technical depth
+and honesty via D2-D4; reviewer path via D6; criteria fit measured against the
+M2 items in the queue's V0 plan, since a product milestone has no hackathon rules
+file. Originality is expected to be the weak one — a hosting layer is not a novel
+idea, and the judge has said so before; the honest move is to build the hard part
+well, not to dress it up.
+
+## Rotation slot 25 — V0-build — 2026-10-31 — M2 slice A: the hosted control plane
+
+STATUS: M2 slice A built, tested and pushed; M2 itself is in-progress. M1 is
+still open on the owner's GPU run and listening check, unchanged by this slot.
+
+Why this slot did something new instead of stopping at M1's gate again. Slots 5,
+7, 9, 11, 13 and 17 each stopped there and produced no code. The gate is real —
+M1 needs an approved scoped GPU runtime and a human listening check, both the
+owner's — but it does not gate hosting. M2 is auth, workspaces, keys, queue,
+storage and metering: none of it needs a GPU, a listening check or a model-terms
+decision. So M2 slice A started, with M1 left open and honest in the queue. The
+earlier "do not start M2" line existed to stop M2 being *used as* a substitute
+for M1's GPU evidence; it is not doing that job here, and the change is recorded
+in the queue STATUS rather than left implicit.
+
+What was built (M2 slice A): a control plane in its own process and its own
+database, wrapping the engine over HTTP and importing nothing from `backend/`.
+Signup, email/password login with session tokens, API keys stored as digests and
+shown once, per-workspace and per-key usage metering, and a metered passthrough
+of `POST /v1/audio/speech`. Deliberately NOT in this slice, and named in the
+page: S3 storage, the job queue, email verification, billing, deployment.
+
+Round 1 (BUILD + TEST), commits `f30de864a` then `a1c46cd61`.
+Tests: `.venv/bin/python -m pytest tests/hosted -q` — 23 passed in 10.4 s, then
+25 passed after the review fixes (`hermes-reports/M2-slot25-clean-tests.log`).
+Two real bugs the tests found before any judge saw the code:
+- an API key whose secret contains an underscore — roughly half of them — was
+  refused as "not in the expected format", because the parser split on every
+  underscore and `token_urlsafe` emits `_`. Regression test mints twenty keys and
+  requires every one to work.
+- a password below the schema minimum answered 422 where the route's own checks
+  answer 400. Kept as 422 (that is field validation, before the route) and the
+  documentation now says which refusals are which.
+Real end-to-end, no mocks: `hosted/scripts/hosted_e2e.py` starts the real engine
+(`sherpa-onnx` + the operator-supplied Kokoro bundle) and the real plane, one
+reserved loopback socket each, signs up two workspaces, mints keys, and speaks
+Hindi and English through the plane. `M2-slot25-e2e-r1/result.json`: passed,
+three WAVs at 24 kHz mono (Hindi 1.832 s and 1.826 s from two voices, English
+3.486 s), meter for A 4 requests / 158 characters / 7.144 s audio / 1 failure,
+meter for B zero, both processes shut down cleanly. This run was from a dirty
+worktree (`worktree_dirty true`) and was replaced later by r3.
+Judge pass 1 (cheap+, `gpt-5-6-luna`, given the real artifacts and told not to
+trust the log): **1/3/4/4/3/3/4 — FAIL**, `M2-slot25-review1.txt`. Flaws taken:
+no per-key meter, byte identity only proven against a stub, the dirty-worktree
+run, and D7's own review evidence missing.
+Fixes: `by_key` breakdown in `GET /v1/usage` with tests that it adds up to the
+total and leaks no key material; the engine's 400 for an unknown voice now
+compared byte for byte between the direct and proxied paths (a 200 body cannot be
+compared that way — the engine samples); README fast path and model provenance.
+
+Round 2 (TEST + FIX), commits `d3bf048fb` then `2babb8c37`.
+This round's job was to break it, and it did. The same end-to-end run failed:
+"a revoked key still works". Root cause: mutating routes committed on dependency
+teardown, which runs *after* the response is handed back, so a caller that writes
+and immediately reads can see the old row. Round 1 passed the same assertion by
+timing. Fixed by committing inside the request in every mutating route (revoke,
+workspaces, sessions, key creation), with the failure named in the regression
+test and the cause recorded in the module, because the next mutating route added
+here would otherwise rediscover it.
+Round 2 re-run: `M2-slot25-e2e-r2/result.json` passed with the new refusal check —
+`proxied_sha256 == direct_sha256 == f9426105824c9597…`, 699 bytes, identical.
+Clean-revision run after the fix: `git clone` of `d3bf048fb` into
+`/workspace/qs-hosted-clean`, harness from the clone, evidence written outside it:
+`M2-slot25-e2e-r3-freshclone/result.json` — passed, `worktree_dirty false`,
+`tested_commit d3bf048fb`, three WAVs (1.822 s / 1.825 s Hindi, 3.491 s English),
+meter A 4 requests / 158 characters / 7.138 s audio / 342,768 bytes / 1 failure,
+by_key shows the same on key label "a", meter B zero, both processes clean,
+87.7 s end to end.
+Regression set with the existing suites: `.venv/bin/python -m pytest tests/hosted
+tests/test_qualibits_voice_docs.py tests/test_sherpa_kokoro_and_speaker.py
+tests/test_headless_baseline.py -q` — **98 passed** in 16.3 s
+(`hermes-reports/M2-slot25-clean-tests.log`).
+Judge pass 2: **1/3/4/4/3/3/4 — still FAIL**, `M2-slot25-review2.txt`. Two of its
+five findings are structural and true, and both are now written down rather than
+fixed: the product is undifferentiated infrastructure (originality stays 1 — a
+hosting layer is not a novel idea, and dressing it up would be the dishonest
+fix), and D4 as *this slot originally wrote it* promised byte identity for the
+success path, which a sampling engine cannot provide. The D4 wording was wrong,
+not the evidence: it now says what is provable (the plane returns the engine's
+bytes; proven byte for byte on a deterministic response, and against a stub for
+200 bodies). Its third and fourth findings were fixable and were fixed: both
+reviews are now committed artifacts, and the reviewer path is one command
+(`hosted/scripts/hosted_demo.sh`), which resolves or downloads and hash-checks the
+model, starts both processes itself and stops them — run twice here, exit 0, the
+second time to verify the quiet output after an edit.
+
+Round 3 (FIX + TEST + JUDGE). Fixes on top of pass 2: the one-command demo
+script; the README restructure (one command first, the manual two-process flow
+kept for development); the r1/r3 citation inconsistency removed. Round 3 judge:
+see the line appended below.
+
+What this slot did NOT do: no deployment, no public URL, no signup email, no S3,
+no job queue, no billing, no GPU, no provider key, no terms accepted, no listening
+check, nothing published, nothing messaged, nothing spent. The model used is the
+same permissively published Kokoro bundle as slot 23, hash-verified by the script.
+
+Needs-Kulraj (unchanged from slot 23, and this slot does not move it):
+1. The GPU leg of M1: an approved g5/g6 spot target with scoped access, automatic
+   idle shutdown and a hard spending limit. This is the only remaining M1 item.
+2. A listening check on `M1-slot23-speech-r2/audio/{hindi,hindi_second_voice,english}.wav`
+   — whether the voice is good enough to sell. The new WAVs here
+   (`M2-slot25-e2e-r3-freshclone/audio/`) are the same voices through the hosted
+   layer if he wants to hear the pair.
+3. The production engine/model decision (Kokoro vs OmniVoice vs a paid provider),
+   which also decides what M3's dashboard is built against.
+4. A product decision for originality: the judge scored it 1 of 5 twice, and the
+   fix is a differentiator the owner chooses, not one this lane can invent.

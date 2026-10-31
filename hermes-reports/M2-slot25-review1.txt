@@ -1,0 +1,23 @@
+Originality: 1/5 — A conventional auth/API-key/proxy/metering layer; the project log itself says originality is expected to be weak (V0-rounds.md:617-622).
+
+Taste: 3/5 — Clear README and restrained scope, but it is infrastructure documentation rather than a designed product experience; no customer-facing UI or memorable product moment.
+
+Human feel: 4/5 — Specific, candid writing with little generic AI language; some explanatory density and long prose keep it from feeling fully polished.
+
+Technical depth: 4/5 — Real auth isolation, digest storage, failure metering, WAV-derived duration, tests, and an 83.864-second CPU E2E run are substantial; key operational concerns remain outside the slice.
+
+Criteria fit: 3/5 — D1-D6 have meaningful evidence, but D7’s two-round acceptance is not evidenced, real E2E byte identity is not proven, and usage is aggregated by workspace rather than exposed per key.
+
+Reviewer path: 3/5 — The README gives commands, but requires a separately obtained model at `/path/to/kokoro-int8-multi-lang-v1_0`, two processes, and roughly 84 seconds; the recorded run was dirty rather than a clean-clone verification (result.json:170-178).
+
+Honesty: 4/5 — Strong disclosure of CPU-only status, no deployment, no GPU, and no listening check; however, the milestone log calls real byte identity a requirement while the evidence only proves proxy equality against a deterministic stub (V0-rounds.md:604-609; result.json:106-111).
+
+Five most damaging flaws:
+
+1. The core product is not distinctive: it is a standard hosted control plane with no surprising user-visible capability (V0-rounds.md:617-622).
+2. The required two cheap+ judge rounds and final all-criteria-4 gate are planned but not evidenced for M2; the slot log ends at the definition of done (V0-rounds.md:614-615, 617-622).
+3. Real proxy byte identity is unproven: direct and proxied calls are separate sampled engine calls, while equality is tested only against a stub (result.json:106-111; tests/hosted/test_hosted_metering.py:17-27).
+4. “Per workspace per key” metering is stored per key but the only usage endpoint aggregates the entire workspace, so customers cannot inspect per-key spend (hosted/control_plane/app.py:279-283; hosted/control_plane/metering.py:118-140).
+5. Reproducibility is weaker than claimed: the only recorded E2E run used `worktree_dirty: true`, and the README depends on an external model bundle rather than a fresh-clone path that supplies or verifies it (result.json:170-178; hosted/README.md:34-47, 132-143).
+
+What would make this win: turn the metering layer into a genuinely differentiated, per-key customer product and prove it from a clean clone with two independent judge rounds, real proxy-byte verification, and a fast self-contained demo path.

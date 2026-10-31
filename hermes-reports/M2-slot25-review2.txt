@@ -1,0 +1,23 @@
+Originality: 1/5 — A conventional auth, API-key, proxy, and metering layer with no memorable user-facing innovation; the project log itself concedes hosting is not novel (V0-rounds.md:617-622).
+
+Taste: 3/5 — Restrained and technically clear, but it reads as infrastructure documentation rather than a designed product experience; no UI or compelling product moment (hosted/README.md:1-30).
+
+Human feel: 4/5 — Specific, candid, and mostly free of generic AI language; the README is somewhat dense and operationally written.
+
+Technical depth: 4/5 — Real multi-tenant auth, key hashing, revocation, failure metering, WAV-derived duration, regression coverage, and a real CPU E2E run; the required real-success-path byte identity remains unproven (result.json:107-112).
+
+Criteria fit: 3/5 — D1-D3, D5, and D6 have evidence, but D4 explicitly requires real WAV byte identity that the result disclaims, and D7’s two cheap+ judge rounds plus final all-4 gate are not evidenced (V0-rounds.md:604-615).
+
+Reviewer path: 3/5 — The fast unit path is useful, but the real demonstration requires a separately obtained model, two manually managed processes, and about 88 seconds; the README’s command points to r1 while its measured section cites r3 (hosted/README.md:34-47, 82-83, 140-157; result.json:200).
+
+Honesty: 4/5 — The revision is unusually candid about no deployment, GPU, listening check, and the byte-identity limitation; no clear honesty flaw, though the definition-of-done wording still overstates D4 relative to the evidence (result.json:202-203; V0-rounds.md:604-609).
+
+Five most damaging flaws:
+
+1. The core product is undifferentiated infrastructure with no surprising customer capability or memorable moment (V0-rounds.md:617-622).
+2. Real success-response byte identity is not proven: direct and proxied speech calls differ, while byte equality is proven only against a deterministic stub; this fails the stated D4 requirement (result.json:107-112; V0-rounds.md:604-609).
+3. The required two cheap+ judge rounds and final no-score-under-4 gate are not present as review artifacts, so D7 is unsupported (V0-rounds.md:614-615; no M2 review artifacts under hermes-reports).
+4. The fresh-clone reviewer path still depends on a separately obtained Kokoro bundle and two manually started services, with an approximately 88-second real run (hosted/README.md:34-47, 140-150; result.json:200).
+5. The README points reviewers to `M2-slot25-e2e-r1` for the pass result while the measured evidence is from `M2-slot25-e2e-r3-freshclone`, creating avoidable reproducibility ambiguity (hosted/README.md:82-83, 155-157).
+
+What would make this win: Add a genuinely differentiated customer-facing capability, then prove it with committed two-round judge evidence and a self-contained fast real-engine demo whose D4 byte/proxy and reviewer-path claims are mechanically verifiable.

@@ -7,9 +7,29 @@ this layer is what turns it into something a business can buy.
 Not deployed. Not public. No GPU. Nothing here has been sold to anyone.
 
 ```
-hosted/control_plane/       the plane itself
-hosted/scripts/hosted_e2e.py  the end-to-end proof against the real engine
-tests/hosted/               its tests
+hosted/control_plane/         the plane itself
+hosted/scripts/hosted_e2e.py  the end-to-end proof: starts both processes itself
+hosted/scripts/hosted_demo.sh one command around it, with the model handling
+tests/hosted/                 its tests
+```
+
+## See it work, one command
+
+```sh
+hosted/scripts/hosted_demo.sh
+```
+
+It finds the Kokoro bundle (or downloads it and checks three sha256 values against
+pinned ones), verifies the model bytes, then starts BOTH the engine and the plane
+on reserved loopback sockets, runs the whole proof, stops them, and prints what
+passed. Nothing to start by hand, nothing left running. About a minute and a half
+on a small CPU box, inside whatever work directory you pass as an argument
+(`.hosted-demo` by default).
+
+The tests are the faster path and need no model at all, about eleven seconds:
+
+```sh
+.venv/bin/python -m pytest tests/hosted -q
 ```
 
 ## What it does today
@@ -29,11 +49,12 @@ tests/hosted/               its tests
 Not in yet, and named as the next slices: object storage (S3) for generated
 audio, the per-workspace job queue, email verification, billing, deployment.
 
-## Run it
+## Run it by hand
 
-Two processes. The engine first, then the plane pointed at it. This assumes a
-venv built with `uv sync --frozen --no-default-groups --group cpu --group dev`,
-and the Kokoro bundle from `docs/engines/sherpa-onnx.md`.
+The demo script above is the short path. This is the same thing as two long-lived
+processes, which is what you want while working on it. It assumes a venv built
+with `uv sync --frozen --no-default-groups --group cpu --group dev`, and the
+Kokoro bundle from `docs/engines/sherpa-onnx.md`.
 
 ```sh
 # terminal 1 — the engine, CPU, with the permissive Kokoro model
@@ -79,8 +100,8 @@ curl -sS -X POST $BASE/v1/audio/speech \
 curl -sS $BASE/v1/usage -H "Authorization: Bearer $QBV_KEY"
 ```
 
-What a pass looks like, from the run in `hermes-reports/M2-slot25-e2e-r1/`: see
-"Measured" below.
+What a pass looks like: see "Measured" below, which quotes
+`hermes-reports/M2-slot25-e2e-r3-freshclone/result.json` — the clean-clone run.
 
 ## How it is put together
 

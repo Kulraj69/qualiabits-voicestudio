@@ -1,0 +1,25 @@
+==> verifying the model bytes against the pinned hashes
+    ok model.int8.onnx
+    ok tokens.txt
+    ok voices.bin
+==> running the end-to-end proof (about a minute and a half on a small CPU box)
+    evidence goes to /workspace/qs-hosted-demo/evidence-20261031-140111
+  PASS  control_plane_and_engine_both_up
+  PASS  two_workspaces_signed_up_with_keys
+  PASS  hindi_and_english_audio_through_the_control_plane
+  PASS  engine_refusal_passed_through_as_400
+  PASS  refusal_bytes_identical_to_the_real_engine
+  PASS  key_refusals_are_401
+  PASS  meter_matches_the_audio_and_is_per_workspace
+  PASS  revoked_key_refused_and_other_workspace_untouched
+  hindi_hf_alpha   hf_alpha  hi  1.832 s at 24000 Hz, peak 0.789185, engine took 17.878 s
+  hindi_hm_omega   hm_omega  hi  1.826 s at 24000 Hz, peak 0.785522, engine took 10.232 s
+  english          hf_alpha  en  3.487 s at 24000 Hz, peak 0.788849, engine took 17.934 s
+  meter for workspace A: 4 requests, 158 characters, 7.145 s of audio
+  meter for workspace B: 0 requests
+
+audio in /workspace/qs-hosted-demo/evidence-20261031-140111/audio
+full result in /workspace/qs-hosted-demo/evidence-20261031-140111/result.json
+not a listening check, not GPU evidence, not deployed, and not M1 acceptance.
+
+(second run, after the log redirect edit, same checkout)
