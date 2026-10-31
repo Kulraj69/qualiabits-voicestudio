@@ -134,6 +134,12 @@ three WAVs, three ASR transcripts), `hermes-reports/M1-slot23-speech-r3-freshclo
 and `hermes-reports/M1-slot23-review1.txt` and `hermes-reports/M1-slot23-review2.txt`
 (two reviews that both failed and are kept anyway).
 
+The hosted layer has its own page and its own evidence: `hosted/README.md`,
+`hermes-reports/M2-slot25-e2e-r1/`, `M2-slot25-e2e-r2/` and
+`M2-slot25-e2e-r3-freshclone/` (the last run from a clean clone of the pushed
+revision). It is a local control plane — workspaces, keys, metering — and it is
+not deployed either.
+
 ## Licence, attribution, and what hosting means
 
 VoiceStudio is AGPL-3.0. This fork keeps `LICENSE`, `LICENSE-NOTICE.md` and the

@@ -1,0 +1,28 @@
+INFO:     Started server process [2439672]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on socket ('127.0.0.1', 36233) (Press CTRL+C to quit)
+INFO:     127.0.0.1:45130 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36414 - "GET /healthz/upstream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36426 - "POST /v1/workspaces HTTP/1.1" 201 Created
+INFO:     127.0.0.1:36430 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36442 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:36458 - "POST /v1/workspaces HTTP/1.1" 201 Created
+INFO:     127.0.0.1:36470 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36486 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:36500 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37734 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40320 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49658 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:49666 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:49672 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:49686 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49688 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49696 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49698 - "DELETE /v1/api-keys/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49710 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:49722 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2439672]

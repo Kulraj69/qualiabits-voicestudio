@@ -152,38 +152,48 @@ records every check, the model file hashes and the commit the run tested.
 
 ## Measured
 
-From `hermes-reports/M2-slot25-e2e-r1/result.json` — a run on 31 Oct 2026 on one
-t3a.medium with no GPU, engine and plane both started fresh. Numbers are copied
-from that file, not from intention.
+From `hermes-reports/M2-slot25-e2e-r3-freshclone/result.json` — a clone of commit
+`d3bf048fb` with a clean worktree, engine and plane both started fresh, on one
+t3a.medium with no GPU (31 Oct 2026). Numbers are copied from that file.
 
 ```
-engine ready            9.0 s        control plane ready   (11.6 s from start)
-whole run               83.9 s       both processes        clean shutdown
+engine ready 11.3 s   control plane ready 13.2 s   whole run 87.7 s
+both processes: clean shutdown
 
-workspace A, three requests through the control plane:
-  hf_alpha  hi  1.832 s audio, 24 kHz mono, peak 0.79, engine took 19.7 s
-  hm_omega  hi  1.826 s audio,                       engine took 10.3 s
-  hf_alpha  en  3.486 s audio, peak 0.80,            engine took 17.6 s
-  a fourth request, an unknown voice, refused 400 by the engine and passed
-  through with the engine's own message listing the model's 54 voices.
+three requests through the control plane, workspace A:
+  hf_alpha  hi   1.822 s audio, 24 kHz mono, peak 0.78   engine took 21.0 s
+  hm_omega  hi   1.825 s audio,              peak 0.79   engine took 10.6 s
+  hf_alpha  en   3.491 s audio,              peak 0.79   engine took 17.7 s
+  plus one request for a voice the model does not have, refused 400 by the
+  engine and passed through with the engine's own message naming its 54 voices.
 
-meter for A   4 requests, 158 characters, 7.144 s audio, 343,022 bytes,
+meter for A   4 requests, 158 characters, 7.138 s audio, 342,768 bytes,
               failed_requests 1, by_status {"200": 3, "400": 1}
+              by_key: one key, label "a", same four requests and 7.138 s
 meter for B   0 requests, 0 characters, 0.000 s audio
 
 same English request straight at the engine, for comparison:
-  direct 3.488 s / 167,476 bytes, through the plane 3.486 s / 167,374 bytes
+  direct 3.508 s / 168,408 bytes   through the plane 3.491 s / 167,608 bytes
+
+the engine's refusal for an unknown voice, taken both ways:
+  sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
 ```
+
+The last two lines are the honest version of the pass-through claim. Speech
+cannot be compared byte for byte between two calls because the engine samples,
+and those two English numbers differ by 800 bytes — so no such claim is made
+anywhere. What is compared byte for byte is a response the engine computes
+deterministically: its refusal. That is checked against the real engine on every
+run, and the 200 path is checked against a deterministic stub in the unit suite.
 
 The model those numbers came from is the one `scripts/qualibits_quickstart.sh`
 downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); the
-run recorded those same hashes, plus the commit it tested. Byte identity is not
-claimed between two *speech* calls, because the engine samples:
-so two identical calls differ by a hundred bytes. What is claimed, and tested
-against a deterministic stub, is that the bytes the plane returns are the bytes
-the engine sent. The CPU is also plainly not production: 5 to 10 seconds of
-compute per second of speech, which is exactly why the GPU run is the owner's to
-approve and not something this layer can work around.
+run recorded the same hashes plus the commit it tested, in the same file.
+
+The CPU is not production, and this is the clearest evidence of it: 5 to 10
+seconds of compute per second of speech, from 10.6 s for the fastest of the
+three. That is why the GPU run is the owner's to approve, and exactly what this
+layer cannot work around.
 
 ## Licence
 
