@@ -70,6 +70,14 @@ def get_db(request: Request) -> Iterator[Session]:
         yield session
 
 
+# Mutating routes commit inside the request, before they return. The dependency
+# teardown above also commits, but teardown runs after the response is handed
+# back, so a caller that writes and immediately reads can lose the race and see
+# the old row. The end-to-end run lost exactly that race over a key revocation:
+# the DELETE answered 200 and the very next request was still accepted. Sessions
+# and workspaces had the same shape of bug and were committed explicitly too.
+
+
 DbSession = Annotated[Session, Depends(get_db)]
 State = Annotated[HostedState, Depends(get_state)]
 
@@ -191,6 +199,7 @@ def create_app(settings: Settings | None = None, upstream: UpstreamClient | None
                 status_code=status.HTTP_409_CONFLICT,
                 detail="A workspace already exists for that email.",
             )
+        session.commit()
         return {"workspace": workspace_dict(workspace)}
 
     @app.post("/v1/auth/token")
@@ -223,6 +232,7 @@ def create_app(settings: Settings | None = None, upstream: UpstreamClient | None
                 workspace_id=workspace.id, token_digest=digest, expires_at=expires_at
             )
         )
+        session.commit()
         return {
             "token": token,
             "token_type": "bearer",
@@ -244,7 +254,7 @@ def create_app(settings: Settings | None = None, upstream: UpstreamClient | None
             label=body.label.strip(),
         )
         session.add(row)
-        session.flush()
+        session.commit()
         return {"api_key_record": key_dict(row, include_secret=full)}
 
     @app.get("/v1/api-keys")
@@ -273,6 +283,7 @@ def create_app(settings: Settings | None = None, upstream: UpstreamClient | None
             )
         if row.revoked_at is None:
             row.revoked_at = utcnow()
+        session.commit()
         return {"revoked": True, "api_key_record": key_dict(row)}
 
     # ── usage ─────────────────────────────────────────────────────────────────

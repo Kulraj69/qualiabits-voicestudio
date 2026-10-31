@@ -169,6 +169,12 @@ def test_a_session_cannot_be_used_where_a_key_is_needed_and_the_reverse(client):
 
 
 def test_revoking_a_key_stops_it(client):
+    """The revoked state must be visible to the next request, with no sleep.
+
+    This is the assertion the end-to-end run failed: the DELETE answered 200 and
+    the next request was still accepted, because the write was committed on
+    dependency teardown rather than inside the request.
+    """
     signup(client)
     token = login(client)
     created = client.post(
