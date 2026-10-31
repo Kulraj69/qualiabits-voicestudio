@@ -3652,6 +3652,112 @@ def _sherpa_vits_extras(model_dir: str) -> dict[str, str]:
     return extras
 
 
+# ``metadata_props`` is field 14 of ONNX ModelProto and serialises after the
+# graph, so a model's self-description always sits at the end of the file.
+_SHERPA_METADATA_TAIL_BYTES = 2 * 1024 * 1024
+
+
+def _sherpa_onnx_string_metadata(model_file: str) -> dict[str, str]:
+    """The string metadata a sherpa-onnx model declares about itself.
+
+    Kokoro releases state ``model_type=kokoro``, ``sample_rate``, ``n_speakers``
+    and their voice table (``id2speaker``/``speaker_names``) in the ONNX graph.
+    sherpa-onnx's Python bindings expose no accessor for it, so the values are
+    read from the file — but only from the tail: ``metadata_props`` serialises
+    after the graph, and scanning 350 MB of weights to find a model's own label
+    would be wasteful. Each entry is ``key\\x12<varint length>value``.
+
+    A model that declares nothing returns ``{}``; the caller keeps working, only
+    the Kokoro branch and the voice-name lookup go unused.
+    """
+    keys = ("model_type", "sample_rate", "n_speakers", "speaker_names",
+            "id2speaker", "language")
+    try:
+        size = os.path.getsize(model_file)
+        with open(model_file, "rb") as handle:
+            handle.seek(max(0, size - _SHERPA_METADATA_TAIL_BYTES))
+            tail = handle.read()
+    except OSError:
+        return {}
+    found: dict[str, str] = {}
+    for key in keys:
+        marker = key.encode("ascii") + b"\x12"
+        at = tail.find(marker)
+        if at < 0:
+            continue
+        cursor = at + len(marker)
+        length = 0
+        shift = 0
+        while cursor < len(tail):
+            byte = tail[cursor]
+            length |= (byte & 0x7F) << shift
+            cursor += 1
+            if not byte & 0x80:
+                break
+            shift += 7
+            if shift > 28:  # A length this long is not a metadata value.
+                length = -1
+                break
+        if length <= 0 or cursor + length > len(tail):
+            continue
+        try:
+            value = tail[cursor:cursor + length].decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        if value.isprintable():
+            found[key] = value
+    return found
+
+
+def _sherpa_speaker_ids(metadata: dict[str, str]) -> dict[str, int]:
+    """Name → speaker id, from a Kokoro-style voice table.
+
+    Kokoro declares ``id2speaker`` as ``0->af_alloy,1->af_aoede,…``; a plain
+    ``speaker_names`` list uses its own order as the index.
+    """
+    table = metadata.get("id2speaker") or metadata.get("speaker_names") or ""
+    ids: dict[str, int] = {}
+    for position, chunk in enumerate(table.split(",")):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        index, arrow, name = chunk.partition("->")
+        if arrow and index.strip().isdigit() and name.strip():
+            ids.setdefault(name.strip().lower(), int(index))
+        else:
+            ids.setdefault(chunk.lower(), position)
+    return ids
+
+
+def _sherpa_kokoro_assets(model_dir: str, model_file: str,
+                          tokens_file: str) -> Optional[dict[str, str]]:
+    """Config kwargs for a Kokoro-layout directory, or ``None`` for anything else.
+
+    Kokoro models are not VITS-layout models even though both run through the
+    same offline-TTS engine: they need ``voices.bin`` (the voice table), a
+    comma-joined lexicon list, the Chinese ``dict``, and the espeak-ng data that
+    every other language phonemizes through. Feeding one to the VITS path aborts
+    the whole backend ("Not a model using characters as modeling unit"), and
+    feeding it a lexicon alone drops every Devanagari character as an OOV token —
+    so the layout is detected from the files before either happens.
+    """
+    if not model_dir or not os.path.isfile(os.path.join(model_dir, "voices.bin")):
+        return None
+    assets = {"model": model_file, "tokens": tokens_file,
+              "voices": os.path.join(model_dir, "voices.bin")}
+    lexicons = sorted(
+        name for name in os.listdir(model_dir)
+        if name.startswith("lexicon") and name.endswith(".txt")
+    )
+    if lexicons:
+        assets["lexicon"] = ",".join(os.path.join(model_dir, name) for name in lexicons)
+    for key, subdir in (("data_dir", "espeak-ng-data"), ("dict_dir", "dict")):
+        path = os.path.join(model_dir, subdir)
+        if os.path.isdir(path):
+            assets[key] = path
+    return assets
+
+
 class SherpaOnnxBackend(TTSBackend):
     """k2-fsa/sherpa-onnx — unified C++ ONNX runtime for TTS (and ASR).
 
@@ -3681,6 +3787,8 @@ class SherpaOnnxBackend(TTSBackend):
     def __init__(self):
         self._tts = None
         self._model_dir = os.environ.get("OMNIVOICE_SHERPA_MODEL", "")
+        self._metadata: dict[str, str] = {}
+        self._speaker_ids: dict[str, int] = {}
 
     def model_identity(self) -> Optional[str]:
         model_dir = (self._model_dir or "").strip()
@@ -3753,29 +3861,105 @@ class SherpaOnnxBackend(TTSBackend):
                 f"No model.onnx found in {self._model_dir}. "
                 "Download a model from https://github.com/k2-fsa/sherpa-onnx/releases"
             )
+        if not os.path.isfile(tokens_file):
+            raise RuntimeError(
+                f"tokens.txt is missing from {self._model_dir}. Every sherpa-onnx "
+                "TTS model directory ships one next to its .onnx graph."
+            )
 
-        logger.info("Loading sherpa-onnx TTS from %s", self._model_dir)
-        config = sherpa_onnx.OfflineTtsConfig(
-            model=sherpa_onnx.OfflineTtsModelConfig(
-                vits=sherpa_onnx.OfflineTtsVitsModelConfig(
-                    model=model_file,
-                    tokens=tokens_file,
-                    **_sherpa_vits_extras(self._model_dir),
+        # The model's own metadata decides which config family it is loaded with
+        # and which voice names it accepts; both are recorded here so `generate`
+        # never has to re-read the graph.
+        self._metadata = _sherpa_onnx_string_metadata(model_file)
+        self._speaker_ids = _sherpa_speaker_ids(self._metadata)
+
+        logger.info(
+            "Loading sherpa-onnx TTS from %s (model_type=%s)",
+            self._model_dir, self._metadata.get("model_type") or "undeclared",
+        )
+        kokoro_assets = _sherpa_kokoro_assets(self._model_dir, model_file, tokens_file)
+        if kokoro_assets is not None:
+            # Kokoro: voices.bin + lexicon list + dict/, not the VITS layout.
+            config = sherpa_onnx.OfflineTtsConfig(
+                model=sherpa_onnx.OfflineTtsModelConfig(
+                    kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(**kokoro_assets)
                 )
             )
-        )
+        else:
+            config = sherpa_onnx.OfflineTtsConfig(
+                model=sherpa_onnx.OfflineTtsModelConfig(
+                    vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+                        model=model_file,
+                        tokens=tokens_file,
+                        **_sherpa_vits_extras(self._model_dir),
+                    )
+                )
+            )
         self._tts = sherpa_onnx.OfflineTts(config)
+
+    def _speaker_id(self, kw: dict) -> int:
+        """Which voice to speak with: ``speaker_id``, else a voice name or index.
+
+        The engine's only voice selector is a numeric speaker id, and
+        ``/v1/audio/speech`` forwards the caller's ``voice`` string — so a
+        multi-speaker model (Kokoro ships 54 voices, four of them Hindi) was
+        unreachable over the API: every request silently spoke with voice 0.
+        Names come from the model's own table; an unknown one is a 400 listing
+        what the loaded model actually offers, never a silent fallback.
+        """
+        if not self._speaker_ids and kw.get("voice") and not kw.get("speaker_id"):
+            return 0  # single-speaker model (or no declared table): keep voice 0
+
+        given = kw.get("speaker_id")
+        if given is not None:
+            try:
+                sid = int(given)
+            except (TypeError, ValueError):
+                raise TTSInputError(
+                    f"speaker_id must be a number for the sherpa-onnx engine, got {given!r}."
+                ) from None
+        else:
+            voice = kw.get("voice")
+            requested = voice.strip() if isinstance(voice, str) else ""
+            if not requested:
+                sid = 0
+            elif requested.lstrip("-").isdigit():
+                sid = int(requested)
+            elif requested.lower() in self._speaker_ids:
+                sid = self._speaker_ids[requested.lower()]
+            else:
+                names = sorted(self._speaker_ids, key=lambda name: self._speaker_ids[name])
+                shown = ", ".join(names[:12]) + (", …" if len(names) > 12 else "")
+                raise TTSInputError(
+                    f"Unknown voice {requested!r} for the loaded sherpa-onnx model "
+                    f"({len(names)} voices: {shown}). Pass a voice name or a numeric id."
+                )
+        total = int(getattr(self._tts, "num_speakers", 0) or 0)
+        if sid < 0 or (total and sid >= total):
+            raise TTSInputError(
+                f"speaker_id {sid} is out of range for this model"
+                f"{f' (0-{total - 1})' if total else ''}."
+            )
+        return sid
 
     def generate(self, text: str, **kw) -> torch.Tensor:
         import numpy as np
         self._ensure_loaded()
 
         speed = float(kw.get("speed", 1.0))
-        # sherpa-onnx speaker ID (for multi-speaker VITS models)
-        sid = int(kw.get("speaker_id", 0))
+        sid = self._speaker_id(kw)
 
         audio = self._tts.generate(text, sid=sid, speed=speed)
         wav = np.array(audio.samples, dtype=np.float32)
+        if wav.size == 0:
+            # sherpa-onnx returns an EMPTY sample list instead of raising when a
+            # front end phonemizes nothing (e.g. every character OOV), which then
+            # surfaced as an opaque 500 (or a zero-length WAV) far from the cause.
+            raise TTSInputError(
+                f"The sherpa-onnx model produced no audio for this text. It phonemized "
+                f"to nothing the loaded model can speak — check the text's language "
+                f"against the model in {self._model_dir}."
+            )
         wav = torch.from_numpy(wav).unsqueeze(0)  # (1, n_samples)
         return wav
 
