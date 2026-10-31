@@ -1,0 +1,12 @@
+# The hosted suite and the existing suites this change could break
+# command: .venv/bin/python -m pytest tests/hosted tests/test_qualibits_voice_docs.py tests/test_sherpa_kokoro_and_speaker.py tests/test_headless_baseline.py -q
+# checkout: clean clone of 6c6e31cb9a9ab4d5efceaaa1743a1124d7fcbba8 (worktree clean), venv reused from the working copy
+........................................................................ [ 73%]
+..........................                                               [100%]
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:28
+  /workspace/qs-hosted-final/tests/hosted/conftest.py:28: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+98 passed, 1 warning in 16.13s

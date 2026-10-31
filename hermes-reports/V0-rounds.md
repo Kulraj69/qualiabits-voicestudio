@@ -734,3 +734,43 @@ Needs-Kulraj (unchanged from slot 23, and this slot does not move it):
    which also decides what M3's dashboard is built against.
 4. A product decision for originality: the judge scored it 1 of 5 twice, and the
    fix is a differentiator the owner chooses, not one this lane can invent.
+
+Round 3 (FIX + TEST + JUDGE). Fixes on top of pass 2: `hosted/scripts/hosted_demo.sh`,
+one command that resolves or downloads and hash-checks the model, starts both
+processes itself, runs the proof, stops them and prints the PASS lines — run
+twice here, exit 0 both times, the second run to verify the quiet output after an
+edit (`M2-slot25-demo-runs.log`); the README restructured to lead with it, with
+the two-process flow kept for development; the stale r1 pointer removed; both
+reviews committed as artifacts.
+Judge pass 3 (commit `c76483e82`): **1/3/4/4/3/4/4 — still FAIL**
+(`M2-slot25-review3.txt`). The reviewer path moved 3 to 4. Three findings left,
+two of them about this log's own text rather than the code: the testing section
+still handed a reviewer a command writing into r1's evidence directory, and D4
+still promised byte identity. Both were true. Both are fixed in `6c6e31cb9`: the
+README now writes evidence to a disposable path and says which committed run is
+which, and D4 is corrected in place with the correction marked, so the original
+wrong claim and the reason stay visible together.
+
+Round 4 (TEST + JUDGE). Clean clone of the revision the page describes, worktree
+clean, suites run from the clone: `.venv/bin/python -m pytest tests/hosted
+tests/test_qualibits_voice_docs.py tests/test_sherpa_kokoro_and_speaker.py
+tests/test_headless_baseline.py -q` — **98 passed, 1 warning in 16.13 s**
+(`M2-slot25-clean-tests.log`, which records its own commit and command).
+Judge pass 4 (commit `6c6e31cb9`): **1/3/4/4/3/4/5 — still FAIL**
+(`M2-slot25-review4.txt`). Honesty moved to 5, the reviewer path held at 4, and
+the judge named the same two blockers it had named each time: originality 1, and
+D7's gate (no criterion under 4) therefore unreachable for this milestone. It is
+right, and the loop stops here rather than dress the idea up: four rounds, two
+real bugs found by real runs, every fixable finding fixed, and the one unfixable
+finding named as the owner's decision.
+
+DONE GATE: not passed, so M2 slice A is NOT marked done. D1, D2, D3, D4, D5 and
+D6 are each shown by evidence above; D7 cannot pass while originality scores 1,
+because a hosting layer is not a novel idea and this lane cannot invent the
+owner's differentiator. Recorded as in-progress / needs-Kulraj.
+
+Evidence in this repo: `hermes-reports/M2-slot25-e2e-r1/` (passed, dirty
+worktree, superseded), `M2-slot25-e2e-r2/` (the round that failed: "a revoked key
+still works"), `M2-slot25-e2e-r3-freshclone/` (clean clone of `d3bf048fb`, the
+numbers the page quotes), `M2-slot25-clean-tests.log`,
+`M2-slot25-demo-runs.log`, `M2-slot25-review1.txt` through `-review4.txt`.

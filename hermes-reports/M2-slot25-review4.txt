@@ -1,0 +1,25 @@
+Originality: 1/5 — Conventional hosted auth, API-key, proxy, and metering infrastructure; no memorable customer capability.
+
+Taste: 3/5 — Clear and candid README, but still reads as infrastructure documentation rather than a designed product experience (`hosted/README.md:1-30`).
+
+Human feel: 4/5 — Specific, plain, and candid; some dense operational sections remain more technical than personal (`hosted/README.md:108-141`).
+
+Technical depth: 4/5 — Real multi-tenant auth, hashed and revocable keys, failure metering, WAV-derived duration, regression coverage, and clean real-engine CPU E2E evidence (`hermes-reports/M2-slot25-e2e-r3-freshclone/result.json`).
+
+Criteria fit: 3/5 — D1-D6 now have substantial evidence, but D7’s explicit no-score-under-4 gate remains unmet because originality is 1/5 (`hermes-reports/V0-rounds.md:614-615, 696-704`).
+
+Reviewer path: 4/5 — The one-command proof is clear and self-cleaning, but still requires a prepared environment, network/model availability, and approximately 88 seconds (`hosted/README.md:8-20`; `hermes-reports/M2-slot25-e2e-r3-freshclone/result.json`).
+
+Honesty: 5/5 — Claims are carefully bounded: no deployment, GPU, human listening, or byte-identical speech claim is implied; measured evidence and limitations are disclosed.
+
+1. The product remains undifferentiated infrastructure with no surprising customer capability or memorable moment (`hosted/README.md:1-30`; `hermes-reports/V0-rounds.md:617-622`).
+
+2. The milestone’s D7 acceptance gate is still impossible to satisfy because originality remains 1/5 (`hermes-reports/V0-rounds.md:614-615, 696-704`).
+
+3. The clean reviewer path still depends on a prebuilt `.venv`, external model availability or download, network access, and roughly 87.7 seconds before results appear (`hosted/scripts/hosted_demo.sh:30-35, 48-58, 76-83`; `hermes-reports/M2-slot25-e2e-r3-freshclone/result.json`).
+
+4. The evidence proves infrastructure behavior and generated file metrics, but no human has listened to the Hindi or English output, so speech quality and user value remain unverified (`hosted/README.md:155-205`; `hermes-reports/M2-slot25-e2e-r3-freshclone/result.json`).
+
+5. The hosted layer has no customer-facing workflow beyond API calls: no dashboard, delivery/storage experience, billing surface, or other visible moment that makes it feel like a product rather than a service boundary (`hosted/README.md:35-57`).
+
+Add one genuinely differentiated customer capability with a memorable end-to-end moment, then raise the evidence from “working control plane” to “valuable product” so D7 can actually pass.
