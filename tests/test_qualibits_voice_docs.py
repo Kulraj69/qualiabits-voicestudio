@@ -81,11 +81,39 @@ def test_every_repo_path_it_names_exists():
     assert not missing, f"the page cites paths that do not exist: {missing}"
 
 
-def test_cited_test_log_actually_says_139_passed():
-    log = _ROOT / "hermes-reports" / "M1-slot23-clean-tests.log"
-    assert log.is_file()
+def test_cited_test_log_holds_the_command_and_its_result():
+    log = _ROOT / "hermes-reports" / "M1-slot24-docs-tests.log"
+    assert log.is_file(), "the page cites this log; it must be committed"
     text = log.read_text(encoding="utf-8", errors="replace")
-    assert "139 passed" in text, "the '139 tests pass' claim must trace to this log"
+    assert "test_qualibits_voice_docs.py" in text, "the page's own guards must be in the run"
+    assert "$ .venv/bin/python -m pytest" in text, "the log must record the command it ran"
+    prose = _prose(_DOC)
+    assert "hermes-reports/M1-slot24-docs-tests.log" in prose
+    green = [line for line in text.splitlines()
+             if re.search(r"\d+ passed", line) and "failed" not in line and "error" not in line]
+    assert green, "the cited log must contain a green summary line"
+    logged = re.search(r"(\d+) passed", green[-1])
+    claimed = re.search(r"(\d+) tests pass", prose)
+    assert logged and claimed, "both the page and the log must state a count"
+    assert logged.group(1) == claimed.group(1), (
+        f"the page says {claimed.group(1)} tests pass; the committed run says {logged.group(1)}"
+    )
+
+
+def test_quickstart_script_pins_the_hashes_the_page_names():
+    script = _ROOT / "scripts" / "qualibits_quickstart.sh"
+    assert script.is_file()
+    assert script.stat().st_mode & 0o111, "the one-command path must be executable"
+    text = script.read_text(encoding="utf-8")
+    # The hashes live in a fenced `sha256sum` block, so check the raw page.
+    raw = _DOC.read_text(encoding="utf-8")
+    for name in ("SHA_MODEL", "SHA_TOKENS", "SHA_VOICES"):
+        value = next(
+            (line.split("=", 1)[1].strip() for line in text.splitlines() if line.startswith(name + "=")),
+            None,
+        )
+        assert value and len(value) == 64, f"{name} must stay a full sha256"
+        assert value[:12] in raw, f"the page must print the {name} prefix it tells people to check"
 
 
 def test_hindi_voice_names_match_the_probe():

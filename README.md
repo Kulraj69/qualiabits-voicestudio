@@ -1,10 +1,17 @@
-> QualiaBits fork: M1 is incomplete and V0 is not live. What this fork does today
-> and how to check it: **[QualiaBits Voice](docs/QUALIABITS-VOICE.md)**. Start
-> with the [headless baseline and architecture notes](docs/ARCHITECTURE-NOTES.md)
-> for the internals.
-> The upstream feature descriptions below are not verification of this fork's
-> hosted service, GPU runtime or speech output. VoiceStudio attribution and
-> AGPL source remain intact.
+> QualiaBits fork: M1 is incomplete and V0 is not live. The upstream feature
+> descriptions below are not verification of this fork's hosted service, GPU
+> runtime or speech output. VoiceStudio attribution and AGPL source remain
+> intact.
+
+**Start here.** This fork is QualiaBits Voice, the speech layer of a hosted
+voice product for Indian BPOs, built on VoiceStudio's API. Not live: no hosted
+service, no login, no telephony, no GPU evidence yet.
+
+- [What works today, what is not verified, and how to hear Hindi and English out of the API in one command](docs/QUALIABITS-VOICE.md)
+- [Internals and the headless baseline](docs/ARCHITECTURE-NOTES.md)
+- [Speech-engine setup, including the CPU Kokoro bundle the page uses](docs/engines/sherpa-onnx.md)
+
+Everything below this line is upstream VoiceStudio's own README.
 
 <div align="center">
   <img src="docs/logo.png" alt="VoiceStudio" width="88" />
