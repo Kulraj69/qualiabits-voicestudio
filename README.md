@@ -11,7 +11,8 @@ service, no login, no telephony, no GPU evidence yet.
 - [Internals and the headless baseline](docs/ARCHITECTURE-NOTES.md)
 - [Speech-engine setup, including the CPU Kokoro bundle the page uses](docs/engines/sherpa-onnx.md)
 
-Everything below this line is upstream VoiceStudio's own README.
+<details>
+<summary><strong>Upstream VoiceStudio README</strong>, kept in full for attribution and licence completeness. The features and badges below are upstream's, and the note at the top says why they are not verification of this fork's hosted service or speech.</summary>
 
 <div align="center">
   <img src="docs/logo.png" alt="VoiceStudio" width="88" />
@@ -191,3 +192,5 @@ Thank you to everyone who sends code, reports, translations and ideas. [All cont
 ## License & responsible use
 
 [AGPL-3.0](LICENSE) covers the app, including commercial use under its terms. Model weights, voices and generated output have their own licences, which the Model Manager shows for each model ([inventory](docs/licensing/model-inventory.md)). Clone a voice only with its owner's permission. Details: [LICENSE-NOTICE.md](LICENSE-NOTICE.md).
+
+</details>

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # One command to see real Hindi and English speech out of this fork's API.
 #
-#   scripts/qualibits_quickstart.sh [work-directory]      # default: .quickstart
+#   scripts/qualibits_quickstart.sh --setup [work-directory]
+#   scripts/qualibits_quickstart.sh [work-directory]      # venv already built
+#
+# --setup runs the uv sync this checkout needs, so a fresh clone is one command.
 #
 # It downloads the Kokoro bundle the product page names, verifies three file
 # hashes against values pinned here (so a corrupted or swapped download stops
@@ -12,8 +15,17 @@
 # What it does not mean: no GPU, no listening check, no hosted service, not M1.
 set -euo pipefail
 
+SETUP=0
+ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --setup) SETUP=1 ;;
+    -h|--help) sed -n '2,9p' "$0" | sed 's/^# \?//'; exit 0 ;;
+    *) ARGS+=("$arg") ;;
+  esac
+done
 REPO=$(cd "$(dirname "$0")/.." && pwd)
-WORK=${1:-"$REPO/.quickstart"}
+WORK=${ARGS[0]:-"$REPO/.quickstart"}
 MODEL="$WORK/kokoro-int8-multi-lang-v1_0"
 EVIDENCE="$WORK/evidence"
 TARBALL="kokoro-int8-multi-lang-v1_0.tar.bz2"
@@ -25,7 +37,21 @@ SHA_TOKENS=6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425
 SHA_VOICES=1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29
 
 PY="$REPO/.venv/bin/python"
-[ -x "$PY" ] || { echo "no .venv here. Run the uv sync step from docs/QUALIABITS-VOICE.md first." >&2; exit 2; }
+SYNC="uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12"
+if [ ! -x "$PY" ]; then
+  if [ "$SETUP" = 1 ] && command -v uv >/dev/null 2>&1; then
+    echo "==> building the venv: $SYNC"
+    (cd "$REPO" && $SYNC)
+  else
+    echo "no .venv in $REPO yet, and this script does not guess your toolchain." >&2
+    echo "Run this from the checkout, then call the script again:" >&2
+    echo "    cd $REPO && $SYNC          # needs uv, Python 3.12" >&2
+    echo "or call it with --setup on a machine that has uv installed:" >&2
+    echo "    scripts/qualibits_quickstart.sh --setup" >&2
+    exit 2
+  fi
+fi
+[ -x "$PY" ] || { echo "the venv still has no python at $PY" >&2; exit 2; }
 
 if [ ! -d "$MODEL" ]; then
   mkdir -p "$WORK"

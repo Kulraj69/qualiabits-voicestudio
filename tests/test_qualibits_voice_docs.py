@@ -100,6 +100,12 @@ def test_cited_test_log_holds_the_command_and_its_result():
     )
 
 
+def test_the_page_and_the_script_agree_on_the_one_command():
+    script = (_ROOT / "scripts" / "qualibits_quickstart.sh").read_text(encoding="utf-8")
+    assert "--setup" in script, "the script must still accept the flag the page tells people to use"
+    assert "scripts/qualibits_quickstart.sh --setup" in _DOC.read_text(encoding="utf-8")
+
+
 def test_quickstart_script_pins_the_hashes_the_page_names():
     script = _ROOT / "scripts" / "qualibits_quickstart.sh"
     assert script.is_file()

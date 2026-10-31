@@ -30,7 +30,7 @@ does not, and how to see both for yourself.
   families and the count, and an out-of-range numeric id is refused too, instead
   of quietly speaking with voice 0. Text that phonemizes to nothing is refused
   rather than returned as a zero-length WAV.
-- 431 tests pass and 7 skip from a clean checkout of the branch, including the
+- 441 tests pass and 7 skip from a clean checkout of the branch, including the
   ones that guard this page. The exact command and its output are in
   `hermes-reports/M1-slot24-docs-tests.log`.
 
@@ -64,9 +64,13 @@ Requires Python 3.12, [uv](https://docs.astral.sh/uv/) and `ffmpeg` on PATH.
 ```sh
 git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git
 cd qualiabits-voicestudio
-uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
-scripts/qualibits_quickstart.sh
+scripts/qualibits_quickstart.sh --setup
 ```
+
+`--setup` builds the venv first with `uv sync --frozen --no-default-groups
+--group cpu --group dev --python python3.12`. If this machine has no `uv`, the
+script prints that command and stops instead of guessing your toolchain. Once the
+venv exists, `scripts/qualibits_quickstart.sh` alone reruns the whole path.
 
 The script downloads the 132 MB Kokoro bundle, checks three file hashes against
 values pinned in the script (a wrong byte stops it with a mismatch instead of
