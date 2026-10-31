@@ -3929,10 +3929,19 @@ class SherpaOnnxBackend(TTSBackend):
                 sid = self._speaker_ids[requested.lower()]
             else:
                 names = sorted(self._speaker_ids, key=lambda name: self._speaker_ids[name])
-                shown = ", ".join(names[:12]) + (", …" if len(names) > 12 else "")
+                # A flat list of the first voices is all English on a Kokoro
+                # table, which tells a caller looking for Hindi nothing. The
+                # families (the leading two-letter group) do.
+                families: dict[str, int] = {}
+                for name in names:
+                    key = name.split("_")[0]
+                    families[key] = families.get(key, 0) + 1
+                listing = ", ".join(f"{key} ({count})"
+                                    for key, count in sorted(families.items()))
                 raise TTSInputError(
-                    f"Unknown voice {requested!r} for the loaded sherpa-onnx model "
-                    f"({len(names)} voices: {shown}). Pass a voice name or a numeric id."
+                    f"Unknown voice {requested!r} for the loaded sherpa-onnx model. "
+                    f"It declares {len(names)} voices; families: {listing}. "
+                    f"Pass a voice name (for example {names[0]}) or its numeric id."
                 )
         total = int(getattr(self._tts, "num_speakers", 0) or 0)
         if sid < 0 or (total and sid >= total):

@@ -229,7 +229,10 @@ def test_unknown_voice_lists_what_the_model_offers():
     backend, engine = _backend_with({"af_alloy": 0, "hf_alpha": 31})
     with pytest.raises(_tts().TTSInputError) as excinfo:
         backend.generate("hi", voice="expr-voice-2-f")
-    assert "af_alloy" in str(excinfo.value) and "hf_alpha" in str(excinfo.value)
+    message = str(excinfo.value)
+    # Bounded, but it says how many voices exist and which families they are in,
+    # so a caller looking for Hindi can see the hf/hm groups.
+    assert "families:" in message and "hf (1)" in message and "2 voices" in message
     assert engine.calls == []  # nothing was synthesized with the wrong voice
 
 

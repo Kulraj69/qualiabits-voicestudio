@@ -127,16 +127,19 @@ def speech(base: str, result: dict, label: str, voice: str, text: str,
         row["elapsed_seconds"] = round(time.monotonic() - started, 3)
     row["http_status"] = status
     row["headers"] = headers
-    if status != expect:
+    if status >= 400:
+        # The engine's own refusal text travels with the evidence (it names the
+        # voices the loaded model offers); parse it whether or not the status
+        # was the one this request expected.
         try:
             error = json.loads(body).get("error", {})
             row["error_type"] = error.get("type")
             row["error_code"] = error.get("code")
             row["error_param"] = error.get("param")
-            # The engine's own refusal text: it names the voices available.
             row["error_message"] = (error.get("message") or "")[:400]
         except (ValueError, UnicodeError, AttributeError):
             row["error_code"] = None
+            row["error_message"] = ""
         return row
     if expect != 200:
         return row
@@ -203,13 +206,16 @@ def probe(base: str, result: dict, english: str, hindi: str, second_hindi_voice:
     result["english_audio"] = english_row["audio"]
     result["checks"].append("english_audio_returned")
 
-    # Refusals must be client errors that name the model's actual voices.
+    # Refusals must be client errors that name what the model offers.
     unknown = speech(base, result, "unknown_voice", "expr-voice-2-f", english, "en", expect=400)
     harness.require(unknown.get("http_status") == 400,
                     "An unknown voice was not refused with 400")
-    harness.require("hf_alpha" in (unknown.get("error_message") or ""),
-                    "The unknown-voice refusal does not list the model's voices")
-    result["checks"].append("unknown_voice_refused_with_voice_list")
+    message = unknown.get("error_message") or ""
+    harness.require(str(len(result["speaker_ids"])) in message and "families:" in message,
+                    "The unknown-voice refusal does not say what the model offers")
+    harness.require("hf" in message,
+                    "The unknown-voice refusal hides the Hindi voice families")
+    result["checks"].append("unknown_voice_refused_with_voice_families")
 
     out_of_range = speech(base, result, "out_of_range_speaker", "99", english, "en", expect=400)
     harness.require(out_of_range.get("http_status") == 400,
