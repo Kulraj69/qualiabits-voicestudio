@@ -1,0 +1,127 @@
+Verdict: FAIL. Strong diagnostic work, but it does not satisfy M1’s definition of done.
+
+1. Originality: 4/5
+
+Evidence:
+- The memorable technical insight is specific: Kokoro models were being loaded through the VITS path, causing either process failure or empty audio; see `tests/test_sherpa_kokoro_and_speaker.py:3-18` and commit `2af336925`.
+- Voice selection was not merely added; the work traces the API mismatch where `voice` was forwarded but only `speaker_id` was consumed. The resulting family-aware refusal is concrete and useful: `backend/services/tts_backend.py:3900-3945`.
+- This is more distinctive than a generic “add multilingual TTS” project.
+
+Deduction:
+- The idea is still an adapter fix inside an existing product, not a particularly novel product concept. The surprising moment is implementation-level rather than user-facing.
+
+2. Taste: 3/5
+
+Evidence:
+- The code comments and refusal message show deliberate product thinking: unknown voices identify counts and families instead of dumping an arbitrary list.
+- The probe records scope, provenance, hashes, audio measurements, and explicit negative flags: `scripts/m1_hindi_probe.py:226-255`.
+- The documentation is structured and readable in `docs/engines/sherpa-onnx.md`.
+
+Problems:
+- The documentation describes generic Piper/VITS setup but does not give a runnable Kokoro setup, despite Kokoro being the actual demonstrated path: `docs/engines/sherpa-onnx.md:23-40`, `54-63`.
+- Much of the submission reads like an evidence-generation system rather than a polished milestone deliverable.
+- The reports contain long procedural logs and repeated qualification language. They are careful, but not especially edited for a judge.
+
+3. Human feel: 4/5
+
+Evidence:
+- Commit messages are unusually specific and explain the failure mode rather than using generic “improve performance” language: commits `2af336925` and `2866a53dd`.
+- The probe’s honesty wording is personal and concrete: `scripts/m1_hindi_probe.py:17-22` and `235-245`.
+- The logs preserve rejected approaches and limitations rather than presenting an artificially clean success story.
+
+Deduction:
+- There is still some AI/process-report texture: repeated “What it is and is not” disclaimers, dense bullet inventories, and highly formal evidence language. It is substantially better than generic generated prose, but not fully natural product storytelling.
+
+4. Technical depth: 5/5
+
+Evidence:
+- Real API execution returned three non-silent WAVs through the actual backend:
+  - Hindi: 24 kHz mono PCM, 5.193 seconds.
+  - Second Hindi voice: 24 kHz mono PCM, 5.110 seconds.
+  - English: 24 kHz mono PCM, 4.913 seconds.
+  - Verified independently with `ffprobe`.
+- `result.json:19-145` records HTTP status, hashes, WAV measurements, voice IDs, and refusal behavior.
+- The implementation handles Kokoro-specific assets, ONNX metadata, named speaker resolution, numeric IDs, range validation, and empty audio: `backend/services/tts_backend.py:3660-3758`, `3841-3973`.
+- Tests cover the critical failure modes: configuration selection, metadata parsing, speaker lookup, API-facing voice selection, invalid voices, invalid ranges, and empty output: `tests/test_sherpa_kokoro_and_speaker.py:108-262`.
+- `M1-slot23-clean-tests.log` records 139 passed tests with only three warnings.
+- The independent ASR check is a real additional measurement, not a mocked assertion.
+
+Caveat:
+- The unit tests stub `sherpa_onnx`; the real-runtime confidence comes from the retained HTTP evidence, not from the test suite itself.
+
+5. Criteria fit: 2/5
+
+M1 definition extracted from the available log:
+
+- Overall M1 requires actual English/Hindi API synthesis on an approved spot GPU, architecture notes, passing tests, and independent review: `hermes-reports/V0-rounds.md:53-56`.
+- The slot-15 local definition requires proving ungated engines, real CPU API audio, measuring it, fixing findings, two independent reviews, and a fresh-copy replay: `hermes-reports/V0-rounds.md:238-242`.
+
+Evidence satisfied:
+- Real English and Hindi CPU API audio: `result.json:19-110`.
+- Audio measurement: `result.json:265-305`; independently confirmed with `ffprobe`.
+- Backend fix and focused regression tests: `backend/services/tts_backend.py:3870-3973`; `tests/test_sherpa_kokoro_and_speaker.py`.
+- Architecture documentation exists: `docs/engines/sherpa-onnx.md`.
+
+Criteria with no evidence:
+- Approved spot GPU run: explicitly false, `result.json:4-6`.
+- M1 completion: explicitly false, `result.json:4`.
+- Human listening check: explicitly false, `result.json:7` and `result.json:148`.
+- Hindi intelligibility: explicitly false, `result.json:7`; the ASR only recovered 46.2% of Hindi tokens, `asr_hindi.json:5-11`.
+- Two independent cheap+ judge reviews for this slot: no artifact was provided in the requested materials, and the log’s judge-review paragraph is intentionally unavailable for this run.
+- Fresh-copy replay for this exact slot: not evidenced in the requested artifacts.
+- Production acceptance: explicitly not claimed, `result.json:148` and `result.json:264`.
+
+The work meets much of the slot-15 diagnostic target but does not meet M1 itself.
+
+6. Reviewer path: 3/5
+
+Evidence:
+- A reviewer can inspect `result.json`, run `ffprobe`, inspect the focused tests, and trace the backend implementation in minutes.
+- The probe has a clear CLI interface: `scripts/m1_hindi_probe.py:322-335`.
+- The report includes model hashes, source hashes, environment details, and shutdown status.
+
+Problems:
+- A fresh clone does not contain the 114 MB ONNX model and 28 MB `voices.bin`; the model is operator-supplied through `OMNIVOICE_SHERPA_MODEL`, `result.json:156-194`.
+- The documentation does not explain how to obtain the exact Kokoro bundle or its required `dict/`, lexicons, `voices.bin`, and metadata layout.
+- The requested evidence directories and `scripts/m1_hindi_asr_check.py` are untracked in the current worktree, according to `git status`; they are not part of the committed HEAD shown by the two requested `git show --stat` commands.
+- The probe takes roughly 143 seconds on two CPUs, `result.json:324`, so “in minutes” is possible only if the external model is already available.
+
+7. Honesty: 5/5
+
+Evidence:
+- The result explicitly says `m1_complete: false`, `gpu_verified: false`, `intelligibility_verified: false`, and `listening_verified: false`: `result.json:4-7`.
+- The probe labels the licence statement as a publisher declaration rather than legal clearance: `result.json:194`.
+- The ASR result is not inflated: Hindi token recall is reported as 0.462, `asr_hindi.json:5-11`.
+- No claim of GPU success, intelligibility, or production readiness is backed by implication.
+- The audio files and measurements are real and consistent with the JSON.
+
+No honesty flaw found in the supplied artifacts.
+
+Five most damaging flaws
+
+1. It is not M1 completion.
+   - `hermes-reports/V0-rounds.md:53-56`
+   - `hermes-reports/M1-slot23-speech-r2/result.json:4-7`
+   - No approved GPU evidence, no listening check, and no M1-complete claim.
+
+2. The “Hindi works” result is only an audio-generation result, not a validated Hindi speech result.
+   - `asr_hindi.json:5-11`
+   - Only 6 of 13 expected tokens matched; `token_recall` is 0.462.
+   - The artifact correctly refuses to call this intelligibility, but that leaves a central M1 quality claim unresolved.
+
+3. The fresh-clone reviewer path is incomplete.
+   - `docs/engines/sherpa-onnx.md:23-40`
+   - `scripts/m1_hindi_probe.py:324-330`
+   - The exact Kokoro model acquisition and directory preparation are not documented, while the required model is external and absent from the repository.
+
+4. The strongest evidence is not in the committed HEAD.
+   - `git status --short` shows modified `hermes-reports/V0-rounds.md` plus untracked `hermes-reports/M1-slot23-speech-r1/`, `hermes-reports/M1-slot23-speech-r2/`, and `scripts/m1_hindi_asr_check.py`.
+   - The requested `git show --stat` output for `2af336925` and `2866a53dd` lists only backend/tests/probe changes, not the evidence artifacts.
+   - A stranger checking out HEAD cannot see the claimed WAVs or ASR results.
+
+5. The required independent-review and replay gates are not evidenced for this run.
+   - `hermes-reports/V0-rounds.md:238-242` requires two independent reviews and a fresh-copy replay for the local slot definition.
+   - No review artifacts were supplied, and the user explicitly instructed that the judge-review paragraph is not yet written.
+   - Therefore any claim that this slot passed its complete definition of done is not backed by an artifact.
+
+What would make it win: commit a reproducible Kokoro setup with exact model acquisition, provide the two independent reviews and fresh-copy replay, then complete the approved GPU run with human-verified, intelligible English and Hindi audio while keeping the current explicit honesty flags.

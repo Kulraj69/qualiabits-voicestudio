@@ -1,0 +1,91 @@
+1. Originality — 4/5
+
+Evidence:
+- The work identifies and fixes a real integration defect rather than adding a superficial demo: Kokoro models were incorrectly loaded through the VITS configuration, and named speakers were ignored (`tests/test_sherpa_kokoro_and_speaker.py:6-14`; `backend/services/tts_backend.py:3732-3758`).
+- It adds operator-supplied Kokoro support, Hindi voice selection, metadata parsing, refusal messages, and independent ASR evidence.
+- This is technically distinctive within the fork, though it is still an adapter around an existing sherpa-onnx/Kokoro stack rather than a novel model or product capability.
+
+2. Taste — 4/5
+
+Evidence:
+- The implementation is scoped: Kokoro detection is based on model metadata and `voices.bin`, while ordinary VITS models retain their existing path (`tests/test_sherpa_kokoro_and_speaker.py:132-172`).
+- The documentation includes setup, voice names, limitations, licensing caveats, and a runnable API example (`docs/engines/sherpa-onnx.md:65-100`).
+- The failed r1 run is preserved instead of hidden.
+- It is somewhat documentation-heavy and still leaves the reviewer to assemble the runtime/model environment. This is designed work, not a template dump, but not polished end-to-end product work.
+
+3. Human feel — 4/5
+
+Evidence:
+- The probe repeatedly distinguishes “audio produced” from intelligibility, listening, GPU verification, and M1 completion (`scripts/m1_hindi_probe.py:17-21`, `226-245`).
+- The ASR script explicitly calls its score a lower bound, not a quality or pronunciation judgment (`scripts/m1_hindi_asr_check.py:1-13`).
+- The prose has a clear authorial voice and records failures honestly.
+- There are still long explanatory blocks, bullet-heavy documentation, and recurring em-dash constructions. It does not read as generic AI filler, but it is not especially economical.
+
+4. Technical depth — 5/5
+
+Evidence:
+- Real HTTP requests against the real backend produced three WAV files: Hindi, a second Hindi voice, and English (`hermes-reports/M1-slot23-speech-r2/result.json:19-147`).
+- The result records 24 kHz mono PCM WAV output, non-silent audio, distinct audio hashes, model metadata, speaker IDs, shutdown verification, and source hashes.
+- ASR round trips provide independent machine evidence: Hindi 0.462 recall, second Hindi voice 0.692, English 0.917 (`asr_hindi.json:3-11`, `asr_hindi_second_voice.json:3-11`, `asr_english.json:3-11`).
+- The test suite covers metadata parsing, Kokoro asset selection, VITS compatibility, named/numeric speaker selection, invalid voices, range validation, and empty audio (`tests/test_sherpa_kokoro_and_speaker.py:106-262`).
+- Clean-test evidence reports 139 passed (`hermes-reports/M1-slot23-clean-tests.log:1-17`).
+- These tests would fail for several meaningful regressions; this is the strongest category.
+
+5. Criteria fit — 3/5
+
+Slot 15’s definition of done was:
+
+1. Prove which engines are ungated.
+2. Produce real audio through the real unmodified API on CPU.
+3. Measure the audio.
+4. Fix what the run exposes.
+5. Complete two independent cheap+ reviews.
+6. Complete a fresh-copy replay.
+7. Do not claim M1, GPU, Hindi, or production acceptance without evidence.
+
+Evidence by criterion:
+
+- Ungated engine: Partially supported. The result shows `acceptance_required: false`, no catalogue entry, and an operator-supplied sherpa model (`result.json:252-264`). However, it does not reproduce the slot-15 acceptance-logic analysis that established which shipped engines are ungated.
+- Real CPU API audio: Supported. The backend reports CPU and the three API requests returned HTTP 200 (`result.json:19-147`, `252-259`).
+- Audio measurement: Supported. WAV metadata, hashes, duration, RMS, peak, and ffprobe output are present.
+- Fix exposed defects: Supported. Kokoro loading and speaker routing are implemented and covered by tests.
+- Two independent cheap+ reviews: No artifact supplied. Nothing in HEAD demonstrates two completed independent reviews.
+- Fresh-copy replay: Not adequately supported. The clean test log proves a clean test run, not a clean-copy replay of the real speech probe.
+- No unsupported completion claim: Supported. `m1_complete`, `gpu_verified`, `intelligibility_verified`, and `listening_verified` are all false (`result.json:2-8`).
+
+This remains below the pass threshold because two required slot-15 acceptance items are missing, and the work explicitly does not complete M1.
+
+6. Reviewer path — 3/5
+
+Evidence:
+- A stranger can find the model download, environment variables, voice names, and curl request in `docs/engines/sherpa-onnx.md:65-90`.
+- The probe and ASR scripts are discoverable and the result JSON explains the run.
+- The path still requires installing dependencies, downloading a large external model, locating the correct unpacked directory, starting the backend, and separately locating the audio artifacts. There is no single fresh-clone command that says “run this, then inspect these committed outputs.”
+- The committed result references audio files, but those WAV files are not in Git. `git ls-files` lists the r2 JSON/manifest files but not `hermes-reports/M1-slot23-speech-r2/audio/*.wav`; the commit stat also omits the WAVs.
+- `result.json` records `tested_commit: 2866a53dd` and `worktree_dirty: true` (`result.json:318-320`), while the judged HEAD is `3fa89a68d`. That weakens reproducibility of the exact reported run.
+
+7. Honesty — 4/5
+
+Evidence:
+- The result explicitly says this is CPU-only and not M1 completion, GPU verification, listening verification, or intelligibility verification (`result.json:2-8`, `148`).
+- r1 remains as a failed round with its failure reason (`hermes-reports/M1-slot23-speech-r1/result.json:284-285`).
+- The ASR numbers are reported exactly and described as limited machine checks, not human judgments.
+- The main honesty defect is evidence packaging: the commit message says the Hindi run’s evidence was kept with the code, but the actual WAV payloads are absent from Git. A fresh clone cannot verify the audio claims from the committed tree alone. That is an evidence-integrity gap, though not an invented-result problem.
+
+Overall: FAIL
+
+Scores: 4 / 4 / 4 / 5 / 3 / 3 / 4
+
+Five most damaging remaining flaws:
+
+1. M1 is still explicitly incomplete: no approved GPU run, no GPU evidence, and no human listening check (`hermes-reports/V0-rounds.md:229-242`; `result.json:2-8`).
+
+2. The strongest proof is not reproducible from HEAD: the three WAV files are absent from Git even though the JSON points to them (`hermes-reports/M1-slot23-speech-r2/result.json:33-107`; `git ls-files` output; commit `3fa89a68d` stat).
+
+3. The current run does not include the required two independent cheap+ review artifacts. Slot 15 requires them (`hermes-reports/V0-rounds.md:238-242`), but none appear in the commit or requested evidence set.
+
+4. The claimed fresh-copy replay is incomplete: `clean-tests.log` proves 139 tests, not that the real Kokoro API probe and ASR round trip were rerun from a fresh clone; the result itself was generated against commit `2866a53dd` with a dirty worktree (`result.json:318-320`).
+
+5. Hindi intelligibility is weak and machine-only: the two Hindi round trips recover only 46.2% and 69.2% of expected tokens, with no human listener or pronunciation review (`asr_hindi.json:7-11`; `asr_hindi_second_voice.json:7-11`). “Hindi works” is not backed beyond “the model emitted audio that an ASR partially recognized.”
+
+It would win by adding a committed, independently reviewed fresh-clone replay with the WAVs included, then completing the owner-approved GPU run and human Hindi listening check while preserving the current caveats.

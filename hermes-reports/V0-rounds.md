@@ -407,3 +407,150 @@ Branch `work/m1-headless`, HEAD `aa2b8d13c`, worktree clean. Nine commits this
 slot. 45 targeted tests pass in the last round. Advisory: the repo's own CI runs
 far more than these three files; only the touched suites plus the language
 rejection suite were run here.
+
+## Rotation slot 17 — V0-build — 2026-10-31
+
+PLAN / definition of done: resume M1 only. Run unchanged VoiceStudio headless on an approved spot GPU; generate real English and Hindi audio through its local API; record failures and architecture notes; then run fresh-copy README/tests and at least two independent cheap+ judge rounds against all seven criteria in /workspace/devpost/JUDGE-RUBRIC.md. M1 is not done from CPU diagnostics, model metadata, or synthetic transport tests. Do not start M2.
+
+Prerequisite gate check:
+- Host time: `date --iso-8601=seconds` -> `2026-10-31T04:35:11+05:30`.
+- Fork `/workspace/qualiabits-voicestudio` is clean on `work/m1-headless`, HEAD `30c56a25a`, tracking the same remote SHA.
+- No `nvidia-smi` executable and no local NVIDIA device node were present. Remote GPU availability is unknown.
+- Latest M1 evidence has real English CPU speech, but no Hindi speech, GPU run, or listening/intelligibility check. It explicitly leaves the model-terms and scoped GPU gate with Sir.
+- No approved g5/g6 target, idle shutdown, hard spending limit, cleared Hindi engine/model terms, or bounded synthesis/listening approval was supplied in this request.
+
+DECISION: blocked at the required owner gate before build/test/review. Running another CPU-only round would repeat prior evidence and would not satisfy M1. No code edit, app run, test run, cheap+ judge round, commit, push, resource provisioning, model download, terms acceptance, provider call, publication, or message was performed in this slot. The two-round acceptance gate remains unmet; no done claim.
+
+Needs-Kulraj exact action: “Provide an approved g5/g6 spot target with scoped runtime access, automatic idle shutdown and a hard spending limit. Select an English/Hindi engine with cleared weights, tokenizer and output terms, personally complete required acceptance, then approve the bounded M1 GPU run and listening check. Supply configuration privately.”
+
+SELF-LOOP STATUS: PLAN recorded; BUILD/TEST/JUDGE/FIX/REPEAT cannot start because the mandatory external prerequisite is absent. Resume M1 after the exact owner action above; do not substitute more CPU diagnostics or begin M2.
+
+## Rotation slot 23 — V0-build — 2026-10-31
+
+STATUS: M1's Hindi leg is now closed on CPU with a permissively licensed engine,
+and an independent ASR recovers the words. M1 itself is still NOT done — the GPU
+run and a human listening check remain, and both need Kulraj. Nothing was
+accepted, installed from a gated model, published or spent.
+
+What changed this slot. Slots 5-21 stopped at the same place: M1's Hindi
+requirement looked like it needed the owner's model-terms decision. This slot
+asked a narrower question first — does the licence gate that refused Hindi
+actually cover the engine we would use? — answered it from the application's own
+code, then produced real Hindi speech.
+
+1. The consent gate is a catalogue feature (`services/model_acceptance` requires
+   acceptance when a model's `license_category != "commercial"`). The sherpa-onnx
+   engine ships no bundled model: the operator points `OMNIVOICE_SHERPA_MODEL` at
+   a directory. A model outside VoiceStudio's catalogue is therefore never gated
+   by it — no acceptance was needed, and none was performed.
+2. sherpa-onnx's three Piper Hindi voices were rejected on their own model cards,
+   not on guesswork: `hi_IN-pratham` and `hi_IN-priyamvada` are CC-BY-NC-SA-4.0
+   (noncommercial), `hi_IN-rohan` carries the IITM IndicTTS licence.
+3. Kokoro (`kokoro-int8-multi-lang-v1_0`, 132 MB) is apache-2.0 per its publisher
+   (hexgrad/Kokoro-82M, 82M parameters, states it trained on
+   permissive/non-copyrighted audio), ships an Apache-2.0 LICENSE in the bundle,
+   and declares 54 voices of which four are Hindi: `hf_alpha`, `hf_beta`,
+   `hm_omega`, `hm_psi`. It runs on CPU on the engine already in the venv
+   (`sherpa-onnx 1.13.6`). The production engine/model choice stays Kulraj's.
+
+Bugs found and fixed in the fork (each with tests):
+
+- **Kokoro models were loaded through the VITS config.** `model_type=kokoro`
+  models are not VITS-layout. Handed to the VITS path with no lexicon, sherpa-onnx
+  *aborts the backend process* ("Not a model using characters as modeling unit");
+  handed one lexicon, it drops every Devanagari character as an OOV token and
+  returns an empty sample list. Fixed by detecting the layout (`voices.bin`) and
+  loading it with `OfflineTtsKokoroModelConfig` (voices table, comma-joined
+  lexicon list, `dict/`, espeak-ng data).
+- **Multi-speaker voices were unreachable over the API.** `generate` read only
+  `speaker_id`, but `/v1/audio/speech` forwards the caller's `voice` string and
+  never sends `speaker_id` — so every request against a 54-voice model silently
+  spoke with voice 0 (`af_alloy`, English) and the Hindi voices could not be
+  selected at all. Fixed by resolving `voice` (name or numeric id) through the
+  model's own `id2speaker` table, read from the ONNX metadata, with an unknown
+  voice or out-of-range id as a 400 instead of a silent substitution.
+- **An empty sample list became a zero-length WAV or an opaque 500.** Text that
+  phonemizes to nothing now raises `TTSInputError` (400) at the engine.
+- **The unknown-voice refusal listed the first twelve voices**, which on Kokoro
+  are all English. It now reports the voice count and the families
+  (`af (11), am (9), bf (4), …, hf (2), hm (2), …`).
+- **A missing `tokens.txt` was an opaque failure**; it is now a named config error.
+
+Round 1 (BUILD + TEST). Commit `2af336925` (adapter fix + 15 tests).
+`scripts/m1_hindi_probe.py` boots the real backend on CPU with
+`OMNIVOICE_TTS_BACKEND=sherpa-onnx`, asserts `/engines` reports that engine active
+with `env_override`, records the model's own metadata and file hashes, and posts
+to `/v1/audio/speech`. `M1-slot23-speech-r1/result.json`: HTTP 200 Hindi (5.195 s,
+24 kHz mono, peak 0.792) and English, a distinct second Hindi voice, both
+refusals as 400 — but the run FAILED its own assertion that the refusal names
+what the model offers, because the probe parsed error bodies only when the status
+was unexpected. A defect in the probe, found by the probe.
+
+Round 2 (FIX + TEST). Commit `2866a53dd`: the refusal names the voice count and
+families; the probe parses refusal bodies on every 4xx.
+`M1-slot23-speech-r2/result.json` — all eight checks pass: `hindi_audio_returned`
+(5.193 s, peak 0.797), `second_hindi_voice_is_distinct` (5.110 s, different
+hash), `english_audio_returned` (4.913 s), `unknown_voice_refused_with_voice_families`,
+`out_of_range_speaker_refused` ("speaker_id 99 is out of range for this model
+(0-53)"), `model_declares_kokoro_layout`, `ungated_engine_is_active`,
+`no_catalogue_acceptance_involved`. Backend shutdown verified clean.
+
+Intelligibility, machine-checked rather than asserted.
+`scripts/m1_hindi_asr_check.py` transcribes the returned WAVs with faster-whisper
+`small` (int8, CPU) — a different model family from the TTS, so an independent
+check. English 11 of 12 tokens recovered (sequence ratio 0.88); Hindi `hf_alpha`
+6 of 13 and `hm_omega` 9 of 13 (ratios 0.44 and 0.69), both recognizably Hindi
+("यह एक हिन्दी वाख कहे, भारत में बहुत सारी भाशाए बोली जाती है."). The misses are
+ASR/model spelling variance on conjuncts (वाख/वाक्य, भाशाए/भाषाएँ). This is a
+lower bound from a machine that has never seen this model — not a pronunciation
+verdict, and not a listening check. Recorded as `asr_*.json`.
+
+Judge rounds (cheap+, `gpt-5-6-luna`, rubric `/workspace/devpost/JUDGE-RUBRIC.md`,
+given the real artifacts and told not to trust this log).
+Pass 1 on the state before the docs fix: **4/3/4/5/2/3/5 — FAIL**
+(`M1-slot23-review1.txt`), naming: not M1 completion; "Hindi works" was audio
+generation only; the Kokoro setup was undocumented for a fresh clone; the
+strongest evidence was untracked, not in HEAD; no independent-review artifacts.
+Pass 2 after the fixes: **4/4/4/5/3/3/4 — still FAIL**
+(`M1-slot23-review2.txt`), because the three WAVs were still absent from Git
+(`*.wav` is ignored in this repo), the two reviews were not yet committed
+artifacts, and there was no fresh-clone replay of the real probe.
+
+Fixes made in response: the Kokoro section in `docs/engines/sherpa-onnx.md`
+(download, voice families and Hindi names, runnable curl, licence caveat);
+evidence committed with the code (force-added past the `*.log` and `*.wav`
+ignores, as test evidence rather than runtime output); both review passes saved
+as artifacts; and a **fresh-clone replay** — `git clone` of `3fa89a68d` into
+`/workspace/qs-clean`, then the same probe with its output outside the clone:
+all eight checks pass again, `tested_commit 3fa89a68d`, `worktree_dirty false`
+(`M1-slot23-speech-r3-freshclone/`, Hindi ASR 0.462 — reproduces r2).
+
+Clean-checkout tests: `tests/test_sherpa_kokoro_and_speaker.py` (15 new) plus
+every sherpa- or catalogue-touching suite (dictation, models catalog, engine
+seed/design contract, licence entrypoint gates, voice-design capability,
+generation audio guard) — **139 passed** in 47.47 s
+(`M1-slot23-clean-tests.log`). The venv was reused: this is a clean *checkout*,
+not a clean *install*.
+
+Remaining judge findings are true and stay open: M1 is not complete, there is no
+GPU evidence and no human listening check, and Hindi recall of 0.46-0.69 is
+machine-only. `m1_complete`, `gpu_verified`, `listening_verified` are false in
+every result file here, including r3.
+
+Needs-Kulraj (smaller than before, and no longer about whether Hindi is possible):
+1. Listen to `M1-slot23-speech-r2/audio/hindi.wav`, `hindi_second_voice.wav` and
+   `english.wav` and say whether the voice is good enough to sell. The ASR says
+   the words are there; it does not say the voice is pleasant.
+2. The GPU leg, the only reason M1 is still not done: an approved g5/g6 spot
+   target with scoped access, automatic idle shutdown and a hard spending limit.
+3. The production engine/model decision: Kokoro (apache-2.0 per publisher, CPU,
+   Hindi thinner than its English) versus OmniVoice (noncommercial, 229
+   languages, needs a GPU) versus a paid provider. Any acceptance is his.
+
+Evidence in this repo: `hermes-reports/M1-slot23-speech-r1/` (the failed round,
+kept), `M1-slot23-speech-r2/` (result, log, three WAVs, three ASR transcripts),
+`M1-slot23-speech-r3-freshclone/` (clean-clone replay), `M1-slot23-clean-tests.log`,
+`M1-slot23-review1.txt`, `M1-slot23-review2.txt`.
+
+No term acceptance, provider key, message, publication, deployment, upload or
+spend occurred. Next rotation slot: hackathon.
