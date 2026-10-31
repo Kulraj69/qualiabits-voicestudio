@@ -1,0 +1,304 @@
+{
+  "scope": "cpu_english_and_hindi_speech_operator_supplied_kokoro",
+  "engine": "sherpa-onnx",
+  "m1_complete": false,
+  "gpu_verified": false,
+  "hindi_audio_produced": true,
+  "intelligibility_verified": false,
+  "listening_verified": false,
+  "checks": [
+    "model_declares_kokoro_layout",
+    "ungated_engine_is_active",
+    "no_catalogue_acceptance_involved",
+    "hindi_audio_returned",
+    "second_hindi_voice_is_distinct",
+    "english_audio_returned"
+  ],
+  "requests": [
+    {
+      "label": "hindi",
+      "voice": "hf_alpha",
+      "language": "hi",
+      "expected_status": 200,
+      "elapsed_seconds": 40.92,
+      "http_status": 200,
+      "headers": {
+        "content-disposition": "inline; filename=\"speech.wav\"; filename*=UTF-8''speech.wav",
+        "content-length": "249390",
+        "content-type": "audio/wav",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "audio_sha256": "a8cf052198cb768b56ab5f166eaa8b7526f4cb25e030b6b0ce53f329dc831cf9",
+      "audio_bytes": 249390,
+      "audio_file": "hindi.wav",
+      "audio": {
+        "audio_format": 1,
+        "channels": 1,
+        "sample_rate": 24000,
+        "byte_rate": 48000,
+        "bits_per_sample": 16,
+        "data_bytes": 249346,
+        "data_truncated": false,
+        "frames": 124673,
+        "duration_seconds": 5.195,
+        "peak": 0.791687,
+        "rms": 0.157641,
+        "non_silent": true
+      }
+    },
+    {
+      "label": "hindi_second_voice",
+      "voice": "hm_omega",
+      "language": "hi",
+      "expected_status": 200,
+      "elapsed_seconds": 28.045,
+      "http_status": 200,
+      "headers": {
+        "content-disposition": "inline; filename=\"speech.wav\"; filename*=UTF-8''speech.wav",
+        "content-length": "245304",
+        "content-type": "audio/wav",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "audio_sha256": "6fa8da5edbabdd73976258bf86467efdae2e26bcc609cf0f5cb84419e576c69f",
+      "audio_bytes": 245304,
+      "audio_file": "hindi_second_voice.wav",
+      "audio": {
+        "audio_format": 1,
+        "channels": 1,
+        "sample_rate": 24000,
+        "byte_rate": 48000,
+        "bits_per_sample": 16,
+        "data_bytes": 245260,
+        "data_truncated": false,
+        "frames": 122630,
+        "duration_seconds": 5.11,
+        "peak": 0.790527,
+        "rms": 0.138944,
+        "non_silent": true
+      }
+    },
+    {
+      "label": "english",
+      "voice": "af_bella",
+      "language": "en",
+      "expected_status": 200,
+      "elapsed_seconds": 25.341,
+      "http_status": 200,
+      "headers": {
+        "content-disposition": "inline; filename=\"speech.wav\"; filename*=UTF-8''speech.wav",
+        "content-length": "235928",
+        "content-type": "audio/wav",
+        "x-omnivoice-backend": "0.5.7"
+      },
+      "audio_sha256": "f2cc35c62dac2aeeac6e2d7a8ebf3153a1d4ec3ed09f922070965ebebfc159fe",
+      "audio_bytes": 235928,
+      "audio_file": "english.wav",
+      "audio": {
+        "audio_format": 1,
+        "channels": 1,
+        "sample_rate": 24000,
+        "byte_rate": 48000,
+        "bits_per_sample": 16,
+        "data_bytes": 235884,
+        "data_truncated": false,
+        "frames": 117942,
+        "duration_seconds": 4.914,
+        "peak": 0.803741,
+        "rms": 0.131619,
+        "non_silent": true
+      }
+    },
+    {
+      "label": "unknown_voice",
+      "voice": "expr-voice-2-f",
+      "language": "en",
+      "expected_status": 400,
+      "elapsed_seconds": 0.059,
+      "http_status": 400,
+      "headers": {
+        "content-length": "563",
+        "content-type": "application/json",
+        "x-omnivoice-backend": "0.5.7"
+      }
+    }
+  ],
+  "honesty_note": "hindi_audio_produced means the real engine returned non-silent audio for Devanagari text from a voice the model declares as Hindi. Nobody has listened to it and no ASR has checked the words, so no intelligibility or acceptance claim is made.",
+  "host": {
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpu_model": "AMD EPYC 7571",
+    "cpu_count": 2,
+    "python": "3.12.3"
+  },
+  "model": {
+    "directory": "kokoro-int8-multi-lang-v1_0",
+    "files": {
+      "model.int8.onnx": {
+        "sha256": "75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e",
+        "bytes": 114202993
+      },
+      "tokens.txt": {
+        "sha256": "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425",
+        "bytes": 687
+      },
+      "voices.bin": {
+        "sha256": "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29",
+        "bytes": 28200960
+      },
+      "LICENSE": {
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "bytes": 11358
+      },
+      "README.md": {
+        "sha256": "87359cd32dfdff6dfeb16633b5a116aee3b9ac69dec3302378270a2cab9885b1",
+        "bytes": 730
+      }
+    },
+    "onnx_metadata": {
+      "model_type": "kokoro",
+      "sample_rate": "24000",
+      "n_speakers": "54",
+      "speaker_names": "af_alloy,af_aoede,af_bella,af_heart,af_jessica,af_kore,af_nicole,af_nova,af_river,af_sarah,af_sky,am_adam,am_echo,am_eric,am_fenrir,am_liam,am_michael,am_onyx,am_puck,am_santa,bf_alice,bf_emma,bf_isabella,bf_lily,bm_daniel,bm_fable,bm_george,bm_lewis,ef_dora,em_alex,ff_siwis,hf_alpha,hf_beta,hm_omega,hm_psi,if_sara,im_nicola,jf_alpha,jf_gongitsune,jf_nezumi,jf_tebukuro,jm_kumo,pf_dora,pm_alex,pm_santa,zf_xiaobei,zf_xiaoni,zf_xiaoxiao,zf_xiaoyi,zm_yunjian,zm_yunxi,zm_yunxia,zm_yunyang,em_santa",
+      "id2speaker": "0->af_alloy,1->af_aoede,2->af_bella,3->af_heart,4->af_jessica,5->af_kore,6->af_nicole,7->af_nova,8->af_river,9->af_sarah,10->af_sky,11->am_adam,12->am_echo,13->am_eric,14->am_fenrir,15->am_liam,16->am_michael,17->am_onyx,18->am_puck,19->am_santa,20->bf_alice,21->bf_emma,22->bf_isabella,23->bf_lily,24->bm_daniel,25->bm_fable,26->bm_george,27->bm_lewis,28->ef_dora,29->em_alex,30->ff_siwis,31->hf_alpha,32->hf_beta,33->hm_omega,34->hm_psi,35->if_sara,36->im_nicola,37->jf_alpha,38->jf_gongitsune,39->jf_nezumi,40->jf_tebukuro,41->jm_kumo,42->pf_dora,43->pm_alex,44->pm_santa,45->zf_xiaobei,46->zf_xiaoni,47->zf_xiaoxiao,48->zf_xiaoyi,49->zm_yunjian,50->zm_yunxi,51->zm_yunxia,52->zm_yunyang,53->em_santa",
+      "language": "multi-lang, e.g., English, Chinese"
+    },
+    "hindi_voices_in_table": [
+      "hf_alpha",
+      "hf_beta",
+      "hm_omega",
+      "hm_psi"
+    ],
+    "licence_claim": "The bundle ships an Apache-2.0 LICENSE; the weights' publisher (hexgrad/Kokoro-82M) declares apache-2.0 and states the model was trained on permissive/non-copyrighted audio. Recorded as the publisher's declaration, NOT a legal clearance and NOT this run's decision to make \u2014 the production engine/model choice stays the owner's."
+  },
+  "speaker_ids": {
+    "af_alloy": 0,
+    "af_aoede": 1,
+    "af_bella": 2,
+    "af_heart": 3,
+    "af_jessica": 4,
+    "af_kore": 5,
+    "af_nicole": 6,
+    "af_nova": 7,
+    "af_river": 8,
+    "af_sarah": 9,
+    "af_sky": 10,
+    "am_adam": 11,
+    "am_echo": 12,
+    "am_eric": 13,
+    "am_fenrir": 14,
+    "am_liam": 15,
+    "am_michael": 16,
+    "am_onyx": 17,
+    "am_puck": 18,
+    "am_santa": 19,
+    "bf_alice": 20,
+    "bf_emma": 21,
+    "bf_isabella": 22,
+    "bf_lily": 23,
+    "bm_daniel": 24,
+    "bm_fable": 25,
+    "bm_george": 26,
+    "bm_lewis": 27,
+    "ef_dora": 28,
+    "em_alex": 29,
+    "ff_siwis": 30,
+    "hf_alpha": 31,
+    "hf_beta": 32,
+    "hm_omega": 33,
+    "hm_psi": 34,
+    "if_sara": 35,
+    "im_nicola": 36,
+    "jf_alpha": 37,
+    "jf_gongitsune": 38,
+    "jf_nezumi": 39,
+    "jf_tebukuro": 40,
+    "jm_kumo": 41,
+    "pf_dora": 42,
+    "pm_alex": 43,
+    "pm_santa": 44,
+    "zf_xiaobei": 45,
+    "zf_xiaoni": 46,
+    "zf_xiaoxiao": 47,
+    "zf_xiaoyi": 48,
+    "zm_yunjian": 49,
+    "zm_yunxi": 50,
+    "zm_yunxia": 51,
+    "zm_yunyang": 52,
+    "em_santa": 53
+  },
+  "health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "ready_seconds": 15.532,
+  "active_tts_backend": "sherpa-onnx",
+  "env_override": true,
+  "catalogue_entries_for_engine": [],
+  "catalogue_tts_entries": [],
+  "acceptance_required": false,
+  "model_terms_accepted_by_probe": 0,
+  "claim_basis": "the engine is the shipped sherpa-onnx runtime and the voice model is operator-supplied through OMNIVOICE_SHERPA_MODEL, so VoiceStudio's per-model catalogue acceptance gate does not cover it and was never invoked. The licence facts recorded here are the publisher's own declarations, not a legal clearance.",
+  "hindi_audio": {
+    "audio_format": 1,
+    "channels": 1,
+    "sample_rate": 24000,
+    "byte_rate": 48000,
+    "bits_per_sample": 16,
+    "data_bytes": 249346,
+    "data_truncated": false,
+    "frames": 124673,
+    "duration_seconds": 5.195,
+    "peak": 0.791687,
+    "rms": 0.157641,
+    "non_silent": true
+  },
+  "hindi_second_voice_audio": {
+    "audio_format": 1,
+    "channels": 1,
+    "sample_rate": 24000,
+    "byte_rate": 48000,
+    "bits_per_sample": 16,
+    "data_bytes": 245260,
+    "data_truncated": false,
+    "frames": 122630,
+    "duration_seconds": 5.11,
+    "peak": 0.790527,
+    "rms": 0.138944,
+    "non_silent": true
+  },
+  "english_audio": {
+    "audio_format": 1,
+    "channels": 1,
+    "sample_rate": 24000,
+    "byte_rate": 48000,
+    "bits_per_sample": 16,
+    "data_bytes": 235884,
+    "data_truncated": false,
+    "frames": 117942,
+    "duration_seconds": 4.914,
+    "peak": 0.803741,
+    "rms": 0.131619,
+    "non_silent": true
+  },
+  "failure_type": "ProbeFailure",
+  "failure": "The unknown-voice refusal does not list the model's voices",
+  "server_exit_code": -15,
+  "startup_stall_warning": false,
+  "shutdown_verified": true,
+  "source_sha256": {
+    "backend/main.py": "172f9a29e1428840831a275bf7573525698ddfe1425d64897720afd6f99a364b",
+    "backend/services/tts_backend.py": "54703ca086ecd40960934b3bf8ec3c17b6a0973260dd66233b47f70f182200ee",
+    "backend/api/routers/openai_compat.py": "ab3e3984507decde0ef3f95fab1ac2bc35c9b74a0b961c3ff06d6d70dba25a48",
+    "uv.lock": "3d71f254a496bfb8132d612acb73280362063b078b30171da4cf5f876446d842",
+    "scripts/m1_hindi_probe.py": "5071b1cf5bbcda82be2aff612b337544c735b8189dcafbdbe1f64b31d31dd443",
+    "tests/test_sherpa_kokoro_and_speaker.py": "a68dda917559fe630b136a97febbb3873f59760e1a9dd2379bae7dc8c22782ca"
+  },
+  "tested_commit": "2af336925527da3c06a085a0ad446cd18a4496e7",
+  "tested_branch": "work/m1-headless",
+  "worktree_dirty": true,
+  "tracked_files_hashed": 4775,
+  "tracked_gitlinks": 1,
+  "tracked_entries": 4776,
+  "elapsed_seconds": 141.13
+}

@@ -1,0 +1,12 @@
+{
+  "wav": "hindi_second_voice.wav",
+  "asr": "faster-whisper small (int8, CPU)",
+  "language_hint": "hi",
+  "elapsed_seconds": 37.23,
+  "expected_tokens": 13,
+  "heard_tokens": 13,
+  "matched_tokens": 9,
+  "token_recall": 0.692,
+  "sequence_ratio": 0.692,
+  "heard": "यह एक हिन्दी वाख कहे, भारत में बहुत सारी भाशाए बोली जाती है."
+}

@@ -1,0 +1,12 @@
+{
+  "wav": "hindi.wav",
+  "asr": "faster-whisper small (int8, CPU)",
+  "language_hint": "hi",
+  "elapsed_seconds": 40.7,
+  "expected_tokens": 13,
+  "heard_tokens": 14,
+  "matched_tokens": 6,
+  "token_recall": 0.462,
+  "sequence_ratio": 0.444,
+  "heard": "यहा एक हिंदी वाख क्या है, बारत में बहुत सारी भाशाए बोली जाती है."
+}

@@ -62,6 +62,43 @@ export OMNIVOICE_SHERPA_MODEL="$PWD/vits-piper-en_US-lessac-medium"
 Any other Piper voice is set up identically; just swap in its archive name and
 the folder it unpacks to.
 
+### Example: a multilingual Kokoro bundle (54 voices, four of them Hindi)
+
+Kokoro releases are a different layout from Piper/VITS — a voice table, two
+lexicons and a `dict/` folder next to the graph — and VoiceStudio picks the
+right config from `voices.bin`, so none of it needs configuring by hand:
+
+```bash
+curl -LO https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2
+tar xjf kokoro-int8-multi-lang-v1_0.tar.bz2   # if bzip2 is missing: python3 -c "import tarfile;tarfile.open('kokoro-int8-multi-lang-v1_0.tar.bz2','r:bz2').extractall()"
+export OMNIVOICE_SHERPA_MODEL="$PWD/kokoro-int8-multi-lang-v1_0"
+export OMNIVOICE_TTS_BACKEND=sherpa-onnx
+```
+
+132 MB, 24 kHz output, no GPU. Speak with one of its voices by name — the name
+comes from the model's own `id2speaker` table, and so does the numeric id:
+
+```bash
+curl -s localhost:8000/v1/audio/speech -H 'content-type: application/json' \
+  -d '{"model":"sherpa-onnx","voice":"hf_alpha","language":"hi",
+       "input":"यह एक हिन्दी वाक्य है।","response_format":"wav"}' -o hindi.wav
+```
+
+Voice families in this bundle: `af` (11) and `am` (9) American English, `bf`/
+`bm` British, `ef`/`em` Spanish, `ff` French, `hf` (2) and `hm` (2) Hindi,
+`if`/`im` Italian, `jf`/`jm` Japanese, `pf`/`pm` Portuguese, `zf`/`zm` Chinese.
+Hindi voices: `hf_alpha`, `hf_beta` (female), `hm_omega`, `hm_psi` (male).
+An unknown or out-of-range voice is refused with a 400 that reports the voice
+count and these families, rather than silently speaking with voice 0.
+
+Two things to know before shipping Hindi with it. Kokoro's Hindi is thinner
+than its English — a faster-whisper round trip on this bundle's `hf_alpha`
+recovered 6 of 13 Hindi words and 11 of 12 English words — and the bundle ships
+an Apache-2.0 LICENSE while the weights' publisher (hexgrad/Kokoro-82M, 82M
+parameters) declares apache-2.0 and states it trained on permissive audio. That
+is the publisher's declaration; clearing a model for production is the
+operator's call, not VoiceStudio's.
+
 ## Licences
 
 Models supplied through this directory remain subject to their own licence
@@ -75,14 +112,18 @@ the unpacked folder before using or distributing generated audio.
   its own sample rate is used.
 - CPU is the universal baseline; the CUDA onnxruntime provider is available
   on Linux/Windows installs.
-- **No cloning**: voices come from the model itself. Multi-speaker VITS
-  models select a voice by numeric speaker id; speed is supported.
+- **No cloning**: voices come from the model itself. A multi-speaker model
+  (VITS, Kokoro) selects its voice through the request's `voice` — by name from
+  the model's own table, or by numeric speaker id; speed is supported.
 - Languages depend entirely on the model you download.
 
 ## Known limits
 
 - One model at a time — switching models means changing
   `OMNIVOICE_SHERPA_MODEL` and restarting.
+- A Kokoro bundle is only loaded as Kokoro when `voices.bin` sits next to the
+  graph. Strip that file and the engine treats it as VITS and gets nothing
+  speakable out of it.
 - No voice design, no reference-audio cloning, no emotion controls
   (see [expressive-speech.md](../expressive-speech.md)).
 

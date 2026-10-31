@@ -1,0 +1,12 @@
+{
+  "wav": "english.wav",
+  "asr": "faster-whisper small (int8, CPU)",
+  "language_hint": "en",
+  "elapsed_seconds": 26.13,
+  "expected_tokens": 12,
+  "heard_tokens": 13,
+  "matched_tokens": 11,
+  "token_recall": 0.917,
+  "sequence_ratio": 0.88,
+  "heard": "Voice Studio is generating this English sentence on a CPU with no GPU."
+}
