@@ -9,10 +9,12 @@
 # is done. You do not start anything by hand and you do not need to stop anything.
 #
 # What a pass means: two workspaces signed up, keys minted, Hindi and English
-# WAVs came back through the control plane from the real engine, the meter
-# matched the audio and stayed inside its workspace, and both processes shut down
-# cleanly. What it does not mean: nothing is deployed, there is no GPU, no human
-# has listened to the audio, and M1 stays open.
+# WAVs came back through the control plane from the real engine, a longer Hindi
+# job was queued and spoken by a separate worker process and fetched back out of
+# the object store, the meter matched the audio and stayed inside its workspace,
+# and every process it started shut down cleanly. What it does not mean: nothing
+# is deployed, there is no GPU, no S3 bucket, no human has listened to the audio,
+# and M1 stays open.
 #
 # The fast path, if you only want to see the tests: .venv/bin/python -m pytest tests/hosted -q
 set -euo pipefail
@@ -75,7 +77,9 @@ check "$MODEL/voices.bin" "$SHA_VOICES"
 
 OUT="$WORK/evidence-$(date +%Y%m%d-%H%M%S)"
 LOG="$WORK/hosted_e2e.log"
-echo "==> running the end-to-end proof (about a minute and a half on a small CPU box)"
+echo "==> running the end-to-end proof (several minutes on a small CPU box; the"
+echo "    queued job is the slow part — this engine spends seconds of CPU per"
+echo "    second of speech)"
 echo "    evidence goes to $OUT"
 # The harness prints its own JSON summary; keep it in the evidence directory so
 # this output stays readable, and let the block below say what happened.
@@ -93,6 +97,21 @@ for row in result.get("speech", []):
     print(f"  {row['label']:<16} {row['voice']:<9} {row['language']}  "
           f"{row['seconds']} s at {row['sample_rate']} Hz, peak {row['peak']}, "
           f"engine took {row['engine_seconds_header']} s")
+job = result.get("job")
+if job:
+    stats = job.get("worker_stats", {})
+    print(f"  queued job {job['id']:<6} {job['characters']} characters, {job['seconds']} s "
+          f"at 24 kHz, sha256 {job['sha256'][:12]}…, engine took {job['engine_seconds']} s, "
+          f"worker claimed/succeeded {stats.get('claimed')}/{stats.get('succeeded')}")
+refused = result.get("job_refused")
+if refused:
+    print(f"  refused job {refused['id']:<4} {refused['status']} "
+          f"{refused['status_code']} after {refused['attempts']} attempt: {refused['error'][:60]}")
+cancelled = result.get("job_cancelled")
+if cancelled:
+    stats = cancelled.get("worker_stats", {})
+    print(f"  cancelled job {cancelled['id']:<4} never claimed "
+          f"(worker claimed {stats.get('claimed')})")
 meter = result.get("usage_workspace_a") or {}
 print(f"  meter for workspace A: {meter.get('requests')} requests, "
       f"{meter.get('characters')} characters, {meter.get('audio_seconds')} s of audio")

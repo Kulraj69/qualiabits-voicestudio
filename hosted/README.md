@@ -1,15 +1,20 @@
 # The hosted control plane
 
-The product side of this fork: customers, logins, API keys and a usage meter, in
-front of the engine. The engine stays what it is — a local speech server — and
-this layer is what turns it into something a business can buy.
+The product side of this fork: customers, logins, API keys, a usage meter, an object
+store and a job queue, in front of the engine. The engine stays what it is — a local
+speech server — and this layer is what turns it into something a business can buy.
 
 Not deployed. Not public. No GPU. Nothing here has been sold to anyone.
 
 ```
 hosted/control_plane/         the plane itself
-hosted/scripts/hosted_e2e.py  the end-to-end proof: starts both processes itself
-hosted/scripts/hosted_demo.sh one command around it, with the model handling
+hosted/control_plane/jobs.py  the queue: claims, leases, retries, the receipt
+hosted/control_plane/storage.py  where audio lives, and what the backends refuse
+hosted/control_plane/migrations.py  bringing an older database forward
+hosted/worker/runner.py       the worker: one job at a time, heartbeated
+hosted/scripts/hosted_e2e.py  the end-to-end proof: starts every process itself
+hosted/scripts/run_worker.py  the worker as a process, for a deployment or --once
+hosted/scripts/hosted_demo.sh one command around all of it, with the model handling
 tests/hosted/                 its tests
 ```
 
@@ -20,13 +25,14 @@ hosted/scripts/hosted_demo.sh
 ```
 
 It finds the Kokoro bundle (or downloads it and checks three sha256 values against
-pinned ones), verifies the model bytes, then starts BOTH the engine and the plane
-on reserved loopback sockets, runs the whole proof, stops them, and prints what
-passed. Nothing to start by hand, nothing left running. About a minute and a half
-on a small CPU box, inside whatever work directory you pass as an argument
+pinned ones), verifies the model bytes, then starts the engine, the plane and the
+worker on reserved loopback sockets, runs the whole proof, stops them, and prints
+what passed. Nothing to start by hand, nothing left running. Several minutes on a
+small CPU box — the queued job is the slow part, because this engine spends seconds
+of CPU per second of speech. Evidence lands in whatever work directory you pass
 (`.hosted-demo` by default).
 
-The tests are the faster path and need no model at all, about eleven seconds:
+The tests are the faster path and need no model at all, about twenty-five seconds:
 
 ```sh
 .venv/bin/python -m pytest tests/hosted -q
@@ -36,7 +42,7 @@ The tests are the faster path and need no model at all, about eleven seconds:
 
 | Route | Who may call it | What it does |
 | --- | --- | --- |
-| `GET /healthz` | anyone | is the plane up, and which schema is it on |
+| `GET /healthz` | anyone | is the plane up, on which schema, with how many jobs in each state |
 | `GET /healthz/upstream` | anyone | is the engine behind it up |
 | `POST /v1/workspaces` | anyone | signup: email + password, one workspace per customer |
 | `POST /v1/auth/token` | anyone | email + password → session token |
@@ -44,14 +50,18 @@ The tests are the faster path and need no model at all, about eleven seconds:
 | `GET /v1/api-keys` | session | list keys — never key material |
 | `DELETE /v1/api-keys/{id}` | session | revoke one of your own keys |
 | `GET /v1/usage` | session or key | this workspace's meter, and its key-by-key breakdown |
-| `POST /v1/audio/speech` | API key | metered passthrough to the engine |
+| `POST /v1/audio/speech` | API key | metered passthrough to the engine, for one short request |
+| `POST /v1/jobs` | session or key | queue a longer piece of speech (up to 20,000 characters) |
+| `GET /v1/jobs` | session or key | your jobs, newest first, with a status filter |
+| `GET /v1/jobs/{id}` | session or key | one of your jobs, with its full text |
+| `DELETE /v1/jobs/{id}` | session or key | cancel a job that has not been claimed |
+| `GET /v1/jobs/{id}/audio` | session or key | the stored audio of a finished job |
 
-Not in yet, and named as the next slices: object storage (S3) for generated
-audio, the per-workspace job queue, email verification, billing, deployment.
+Not in yet, and named as the next slices: email verification, billing, deployment.
 
 ## Run it by hand
 
-The demo script above is the short path. This is the same thing as two long-lived
+The demo script above is the short path. This is the same thing as three long-lived
 processes, which is what you want while working on it. It assumes a venv built
 with `uv sync --frozen --no-default-groups --group cpu --group dev`, and the
 Kokoro bundle from `docs/engines/sherpa-onnx.md`.
@@ -65,10 +75,18 @@ export OMNIVOICE_TTS_BACKEND=sherpa-onnx
 # terminal 2 — the control plane in front of it
 export QUALI_UPSTREAM_BASE_URL=http://127.0.0.1:3900
 export QUALI_DATABASE_URL="sqlite:///$PWD/.hosted/control-plane.db"
+export QUALI_STORAGE_DIR="$PWD/.hosted/objects"
 .venv/bin/python -m uvicorn hosted.control_plane.app:app --port 8080
+
+# terminal 3 — a worker, which is what actually speaks the queued jobs. Without
+# one, jobs sit in `queued` forever; that is the point of a queue.
+export QUALI_UPSTREAM_BASE_URL=http://127.0.0.1:3900
+export QUALI_DATABASE_URL="sqlite:///$PWD/.hosted/control-plane.db"
+export QUALI_STORAGE_DIR="$PWD/.hosted/objects"
+.venv/bin/python hosted/scripts/run_worker.py            # polls forever
 ```
 
-Then, in a third terminal, do exactly this:
+Then, in a fourth terminal, do exactly this:
 
 ```sh
 BASE=http://127.0.0.1:8080
@@ -85,23 +103,35 @@ curl -sS -X POST $BASE/v1/auth/token \
 
 # 3. mint a key. The api_key value is shown this once; only its digest is stored.
 curl -sS -X POST $BASE/v1/api-keys \
-  -H "Authorization: Bearer $SESSION" \
+  -H "Authorization: Bearer TOKEN_FROM_STEP_2" \
   -H 'content-type: application/json' -d '{"label":"laptop"}'
 
 # 4. speak. Real audio comes back, proxy-passed from the engine.
 curl -sS -X POST $BASE/v1/audio/speech \
-  -H "Authorization: Bearer $QBV_KEY" \
+  -H "Authorization: Bearer KEY_FROM_STEP_3" \
   -H 'content-type: application/json' \
   -d '{"input":"यह एक हिन्दी वाक्य है।","voice":"hf_alpha","response_format":"wav"}' \
   --output hindi.wav
 
-# 5. read the meter. characters are what you asked for, audio_seconds are what
-#    arrived, measured from the WAV you just received.
-curl -sS $BASE/v1/usage -H "Authorization: Bearer $QBV_KEY"
+# 5. queue a longer piece of speech. 202 with an id. Nothing is spoken yet.
+curl -sS -X POST $BASE/v1/jobs \
+  -H "Authorization: Bearer KEY_FROM_STEP_3" \
+  -H 'content-type: application/json' \
+  -d '{"input":"नमस्ते। यह लंबा वाक्य कतार से बोला जाएगा।","voice":"hm_omega"}'
+
+# 6. poll it until the worker has spoken it, then take the audio out of the store.
+curl -sS $BASE/v1/jobs/1 -H "Authorization: Bearer KEY_FROM_STEP_3"
+curl -sS $BASE/v1/jobs/1/audio -H "Authorization: Bearer KEY_FROM_STEP_3" \
+  --output job1.wav
+file job1.wav        # RIFF 24 kHz mono; sha256 matches the job's own receipt
+
+# 7. read the meter. characters are what you asked for, audio_seconds are what
+#    arrived, measured from the WAV you actually received — both routes, once each.
+curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
 ```
 
 What a pass looks like: see "Measured" below, which quotes
-`hermes-reports/M2-slot25-e2e-r3-freshclone/result.json` — the clean-clone run.
+`hermes-reports/M2-slot27-e2e-r1/result.json` — the clean-clone run.
 
 ## How it is put together
 
@@ -137,26 +167,120 @@ the workspace total rather than silently under-report.
 
 **What is deliberately absent.** No route takes a workspace id, so a customer
 cannot even ask for someone else's numbers. Speaking always requires a key, so
-every byte of audio is attributable. Revoking twice is fine; revoking someone
-else's key is a 404, not a 403, so key ids are not a probe.
+every byte of audio is attributable. (A job may be queued from the dashboard
+instead, and then it is attributed to the workspace; the meter's `by_key` is empty
+rather than inventing a key.) Revoking twice is fine; revoking someone else's key
+is a 404, not a 403, so key ids are not a probe. A job id that belongs to another
+workspace answers exactly like one that does not exist.
+
+## How a job works
+
+`POST /v1/audio/speech` is a passthrough: it holds your connection open while the
+engine speaks. That is fine for a sentence and wrong for a paragraph, which is what
+`POST /v1/jobs` is for. A job is a row, not a thread: it survives a restart of
+anything, and its status is the answer to "what happened to my work".
+
+```
+POST /v1/jobs   -> 202, status queued, nothing spoken yet, meter untouched
+worker process  -> claims it, asks the engine, stores the bytes, settles the job
+GET /v1/jobs/{id}      -> queued | running | succeeded | failed | cancelled
+GET /v1/jobs/{id}/audio -> the stored WAV (409 until it is finished)
+```
+
+Three mechanisms keep "one worker per job" true, and each has its own test:
+
+1. **Claiming is a compare-and-swap.** The worker reads a candidate id, then issues
+   one `UPDATE ... WHERE id = :candidate AND <still claimable>` and believes only a
+   rowcount of 1. Two workers that read the same candidate both write, and the loser's
+   `WHERE` no longer matches. This is what SQLite has instead of
+   `SELECT ... FOR UPDATE SKIP LOCKED`, and it is checked with four worker threads
+   racing over twelve jobs.
+2. **A lease, not a lock.** A claim is valid until `lease_expires_at`; a worker that
+   dies holding a job releases it by not renewing. The worker heartbeats every third
+   of the lease while the engine works, so a slow job does not lose the lease it is
+   using.
+3. **Bounded attempts, and a sweep for the last one.** A claim requires an attempt
+   in hand, so a job whose lease expired on its final attempt would sit `running`
+   forever. The next claim pass fails it and writes the usage event it owes.
+
+**Which failures retry.** The engine not answering (502/504) is our side of the
+wire, so the job goes back to `queued` until its attempts run out. The engine's own
+refusal (400) is deterministic, so it fails the job on the first try with the
+engine's own message — spending two more minutes of CPU to be told the same thing
+is not diligence. **Cancelling** a queued job is free: nothing reached the engine, so
+the meter never sees it.
+
+**One usage event per job**, written when the job reaches a terminal state. A retry
+after our own 502 is not a second order, so the characters are counted once. Engine
+time burned on attempts that were discarded is kept separately as
+`wasted_engine_seconds`, so no single number implies we did work we threw away.
+
+## Where the audio lives
+
+Bytes go to an object store; the job row keeps the key, the digest and the length.
+Keys are content addresses — `<sha256[:2]>/<sha256[2:4]>/<sha256>.wav` — so two
+identical WAVs are one object, and the name is checkable: every read re-hashes the
+bytes and refuses to serve anything that does not match the name it was stored
+under. Writes go to a temp file, `fsync`, then `rename`, and are read back and
+verified before the write is reported as done.
+
+`QUALI_STORAGE_BACKEND=local` (the default) keeps objects under
+`QUALI_STORAGE_DIR`. `=s3` needs `QUALI_S3_BUCKET` and credentials, and with a
+bucket missing or `boto3` absent it **refuses at startup** rather than quietly
+falling back to local disk — finding out where customer audio went by watching a
+disk fill is not a debugging experience anybody should have. The S3 backend is
+written and its logic is tested against a stub client; no bucket has ever been
+used, and the page says so rather than implying otherwise.
+
+## Migrations
+
+The plane's database is its own (the engine has a separate one), and it now has two
+versions: `m2a1` (slice A: workspaces, keys, sessions, usage) and `m2b1` (slice B:
+the jobs table). `hosted/control_plane/migrations.py` applies ordered steps, each
+stamping its version in the same transaction as its DDL, so a crash halfway leaves
+the stamp alone and the next start retries — which is why every step is idempotent.
+
+A database from a version nobody knows is still refused, naming both versions: that
+is somebody else's schema, not a file to guess at. The tests build a real slice-A
+database (slice A's DDL, copied rather than generated from today's models, so the
+fixture cannot drift), put a customer, a key and a metered request in it, upgrade
+it through the real app, and check that customer can still log in and use their
+ledger afterwards.
+
+Why not alembic, which the engine's database already uses: the control plane owns
+one schema, applied linearly, with no branches and one consumer. When a step needs
+data from a table a later step drops, or two people ship steps at once, that is the
+moment to convert these functions into an alembic baseline revision — not before.
 
 ## Testing
 
-Fast path, no model download, about eleven seconds:
+Fast path, no model download, about twenty-five seconds:
 
 ```sh
 .venv/bin/python -m pytest tests/hosted -q
 ```
 
-The suite runs the real plane against a stub engine (a real ASGI app answering
-with a WAV of a known duration, so the meter is checked against audio rather than
-against a number the test invented), and real connection failures against a
-closed loopback port. It covers signup/login/session expiry, key lifecycle,
-revocation, cross-workspace isolation, refusal of every malformed credential, the
-engine's own errors passed through, timeouts, 502s, input that never reaches the
-engine, and the two real bugs this slice hit: a key whose secret contains an
-underscore being refused as malformed, and a short password answering 422 instead
-of 400.
+Four suites, and the stub is the only substitution (a real ASGI app answering with a
+WAV of a known duration, so the meter is checked against audio rather than against a
+number the test invented; real connection refusals against a closed loopback port):
+
+- `test_hosted_accounts.py` / `test_hosted_metering.py` — signup, login, session
+  expiry, key lifecycle, revocation, cross-workspace isolation, every malformed
+  credential, the engine's errors passed through, timeouts, 502s, input that never
+  reaches the engine, and the two real bugs slice A hit.
+- `test_hosted_storage.py` — content addressing, one object for identical bytes,
+  atomic writes with no `.part` left behind, a corrupt object refused rather than
+  served (and repaired by storing the right bytes again), traversal-shaped keys
+  refused, and the S3 backend refusing when misconfigured.
+- `test_hosted_jobs.py` — queue, worker, stored audio, meter, isolation of job ids,
+  every refusal boundary (400 empty, 413 at 20,001, 422 past the body backstop),
+  cancellation, and a job that survives a plane restart.
+- `test_hosted_queue.py` — four threads racing for twelve jobs, leases that expire
+  and are reclaimed, a dead worker's last attempt swept into `failed` instead of
+  hanging, a worker that lost its lease being unable to overwrite the new owner's
+  result, retries that stay bounded, and characters counted once across them.
+- `test_hosted_migrations.py` — fresh create, in-place upgrade with the rows intact,
+  idempotent re-run, and refusals for unknown and newer schemas.
 
 The end-to-end run is the other half — the one-command script at the top calls
 it, and this is it directly when you already have a model directory:
@@ -167,42 +291,23 @@ it, and this is it directly when you already have a model directory:
   --model /path/to/kokoro-int8-multi-lang-v1_0
 ```
 
-It starts the real engine and the real plane, signs up two workspaces, mints
-keys, speaks Hindi and English through the plane, takes the same request straight
-from the engine for comparison, compares the engine's refusal byte for byte on
-both paths, checks the credential refusals, reads both meters and revokes a key.
-`result.json` records every check, the model file hashes and the commit the run
-tested. The committed runs are `hermes-reports/M2-slot25-e2e-r1/` (passed, dirty
-worktree, superseded), `-r2/` (failed, kept) and `-r3-freshclone/` (the clean
-clone whose numbers this page quotes).
+It starts the real engine, the real plane and real worker processes, signs up two
+workspaces, mints keys, speaks Hindi and English through the plane, queues a longer
+Hindi paragraph and has a worker process speak it, downloads the audio back out of
+the object store and checks it against the job's own digest, takes the same request
+straight from the engine for comparison, compares the engine's refusal byte for byte
+on both paths, checks a refused job fails once and a cancelled job is never spoken,
+reads both meters and revokes a key. `result.json` records every check, the worker
+counters, the model file hashes and the commit the run tested.
 
 ## Measured
 
-From `hermes-reports/M2-slot25-e2e-r3-freshclone/result.json` — a clone of commit
-`d3bf048fb` with a clean worktree, engine and plane both started fresh, on one
-t3a.medium with no GPU (31 Oct 2026). Numbers are copied from that file.
+From `hermes-reports/M2-slot27-e2e-r1/result.json` — engine, plane and worker all
+started fresh by the harness, on one t3a.medium with no GPU (31 Oct 2026). Numbers
+are copied from that file.
 
 ```
-engine ready 11.3 s   control plane ready 13.2 s   whole run 87.7 s
-both processes: clean shutdown
-
-three requests through the control plane, workspace A:
-  hf_alpha  hi   1.822 s audio, 24 kHz mono, peak 0.78   engine took 21.0 s
-  hm_omega  hi   1.825 s audio,              peak 0.79   engine took 10.6 s
-  hf_alpha  en   3.491 s audio,              peak 0.79   engine took 17.7 s
-  plus one request for a voice the model does not have, refused 400 by the
-  engine and passed through with the engine's own message naming its 54 voices.
-
-meter for A   4 requests, 158 characters, 7.138 s audio, 342,768 bytes,
-              failed_requests 1, by_status {"200": 3, "400": 1}
-              by_key: one key, label "a", same four requests and 7.138 s
-meter for B   0 requests, 0 characters, 0.000 s audio
-
-same English request straight at the engine, for comparison:
-  direct 3.508 s / 168,408 bytes   through the plane 3.491 s / 167,608 bytes
-
-the engine's refusal for an unknown voice, taken both ways:
-  sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
+PLACEHOLDER_MEASURED
 ```
 
 The last two lines are the honest version of the pass-through claim. Speech

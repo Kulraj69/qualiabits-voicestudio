@@ -108,13 +108,23 @@ def app_client(
     ttl: int = 3600,
     upstream_base: str = "http://engine",
     transport: httpx.AsyncBaseTransport | None = None,
+    storage_backend: str = "local",
+    s3_bucket: str = "",
+    storage_dir: Path | None = None,
+    job_lease_seconds: int = 900,
+    job_max_attempts: int = 3,
 ):
-    """A real control plane, its own database, pointed at the stub engine."""
+    """A real control plane, its own database, its own object store, stub engine."""
     settings = Settings(
         database_url=f"sqlite:///{tmp_path / name}",
         upstream_base_url=upstream_base,
         upstream_timeout_seconds=30.0,
         session_ttl_seconds=ttl,
+        storage_backend=storage_backend,
+        storage_dir=str(storage_dir if storage_dir is not None else tmp_path / "objects"),
+        s3_bucket=s3_bucket,
+        job_lease_seconds=job_lease_seconds,
+        job_max_attempts=job_max_attempts,
     )
     # The stub is reached in-process only when the test asked for the stub's own
     # URL. A test that points at a real address (a closed loopback port, say) gets
@@ -131,6 +141,42 @@ def app_client(
 def client(tmp_path: Path, engine: StubEngine):
     with app_client(tmp_path, engine) as test_client:
         yield test_client
+
+
+# ── the worker, in process ────────────────────────────────────────────────────
+
+def worker_for(test_client: TestClient, engine: StubEngine, *, worker_id: str = "test-worker"):
+    """A real worker process's logic, pointed at the same database and store.
+
+    The only substitution is again the engine: the worker talks to the stub over
+    the same ASGI transport the plane uses. Everything else — the queue table, the
+    object store, the lease, the usage ledger — is the real thing.
+    """
+    from hosted.control_plane.db import Database
+    from hosted.worker.runner import Worker
+
+    settings = test_client.app.state.hosted.settings
+    store = test_client.app.state.hosted.store
+    client = httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=engine.app),
+        base_url=settings.upstream_base_url,
+    )
+    upstream = UpstreamClient(settings.upstream_base_url, 30.0, client=client)
+    return Worker(
+        settings,
+        worker_id,
+        db=Database(settings.database_url),
+        store=store,
+        upstream=upstream,
+        log=lambda line: None,
+    )
+
+
+def drain(worker, *, max_jobs: int = 0):
+    """Run the worker until the queue is empty, the way ``run_worker.py --once`` does."""
+    import asyncio
+
+    return asyncio.run(worker.drain(max_jobs=max_jobs, idle_polls_before_exit=1))
 
 
 # ── small helpers every test file uses ────────────────────────────────────────
@@ -170,4 +216,39 @@ def speak(client: TestClient, credential: str, text: str, **extra):
     body = {"input": text, "voice": "hf_alpha", "response_format": "wav", **extra}
     return client.post(
         "/v1/audio/speech", json=body, headers={"Authorization": f"Bearer {credential}"}
+    )
+
+
+def queue_job(client: TestClient, credential: str, text: str, **extra):
+    body = {"input": text, "voice": "hf_alpha", "response_format": "wav", **extra}
+    return client.post(
+        "/v1/jobs", json=body, headers={"Authorization": f"Bearer {credential}"}
+    )
+
+
+def create_job(client: TestClient, credential: str, text: str, **extra) -> dict:
+    response = queue_job(client, credential, text, **extra)
+    assert response.status_code == 202, response.text
+    return response.json()["job"]
+
+
+def get_job(client: TestClient, credential: str, job_id: int) -> dict:
+    response = client.get(
+        f"/v1/jobs/{job_id}", headers={"Authorization": f"Bearer {credential}"}
+    )
+    assert response.status_code == 200, response.text
+    return response.json()["job"]
+
+
+def list_jobs(client: TestClient, credential: str, **params) -> dict:
+    response = client.get(
+        "/v1/jobs", headers={"Authorization": f"Bearer {credential}"}, params=params
+    )
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def fetch_job_audio(client: TestClient, credential: str, job_id: int):
+    return client.get(
+        f"/v1/jobs/{job_id}/audio", headers={"Authorization": f"Bearer {credential}"}
     )

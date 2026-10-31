@@ -11,6 +11,7 @@ import sqlite3
 import time
 
 from conftest import PASSWORD, mint_key, signup, login, usage
+from hosted.control_plane.config import SCHEMA_VERSION
 
 
 def test_signup_creates_one_workspace_per_email(client):
@@ -222,7 +223,12 @@ def test_health_routes_need_no_credential(client):
     health = client.get("/healthz")
     assert health.status_code == 200
     assert health.json()["status"] == "ok"
-    assert health.json()["schema_version"] == "m2a1"
+    # The version this build publishes, and what it did to the database it opened:
+    # "created" for a fresh file, "upgraded:<old>-><new>" for one brought forward.
+    assert health.json()["schema_version"] == SCHEMA_VERSION
+    assert health.json()["schema_state"] == "created"
+    assert health.json()["storage"]["backend"] == "local"
+    assert health.json()["jobs"] == {}
 
     upstream = client.get("/healthz/upstream")
     assert upstream.status_code == 200

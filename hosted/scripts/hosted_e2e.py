@@ -46,6 +46,16 @@ import m1_speech_probe as m1  # noqa: E402  (env building, readiness, WAV measur
 ROOT = Path(__file__).resolve().parents[2]
 ENGINE = "sherpa-onnx"
 HINDI = "यह एक हिन्दी वाक्य है।"
+#: What the job section speaks: a paragraph rather than a sentence, which is the
+#: shape of work a queue is really for. It is not near the 20,000-character
+#: ceiling — on this CPU engine every second of speech costs several seconds of
+#: compute, so a full-length job would add minutes to a run that is already
+#: minutes long. The ceiling itself is asserted in the unit suite, not here.
+HINDI_LONG = (
+    "नमस्ते। यह एक लंबा हिन्दी वाक्य है जो कतार से बोला जाता है। "
+    "इसमें एक सौ से अधिक अक्षर हैं, ताकि यह सीधे अनुरोध से बड़ा काम लगे। "
+    "यह साबित करता है कि लंबा काम कतार में जाता है और ऑब्जेक्ट स्टोर में रखा जाता है।"
+)
 ENGLISH = "This sentence is spoken through the hosted control plane."
 HINDI_VOICE = "hf_alpha"
 HINDI_VOICE_2 = "hm_omega"
@@ -381,6 +391,168 @@ def run(output: Path, model: Path) -> int:
                     "the two workspaces share an id")
             result["checks"].append("meter_matches_the_audio_and_is_per_workspace")
 
+            # ── jobs: queued through the plane, worked by a real process ────
+            # The same real engine, but the work goes through the queue: the
+            # worker is started as its own process (``hosted/scripts/run_worker.py
+            # --once``), exactly as a deployment runs it, and it claims the job
+            # over the same database the plane is serving.
+            storage_root = Path(state) / "objects"
+            worker_env = dict(plane_env)
+            worker_env["QUALI_STORAGE_DIR"] = str(storage_root)
+
+            def run_worker_once(tag: str) -> dict:
+                stats_file = output / f"worker-stats-{tag}.json"
+                completed = subprocess.run(
+                    [sys.executable, "hosted/scripts/run_worker.py", "--once",
+                     "--worker-id", f"e2e-{tag}", "--stats-file", str(stats_file)],
+                    cwd=ROOT, env=worker_env, capture_output=True, timeout=1800,
+                )
+                (output / f"worker-{tag}.log").write_bytes(
+                    completed.stdout + completed.stderr
+                )
+                require(completed.returncode == 0,
+                        f"the worker exited {completed.returncode}: {completed.stderr[-400:]!r}")
+                parsed = json.loads(stats_file.read_text())
+                require(parsed["claimed"] == parsed["succeeded"] + parsed["failed"]
+                        + parsed["requeued"],
+                        "the worker's counters do not add up")
+                return parsed
+
+            def usage_now(token: str) -> dict:
+                return json_body(http(plane_base, "/v1/usage", None, method="GET",
+                                      token=token)[1])["usage"]
+
+            job_text = HINDI_LONG
+            meter_before_job = usage_now(a_key)
+            status, body, _ = http(plane_base, "/v1/jobs",
+                                   speech_payload(job_text, HINDI_VOICE_2, "hi"), token=a_key)
+            require(status == 202, f"queueing a job returned {status}: {body[:200]!r}")
+            job = json_body(body)["job"]
+            require(job["status"] == "queued" and job["attempts"] == 0,
+                    f"a queued job came back as {job['status']!r}")
+            require(job["audio"] is None and job["characters"] == len(job_text),
+                    "a queued job reports audio it does not have, or the wrong length")
+            # Queueing is not speaking: the meter must be untouched until the
+            # worker has actually produced audio.
+            require(usage_now(a_key) == meter_before_job,
+                    "queueing a job moved the meter before anything was spoken")
+
+            stats = run_worker_once("first")
+            require(stats["claimed"] == 1 and stats["succeeded"] == 1,
+                    f"the worker did not speak the queued job: {stats}")
+            status, body, _ = http(plane_base, f"/v1/jobs/{job['id']}", None,
+                                   method="GET", token=a_key)
+            require(status == 200, f"reading the job back returned {status}")
+            done = json_body(body)["job"]
+            require(done["status"] == "succeeded" and done["attempts"] == 1,
+                    f"the job finished as {done['status']!r} after {done['attempts']} attempts")
+
+            status, raw, headers = http(plane_base, f"/v1/jobs/{job['id']}/audio", None,
+                                        method="GET", token=a_key)
+            require(status == 200, f"downloading the job's audio returned {status}")
+            require(headers.get("x-qualiabits-object-sha256") == hashlib.sha256(raw).hexdigest(),
+                    "the audio served does not hash to the digest recorded on the job")
+            wav = m1.describe_wav(raw)
+            require(wav["sample_rate"] == 24000 and wav["channels"] == 1,
+                    "the job's audio is not 24 kHz mono")
+            require(wav["peak"] > 0.001, "the job's audio is silence")
+            job_seconds = round(wav["frames"] / wav["sample_rate"], 3)
+            require(abs(job_seconds - done["audio"]["seconds"]) < 0.01,
+                    f"the job records {done['audio']['seconds']} s, the WAV is {job_seconds} s")
+            (audio_dir / "job_hindi_long.wav").write_bytes(raw)
+            result["job"] = {
+                "id": job["id"], "voice": HINDI_VOICE_2, "characters": job["characters"],
+                "seconds": job_seconds, "bytes": len(raw),
+                "sha256": hashlib.sha256(raw).hexdigest(),
+                "object_sha256": done["audio"]["sha256"],
+                "engine_seconds": done["audio"]["engine_seconds"],
+                "worker_stats": stats,
+            }
+            # The object is on disk where the plane said it would be, and hashes to
+            # the name it was stored under.
+            object_path = storage_root / done["audio"]["sha256"][:2] / done["audio"]["sha256"][2:4] \
+                / f"{done['audio']['sha256']}.wav"
+            require(object_path.is_file(), f"the worker's object is not at {object_path}")
+            stored_bytes = object_path.read_bytes()
+            require(hashlib.sha256(stored_bytes).hexdigest() == done["audio"]["sha256"]
+                    == hashlib.sha256(raw).hexdigest(),
+                    "the object on disk, the job receipt and the download disagree")
+            result["job"]["object_path"] = str(object_path)
+
+            meter_after_job = usage_now(a_key)
+            require(meter_after_job["requests"] == meter_before_job["requests"] + 1,
+                    "the finished job is not in the meter's request count")
+            require(meter_after_job["characters"]
+                    == meter_before_job["characters"] + len(job_text),
+                    "the finished job's characters are not counted once")
+            require(abs(meter_after_job["audio_seconds"] - meter_before_job["audio_seconds"]
+                        - job_seconds) < 0.05,
+                    "the finished job's audio seconds are not in the meter")
+            by_key = meter_after_job["by_key"][0]
+            require(by_key["requests"] == meter_after_job["requests"],
+                    "the job was not attributed to the key that queued it")
+            result["checks"].append("a_queued_job_is_spoken_by_a_real_worker_and_metered_once")
+
+            # A job the engine refuses fails with the engine's own words, once.
+            status, body, _ = http(plane_base, "/v1/jobs",
+                                   speech_payload(HINDI, "no_such_voice_here", "hi"), token=a_key)
+            require(status == 202, f"queueing the refused job returned {status}")
+            refused_job = json_body(body)["job"]
+            refused_stats = run_worker_once("refused")
+            require(refused_stats["failed"] == 1 and refused_stats["requeued"] == 0,
+                    f"a deterministic refusal was retried: {refused_stats}")
+            status, body, _ = http(plane_base, f"/v1/jobs/{refused_job['id']}", None,
+                                   method="GET", token=a_key)
+            failed = json_body(body)["job"]
+            require(failed["status"] == "failed" and failed["status_code"] == 400,
+                    f"the refused job ended as {failed['status']!r}/{failed['status_code']}")
+            require(failed["attempts"] == 1, "a refused job was attempted more than once")
+            # The engine's refusal names the voice it was asked for, so the wording
+            # cannot be compared to the held-out refusal above. Compare it to the
+            # engine's own answer for exactly this voice, taken straight from the
+            # engine: the job's ledger line must be the engine's message (our
+            # ledger truncates it at 200 characters, so it must be a prefix).
+            status, direct_refusal, _ = http(engine_base, "/v1/audio/speech",
+                                             speech_payload(HINDI, "no_such_voice_here", "hi"))
+            require(status == 400, f"the engine answered {status} for the unknown voice")
+            engine_words = json_body(direct_refusal).get("detail", "")
+            require(isinstance(engine_words, str) and engine_words
+                    and engine_words.startswith(failed["error"]),
+                    "the failed job does not carry the engine's own refusal message")
+            require("no_such_voice_here" in failed["error"],
+                    "the job's failure does not name the voice it was refused for")
+            require(http(plane_base, f"/v1/jobs/{refused_job['id']}/audio", None,
+                         method="GET", token=a_key)[0] == 409,
+                    "a failed job served audio")
+            result["job_refused"] = {
+                "id": refused_job["id"], "status": failed["status"],
+                "status_code": failed["status_code"], "attempts": failed["attempts"],
+                "error": failed["error"],
+                "engine_detail_for_this_voice": engine_words,
+                "engine_detail_was_truncated_by_the_ledger": len(engine_words) > len(failed["error"]),
+                "worker_stats": refused_stats,
+            }
+            result["checks"].append("a_refused_job_fails_once_with_the_engine_s_own_message")
+
+            # A cancelled job is never spoken: nothing reaches the engine, so
+            # nothing is metered, and the worker finds nothing to claim.
+            meter_before_cancel = usage_now(a_key)
+            status, body, _ = http(plane_base, "/v1/jobs",
+                                   speech_payload(HINDI, HINDI_VOICE, "hi"), token=a_key)
+            require(status == 202, f"queueing the cancellable job returned {status}")
+            cancellable = json_body(body)["job"]
+            status, body, _ = http(plane_base, f"/v1/jobs/{cancellable['id']}", None,
+                                   method="DELETE", token=a_key)
+            require(status == 200 and json_body(body)["job"]["status"] == "cancelled",
+                    "cancelling a queued job did not work")
+            cancel_stats = run_worker_once("after-cancel")
+            require(cancel_stats["claimed"] == 0,
+                    f"a cancelled job was claimed: {cancel_stats}")
+            require(usage_now(a_key)["requests"] == meter_before_cancel["requests"],
+                    "a cancelled job was billed something")
+            result["job_cancelled"] = {"id": cancellable["id"], "worker_stats": cancel_stats}
+            result["checks"].append("a_cancelled_job_is_never_spoken_or_metered")
+
             # ── a revoked key stops immediately ─────────────────────────────
             status, body, _ = http(plane_base, "/v1/api-keys", None, method="GET",
                                    token=customers["a"]["session"])
@@ -426,12 +598,17 @@ def run(output: Path, model: Path) -> int:
         "A signed-up workspace, holding a key minted by the control plane, got real "
         "24 kHz WAV speech in Hindi and English from the fork's own engine through the "
         "hosted layer, and the usage meter matched the audio's own duration and stayed "
-        "inside that workspace."
+        "inside that workspace. A longer Hindi paragraph was queued and spoken by a "
+        "separate worker process; the audio was fetched back out of the object store "
+        "and hashed to the digest on the job. A refusal failed once with the engine's "
+        "own message, and a cancelled job was never spoken or billed."
     )
     result["what_this_does_not_prove"] = (
-        "Not deployed, no public URL, no HTTPS, no GPU, no human listening check, "
-        "no object storage or job queue, and no claim that the voice is good enough to "
-        "sell. M1 stays open until the owner's GPU run and listening check."
+        "Not deployed, no public URL, no HTTPS, no GPU, no human listening check, no S3 "
+        "bucket or credentials, no email delivery, no billing, and no claim that the "
+        "voice is good enough to sell. The store is the local filesystem backend; the "
+        "S3 backend is written and refuses when misconfigured but has never been run "
+        "against a bucket. M1 stays open until the owner's GPU run and listening check."
     )
     (output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps({k: result[k] for k in
