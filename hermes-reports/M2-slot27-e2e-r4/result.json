@@ -1,0 +1,315 @@
+{
+  "run": "hosted control plane end to end",
+  "engine": "sherpa-onnx",
+  "model_dir": "/workspace/m1-models/kokoro-int8-multi-lang-v1_0",
+  "model_licence_first_line": "Apache License",
+  "checks": [
+    "control_plane_and_engine_both_up",
+    "two_workspaces_signed_up_with_keys",
+    "hindi_and_english_audio_through_the_control_plane",
+    "engine_refusal_passed_through_as_400",
+    "refusal_bytes_identical_to_the_real_engine",
+    "key_refusals_are_401",
+    "meter_matches_the_audio_and_is_per_workspace",
+    "a_queued_job_is_spoken_by_a_real_worker_and_metered_once",
+    "a_refused_job_fails_once_with_the_engine_s_own_message",
+    "a_cancelled_job_is_never_spoken_or_metered",
+    "revoked_key_refused_and_other_workspace_untouched"
+  ],
+  "host": {
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "python": "3.12.3",
+    "cpu_count": 2
+  },
+  "m1_complete": false,
+  "gpu_verified": false,
+  "listening_verified": false,
+  "deployed": false,
+  "public_url": null,
+  "engine_ready_seconds": 10.307,
+  "engine_health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "control_plane_health": {
+    "status": "ok",
+    "service": "qualiabits-voice-control-plane",
+    "schema_version": "m2b1",
+    "schema_state": "created",
+    "upstream_base_url": "http://127.0.0.1:51517",
+    "storage": {
+      "backend": "local",
+      "root": "/home/ubuntu/.hermes/cache/scratch/hosted-e2e-w34mmivt/objects"
+    },
+    "jobs": {}
+  },
+  "plane_ready_seconds": 12.141,
+  "control_plane_sees_engine": {
+    "upstream_base_url": "http://127.0.0.1:51517",
+    "reachable": true,
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "workspaces": {
+    "a": {
+      "id": 1,
+      "email": "first@example.com"
+    },
+    "b": {
+      "id": 2,
+      "email": "second@example.com"
+    }
+  },
+  "speech": [
+    {
+      "label": "hindi_hf_alpha",
+      "voice": "hf_alpha",
+      "language": "hi",
+      "characters": 22,
+      "status": 200,
+      "bytes": 87984,
+      "seconds": 1.832,
+      "sample_rate": 24000,
+      "channels": 1,
+      "peak": 0.795319,
+      "engine_seconds_header": 19.594,
+      "audio_seconds_header": 1.832083,
+      "engine_marker_header": "0.5.7",
+      "sha256": "d6c8b97fe5f6514c20c0e0b2db691ed25dcb1b67b6f3c227d29d81c7f385e677"
+    },
+    {
+      "label": "hindi_hm_omega",
+      "voice": "hm_omega",
+      "language": "hi",
+      "characters": 22,
+      "status": 200,
+      "bytes": 87678,
+      "seconds": 1.826,
+      "sample_rate": 24000,
+      "channels": 1,
+      "peak": 0.760895,
+      "engine_seconds_header": 10.385,
+      "audio_seconds_header": 1.825708,
+      "engine_marker_header": "0.5.7",
+      "sha256": "d58a4b9c9d5eb8e49c3d4c05ef56c96da7c9adf62e9e60b203f29641f991dc8a"
+    },
+    {
+      "label": "english",
+      "voice": "hf_alpha",
+      "language": "en",
+      "characters": 57,
+      "status": 200,
+      "bytes": 167618,
+      "seconds": 3.491,
+      "sample_rate": 24000,
+      "channels": 1,
+      "peak": 0.791229,
+      "engine_seconds_header": 18.86,
+      "audio_seconds_header": 3.491125,
+      "engine_marker_header": "0.5.7",
+      "sha256": "ecb09ff480b0837e2883ecd6e7cc98c6cc9e381f66fc4dd9a3ee5503d9c51d5a"
+    }
+  ],
+  "direct_vs_proxied": {
+    "direct_seconds": 3.487,
+    "proxied_seconds": 3.491,
+    "direct_bytes": 167426,
+    "proxied_bytes": 167618,
+    "note": "Same request, both paths, same engine. Byte identity is not asserted: the engine samples, so two calls need not be identical. Equality of the bytes the proxy returned with the bytes the engine sent is proven in the unit suite against a deterministic stub."
+  },
+  "unknown_voice_refusal": {
+    "error": {
+      "message": "Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.",
+      "type": "invalid_request_error",
+      "param": "input",
+      "code": null
+    },
+    "detail": "Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id."
+  },
+  "refusal_passthrough": {
+    "proxied_sha256": "f9426105824c9597049f4268b53380e9535c31875e724d64d0e83418dac9c2c9",
+    "direct_sha256": "f9426105824c9597049f4268b53380e9535c31875e724d64d0e83418dac9c2c9",
+    "identical": true,
+    "bytes": 699
+  },
+  "usage_workspace_a": {
+    "workspace_id": 1,
+    "requests": 4,
+    "characters": 158,
+    "audio_seconds": 7.149,
+    "audio_bytes": 343280,
+    "failed_requests": 1,
+    "requests_without_audio_seconds": 1,
+    "by_status": {
+      "200": 3,
+      "400": 1
+    },
+    "by_key": [
+      {
+        "api_key_id": 1,
+        "key_id": "85489512bda9f7e7",
+        "label": "a",
+        "requests": 4,
+        "characters": 158,
+        "audio_seconds": 7.149,
+        "failed_requests": 1,
+        "last_request_at": "2026-10-31T12:55:48.721831"
+      }
+    ],
+    "first_request_at": "2026-10-31T12:54:55.396706",
+    "last_request_at": "2026-10-31T12:55:48.721831",
+    "characters_note": "text sent to the engine, counted whether or not it answered",
+    "audio_seconds_note": "audio received, measured from the returned WAV header",
+    "by_key_note": "spend per key, so a customer can tell which integration is talking. Input the engine never saw appears here too, with zero characters."
+  },
+  "usage_workspace_b": {
+    "workspace_id": 2,
+    "requests": 0,
+    "characters": 0,
+    "audio_seconds": 0.0,
+    "audio_bytes": 0,
+    "failed_requests": 0,
+    "requests_without_audio_seconds": 0,
+    "by_status": {},
+    "by_key": [],
+    "first_request_at": null,
+    "last_request_at": null,
+    "characters_note": "text sent to the engine, counted whether or not it answered",
+    "audio_seconds_note": "audio received, measured from the returned WAV header",
+    "by_key_note": "spend per key, so a customer can tell which integration is talking. Input the engine never saw appears here too, with zero characters."
+  },
+  "job": {
+    "id": 1,
+    "voice": "hm_omega",
+    "characters": 208,
+    "seconds": 16.46,
+    "bytes": 790136,
+    "sha256": "0d11a77e418e2d95ce7f7c192ddbab7012215e4272d418bd0ec613fbb434d872",
+    "object_sha256": "0d11a77e418e2d95ce7f7c192ddbab7012215e4272d418bd0ec613fbb434d872",
+    "engine_seconds": 125.735,
+    "worker_stats": {
+      "worker_id": "e2e-first",
+      "mode": "once",
+      "claimed": 1,
+      "succeeded": 1,
+      "failed": 0,
+      "requeued": 0,
+      "lost_lease": 0,
+      "idle_polls": 1,
+      "engine_seconds": 125.735
+    },
+    "object_path": "/home/ubuntu/.hermes/cache/scratch/hosted-e2e-w34mmivt/objects/0d/11/0d11a77e418e2d95ce7f7c192ddbab7012215e4272d418bd0ec613fbb434d872.wav"
+  },
+  "job_refused": {
+    "id": 2,
+    "status": "failed",
+    "status_code": 400,
+    "attempts": 1,
+    "error": "Unknown voice 'no_such_voice_here' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), j",
+    "engine_detail_for_this_voice": "Unknown voice 'no_such_voice_here' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.",
+    "engine_detail_was_truncated_by_the_ledger": true,
+    "worker_stats": {
+      "worker_id": "e2e-refused",
+      "mode": "once",
+      "claimed": 1,
+      "succeeded": 0,
+      "failed": 1,
+      "requeued": 0,
+      "lost_lease": 0,
+      "idle_polls": 1,
+      "engine_seconds": 0.336
+    }
+  },
+  "job_cancelled": {
+    "id": 3,
+    "worker_stats": {
+      "worker_id": "e2e-after-cancel",
+      "mode": "once",
+      "claimed": 0,
+      "succeeded": 0,
+      "failed": 0,
+      "requeued": 0,
+      "lost_lease": 0,
+      "idle_polls": 1,
+      "engine_seconds": 0.0
+    }
+  },
+  "usage_workspace_a_at_end": {
+    "workspace_id": 1,
+    "requests": 6,
+    "characters": 388,
+    "audio_seconds": 23.609,
+    "audio_bytes": 1133416,
+    "failed_requests": 2,
+    "requests_without_audio_seconds": 2,
+    "by_status": {
+      "200": 4,
+      "400": 2
+    },
+    "by_key": [
+      {
+        "api_key_id": 1,
+        "key_id": "85489512bda9f7e7",
+        "label": "a",
+        "requests": 6,
+        "characters": 388,
+        "audio_seconds": 23.609,
+        "failed_requests": 2,
+        "last_request_at": "2026-10-31T12:58:06.524104"
+      }
+    ],
+    "first_request_at": "2026-10-31T12:54:55.396706",
+    "last_request_at": "2026-10-31T12:58:06.524104",
+    "characters_note": "text sent to the engine, counted whether or not it answered",
+    "audio_seconds_note": "audio received, measured from the returned WAV header",
+    "by_key_note": "spend per key, so a customer can tell which integration is talking. Input the engine never saw appears here too, with zero characters."
+  },
+  "usage_workspace_b_at_end": {
+    "workspace_id": 2,
+    "requests": 0,
+    "characters": 0,
+    "audio_seconds": 0.0,
+    "audio_bytes": 0,
+    "failed_requests": 0,
+    "requests_without_audio_seconds": 0,
+    "by_status": {},
+    "by_key": [],
+    "first_request_at": null,
+    "last_request_at": null,
+    "characters_note": "text sent to the engine, counted whether or not it answered",
+    "audio_seconds_note": "audio received, measured from the returned WAV header",
+    "by_key_note": "spend per key, so a customer can tell which integration is talking. Input the engine never saw appears here too, with zero characters."
+  },
+  "engine_shutdown": {
+    "started": true,
+    "exit_code": -15,
+    "forced": false,
+    "clean": true
+  },
+  "control_plane_shutdown": {
+    "started": true,
+    "exit_code": -15,
+    "forced": false,
+    "clean": true
+  },
+  "model_files": {
+    "tokens.txt": "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425",
+    "voices.bin": "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "revision": {
+    "tested_commit": "fe71b3bef668a7333e9ab290fbfc1d22465ab54f",
+    "tested_branch": "work/m1-headless",
+    "worktree_dirty": false,
+    "tracked_files_hashed": 4872,
+    "tracked_gitlinks": 1,
+    "tracked_entries": 4873
+  },
+  "elapsed_seconds": 256.569,
+  "passed": true,
+  "what_this_proves": "A signed-up workspace, holding a key minted by the control plane, got real 24 kHz WAV speech in Hindi and English from the fork's own engine through the hosted layer, and the usage meter matched the audio's own duration and stayed inside that workspace. A longer Hindi paragraph was queued and spoken by a separate worker process; the audio was fetched back out of the object store and hashed to the digest on the job. A refusal failed once with the engine's own message, and a cancelled job was never spoken or billed.",
+  "what_this_does_not_prove": "Not deployed, no public URL, no HTTPS, no GPU, no human listening check, no S3 bucket or credentials, no email delivery, no billing, and no claim that the voice is good enough to sell. The store is the local filesystem backend; the S3 backend is written and refuses when misconfigured but has never been run against a bucket. M1 stays open until the owner's GPU run and listening check."
+}

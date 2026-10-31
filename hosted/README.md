@@ -251,9 +251,15 @@ verified before the write is reported as done.
 `QUALI_STORAGE_DIR`. `=s3` needs `QUALI_S3_BUCKET` and credentials, and with a
 bucket missing or `boto3` absent it **refuses at startup** rather than quietly
 falling back to local disk — finding out where customer audio went by watching a
-disk fill is not a debugging experience anybody should have. The S3 backend is
-written and its logic is tested against a stub client; no bucket has ever been
-used, and the page says so rather than implying otherwise.
+disk fill is not a debugging experience anybody should have. The S3 backend's logic
+is tested against a stub client and then end to end over real HTTP against a local
+S3-compatible server (moto, in-process): real signed requests, an upload, a
+read-back through the client, the digest and length checks surviving the round trip,
+an object in the bucket that no longer matches the name it is stored under, and a
+bucket that does not exist. Neither of those is a bucket. No real bucket has ever
+been used, because that needs credentials and a spending decision from the owner,
+and this page says so rather than implying otherwise — which is the one gap a
+reviewer should read as a gap.
 
 ## Migrations
 
@@ -283,9 +289,14 @@ Fast path, no model download, about twenty-five seconds:
 .venv/bin/python -m pytest tests/hosted -q
 ```
 
-Four suites, and the stub is the only substitution (a real ASGI app answering with a
-WAV of a known duration, so the meter is checked against audio rather than against a
-number the test invented; real connection refusals against a closed loopback port):
+Seven test files and two substitutions. The first is the engine: a real ASGI app
+answering with a WAV of a known duration, so the meter is checked against audio
+rather than against a number the test invented. The second is the object store's S3
+path, which runs against a local S3-compatible server on loopback (moto, started in
+process) so the client really signs requests and objects really cross a socket —
+still not S3, still not a bucket, and the storage suite says which of its cases are
+which. Everything else is real: real connection refusals against a closed loopback
+port, a real SQLite file, real threads racing for the same jobs.
 
 - `test_hosted_accounts.py` / `test_hosted_metering.py` — signup, login, session
   expiry, key lifecycle, revocation, cross-workspace isolation, every malformed
@@ -294,7 +305,16 @@ number the test invented; real connection refusals against a closed loopback por
 - `test_hosted_storage.py` — content addressing, one object for identical bytes,
   atomic writes with no `.part` left behind, a corrupt object refused rather than
   served (and repaired by storing the right bytes again), traversal-shaped keys
-  refused, and the S3 backend refusing when misconfigured.
+  refused, the S3 backend refusing when misconfigured, and five cases that put the
+  real client on a socket against a local S3-compatible server: store, read back,
+  the same bytes as one object, an object that no longer matches its name, and a
+  bucket that does not exist.
+- `test_readme_measured_is_generated.py` — the page's Measured section is what
+  `hosted/scripts/render_measured.py` renders from the run file the page cites, the
+  cited run was taken over a clean tree, and the code it measured has not changed
+  since. This suite exists because that page once quoted one run while the bundle
+  beside it was another; a stranger should not have to notice that, and a test
+  should not let it happen again.
 - `test_hosted_jobs.py` — queue, worker, stored audio, meter, isolation of job ids,
   every refusal boundary (400 empty, 413 at 20,001, 422 past the body backstop),
   cancellation, and a job that survives a plane restart.
@@ -325,28 +345,30 @@ counters, the model file hashes and the commit the run tested.
 
 ## Measured
 
-From `hermes-reports/M2-slot27-e2e-r3/result.json` — engine, plane and worker
-processes all started fresh by the harness, on one t3a.medium with no GPU
-(31 Oct 2026). Numbers are copied from that file; the run records the commit it
-tested (`4372299f0`) and the model hashes below.
+From `hermes-reports/M2-slot27-e2e-r4/result.json` — engine, plane and worker processes all started fresh by the
+harness on one CPU box (x86_64, 2 CPUs, Python 3.12.3, no
+GPU). The section is rendered from that file by
+`hosted/scripts/render_measured.py`, and a test fails if the page and the file
+disagree. The run records the commit it tested
+(fe71b3bef, worktree clean) and the model hashes below.
 
 ```
-engine ready 10.2 s   control plane ready 12.0 s   whole run 234.8 s
+engine ready 10.3 s   control plane ready 12.1 s   whole run 256.6 s
 every process it started: clean shutdown
 
 three direct requests through the control plane, workspace A:
-  hf_alpha  hi   1.822 s audio, 24 kHz mono, peak 0.79   engine took 19.5 s
-  hm_omega  hi   1.829 s audio,              peak 0.78   engine took 10.6 s
-  hf_alpha  en   3.508 s audio,              peak 0.79   engine took 18.2 s
+  hf_alpha  hi   1.832 s audio, 24 kHz mono, peak 0.80   engine took 19.6 s
+  hm_omega  hi   1.826 s audio, 24 kHz mono, peak 0.76   engine took 10.4 s
+  hf_alpha  en   3.491 s audio, 24 kHz mono, peak 0.79   engine took 18.9 s
   plus one request for a voice the model does not have, refused 400 by the
   engine and passed through with the engine's own message naming its 54 voices.
 
 one queued job, spoken by a separate worker process (run_worker.py --once):
-  job 1  hm_omega  hi   208 characters -> 16.472 s of 24 kHz mono audio,
-                         790,682 bytes, engine took 108.5 s
+  job 1  hm_omega  hi   208 characters -> 16.460 s of 24 kHz mono audio,
+                         790,136 bytes, engine took 125.7 s
   worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
   the object on disk, the job's receipt and the download all hash to
-  dac7e3e614e3f45ce5b6d3cf9a6d16be527f8057b1a669b09f700bd2a3429c72
+  0d11a77e418e2d95ce7f7c192ddbab7012215e4272d418bd0ec613fbb434d872
 
 one refused job (a voice the model does not have):
   failed 400 after 1 attempt, no retry, no audio served (409), error is the
@@ -354,37 +376,40 @@ one refused job (a voice the model does not have):
 one cancelled job:
   never claimed by the next worker pass, and it moved the meter by nothing
 
-meter for A, at the end of the run: 6 requests, 388 characters, 23.630 s audio,
-              1,134,420 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+meter for A, at the end of the run: 6 requests, 388 characters, 23.609 s audio,
+              1,133,416 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
               requests_without_audio_seconds 2
-              by_key: one key, label "a", same six requests and 23.630 s
+              by_key: one key, label "a", same 6 requests and 23.609 s
 meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
 
 same English request straight at the engine, for comparison:
-  direct 3.488 s / 167,458 bytes   through the plane 3.508 s / 168,414 bytes
+  direct 3.487 s / 167,426 bytes   through the plane 3.491 s / 167,618 bytes
 
 the engine's refusal for an unknown voice, taken both ways:
   sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
+
+engine seconds spent per second of speech, the number that decides whether this
+is sellable on a box like this one:
+  hindi_hf_alpha     10.7 s
+  hindi_hm_omega     5.7 s
+  english            5.4 s
 ```
 
-The last two lines are the honest version of the pass-through claim. Speech
-cannot be compared byte for byte between two calls because the engine samples,
-and those two English numbers differ by 800 bytes — so no such claim is made
-anywhere. What is compared byte for byte is a response the engine computes
-deterministically: its refusal. That is checked against the real engine on every
-run, and the 200 path is checked against a deterministic stub in the unit suite.
+The English lines differ because the engine samples: the two numbers above are the
+same request taken both ways, and they differ by
+192 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
+computes deterministically: its refusal, checked against the real engine on every
+run; the 200 path is compared against a deterministic stub in the unit suite.
 
 The model those numbers came from is the one `scripts/qualibits_quickstart.sh`
-downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); the
-run recorded the same hashes plus the commit it tested, in the same file.
+downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); the run
+recorded the same hashes plus the commit it tested, in the same file.
 
-The CPU is not production, and this is the clearest evidence of it: 5 to 10
-seconds of compute per second of speech, from 10.6 s for the fastest of the
-three. The queued job is the same story told plainly: 16.5 seconds of audio cost
-108.5 seconds of engine time, about 6.6 s per second. That is why the GPU run is
-the owner's to approve, and exactly what this layer cannot work around — the plane
-can hold the request open for a paragraph, but nothing here makes the engine
-faster.
+The CPU is not production, and the rates above are the clearest evidence of it: the
+queued job spent 125.7 s of engine time on 16.460 s of audio, about 7.6 s
+per second. That is why the GPU run is the owner's to approve, and exactly what
+this layer cannot work around — the plane can hold a request open for a paragraph,
+but nothing here makes the engine faster.
 
 ## Licence
 

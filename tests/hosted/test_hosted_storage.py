@@ -7,8 +7,9 @@ run in-process). Neither is a bucket. There are no credentials for one on this
 machine, so nothing here proves S3's own behaviour or a real bucket's permissions;
 what the emulator tests do prove is our side — that the client our configuration
 builds really signs requests, that objects land and read back over the wire, and
-that the length and digest checks survive the round trip. The e2e run uses the real
-local store; no S3 run has ever happened, and the README says so.
+that the length and digest checks survive the round trip. The end-to-end harness
+still runs against the real local store: no run in this repository has ever talked
+to a real bucket, and the README says so.
 """
 from __future__ import annotations
 
