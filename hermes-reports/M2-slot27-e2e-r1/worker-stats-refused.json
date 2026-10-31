@@ -1,0 +1,11 @@
+{
+  "worker_id": "e2e-refused",
+  "mode": "once",
+  "claimed": 1,
+  "succeeded": 0,
+  "failed": 1,
+  "requeued": 0,
+  "lost_lease": 0,
+  "idle_polls": 1,
+  "engine_seconds": 0.111
+}

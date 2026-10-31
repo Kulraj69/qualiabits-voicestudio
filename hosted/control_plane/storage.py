@@ -240,6 +240,7 @@ class S3ObjectStore:
         prefix: str = "",
         region: str = "",
         endpoint_url: str = "",
+        addressing_style: str = "",
         client=None,
     ) -> None:
         if not bucket:
@@ -252,18 +253,31 @@ class S3ObjectStore:
         self.prefix = prefix.strip("/")
         self.region = region
         self.endpoint_url = endpoint_url
+        self.addressing_style = addressing_style
         if client is None:
             try:
                 import boto3  # noqa: PLC0415 - optional dependency
+                from botocore.config import Config  # noqa: PLC0415
             except ImportError as exc:  # pragma: no cover - depends on the box
                 raise StorageError(
                     "QUALI_STORAGE_BACKEND=s3 needs boto3 installed; it is not"
                 ) from exc
+            if addressing_style not in ("", "path", "virtual"):
+                raise StorageError(
+                    "QUALI_S3_ADDRESSING_STYLE must be 'path' or 'virtual', got "
+                    f"{addressing_style!r}"
+                )
+            config = (
+                Config(s3={"addressing_style": addressing_style})
+                if addressing_style
+                else None
+            )
             try:
                 client = boto3.client(
                     "s3",
                     region_name=region or None,
                     endpoint_url=endpoint_url or None,
+                    config=config,
                 )
             except Exception as exc:  # noqa: BLE001 - any client error is this
                 raise StorageError(
@@ -321,6 +335,7 @@ class S3ObjectStore:
             "prefix": self.prefix,
             "region": self.region or "default",
             "endpoint_url_set": bool(self.endpoint_url),
+            "addressing_style": self.addressing_style or "default",
             "note": "credentials and object contents are never reported here",
         }
 
@@ -336,6 +351,7 @@ def build_store(settings) -> ObjectStore:
             prefix=settings.s3_prefix,
             region=settings.s3_region,
             endpoint_url=settings.s3_endpoint_url,
+            addressing_style=getattr(settings, "s3_addressing_style", ""),
         )
     raise StorageError(
         f"QUALI_STORAGE_BACKEND={backend!r} is not a backend this plane has "

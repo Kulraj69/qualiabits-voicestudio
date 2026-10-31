@@ -1,0 +1,30 @@
+Verdict: FAIL. The work is technically substantial, but the evidence bundle contains material inconsistencies, so it does not pass the honesty criterion.
+
+| Criterion | Score | Judge’s basis |
+|---|---:|---|
+| Originality | 4/5 | A hosted speech control plane with leases, retry semantics, content-addressed audio, metering, and migrations is more thoughtful than a typical CRUD wrapper. The memorable idea is the explicit distinction between attempted characters, delivered audio, and wasted engine time. The core product concept itself is not highly novel. |
+| Taste | 4/5 | Naming and boundaries are clear, and the README makes deliberate product decisions visible. The README is also 370 lines, dense, and occasionally over-explains implementation details before giving the shortest reviewer path. |
+| Human feel | 4/5 | The writing is unusually specific and candid: “nothing was ever sent to the engine” and “not a debugging experience anybody should have” sound authored. It still has some documentation-style verbosity, em-dash usage, and repeated explanatory blocks. “Written by Hermes for QualiaBits” also makes authorship less human-specific. |
+| Technical depth | 5/5 | Strong evidence: 164 tests pass; queue races, leases, final-attempt sweeping, retries, object integrity, migration upgrades, workspace isolation, and real CPU speech are covered. The end-to-end run exercises separate engine, plane, worker, storage, metering, cancellation, and refusal paths. |
+| Criteria fit | 3/5 | Queue, local object storage, migration, metering, and the hosted/no-Electron boundary are well evidenced. The stated product plan specifically calls for S3 object storage, but S3 is only tested through a stub and misconfiguration cases; no real bucket operation is demonstrated. Deployment is explicitly out of scope, so that is not penalized. |
+| Reviewer path | 3/5 | The README gives a one-command demo and a fast test path. However, a fresh reviewer needs a prepared `.venv`, dependency installation, model discovery/download, model licensing context, CPU time, and possibly network access. The “few minutes” criterion is not met by the real demo: the supplied E2E run took 219.243 seconds, with the queued job alone taking 108.965 seconds. |
+| Honesty | 2/5 | The artifacts are candid about missing deployment, GPU, S3, listening checks, customers, and sales. But the README’s measured section does not match the supplied `result.json`, and the result explicitly says the tested worktree was dirty. Those contradictions prevent trusting the claimed measurements as a single reproducible record. |
+
+Five most damaging flaws
+
+1. Conflicting measured evidence — `hosted/README.md`, “Measured” section versus Artifact 4.  
+   README claims six requests, 388 characters, 23.630 audio seconds, 1,134,420 bytes, and queued-job hash `dac7...9c72`. The supplied `result.json` reports four requests, 158 characters, 7.143 audio seconds, 343,016 bytes, and job hash `70bf...d7563`. This is the largest honesty failure.
+
+2. Dirty-tree provenance — Artifact 4, `revision.worktree_dirty: true`.  
+   The run claims commit `4372299f0`, but the evidence does not prove that the executed code exactly equals that commit. The README calls it a clean-clone run, which is not supported by the result.
+
+3. S3 is unproven — `hosted/control_plane/storage.py`, `S3ObjectStore` and README “Where the audio lives.”  
+   The local backend is exercised. S3 behavior is only tested with a stub and startup refusal. No real bucket upload, read-back, checksum verification, permissions check, or failure behavior is demonstrated. For a plan explicitly centered on S3-backed storage, this is a significant gap.
+
+4. Reviewer setup is heavier than advertised — `hosted/README.md`, “See it work, one command.”  
+   The reviewer must obtain dependencies and model assets, possibly download several model files, understand model licensing, and wait roughly four minutes on CPU. The fast tests do not prove the real engine path or real worker/storage integration.
+
+5. The evidence is not self-consistent about what the E2E run tested — `hosted/README.md` and Artifact 4.  
+   The README references `M2-slot27-e2e-r3/result.json` and reports a different run profile from the supplied JSON, whose elapsed time is 219.243 seconds and whose result fields differ throughout. A judge cannot tell whether the README describes an earlier run, a later run, or an accidentally stale report.
+
+One sentence on what would make it win: provide one clean-clone, committed, reproducible evidence bundle whose README numbers exactly match the recorded result, then run the same storage contract against a real S3-compatible bucket and reduce the fresh-reviewer path to a verified command sequence.

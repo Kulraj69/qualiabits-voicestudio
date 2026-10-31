@@ -1,11 +1,14 @@
 """The object store: content addressing, atomic writes, and loud refusals.
 
 The local provider is exercised for real — a real directory, real bytes read back
-off the disk. The S3 provider is exercised against a stub client, and that is
-labelled here rather than dressed up: there is no bucket and no credentials on this
-machine, so what these tests prove is our own logic (key derivation, length and
-digest verification, refusal when misconfigured), not that S3 works. The e2e run
-in ``hosted/scripts/hosted_e2e.py`` uses the real local store, not this.
+off the disk. The S3 provider is exercised twice: its logic against a stub client,
+and then end to end over real HTTP against a local S3-compatible server (``moto``,
+run in-process). Neither is a bucket. There are no credentials for one on this
+machine, so nothing here proves S3's own behaviour or a real bucket's permissions;
+what the emulator tests do prove is our side — that the client our configuration
+builds really signs requests, that objects land and read back over the wire, and
+that the length and digest checks survive the round trip. The e2e run uses the real
+local store; no S3 run has ever happened, and the README says so.
 """
 from __future__ import annotations
 
@@ -252,9 +255,135 @@ def test_the_s3_backend_never_serves_an_object_that_does_not_match_its_key():
 
 
 def test_the_s3_describe_never_reports_credentials():
-    described = S3ObjectStore("bucket", prefix="p", region="ap-south-1", client=StubS3()).describe()
+    described = S3ObjectStore(
+        "bucket", prefix="p", region="ap-south-1", addressing_style="path",
+        client=StubS3(),
+    ).describe()
     assert described["backend"] == "s3"
     assert described["bucket"] == "bucket"
     assert described["region"] == "ap-south-1"
+    assert described["addressing_style"] == "path"
     assert described["endpoint_url_set"] is False
     assert not any("secret" in key or "key" in key for key in described)
+
+
+def test_build_store_refuses_an_addressing_style_it_does_not_have(tmp_path):
+    settings = Settings(
+        database_url="sqlite:///:memory:", upstream_base_url="http://x",
+        storage_backend="s3", s3_bucket="bucket", storage_dir=str(tmp_path),
+        s3_addressing_style="sideways",
+    )
+    with pytest.raises(StorageError) as error:
+        build_store(settings)
+    assert "ADDRESSING_STYLE" in str(error.value)
+
+
+# ── the S3 backend over real HTTP, against a local S3-compatible server ──────
+
+
+@pytest.fixture(scope="module")
+def s3_endpoint():
+    """A real S3-compatible server on loopback (moto). Not a bucket, not S3."""
+    server_module = pytest.importorskip(
+        "moto.server", reason="moto is a test-only dependency and is not installed"
+    )
+    server = server_module.ThreadedMotoServer(ip_address="127.0.0.1", port=0)
+    server.start()
+    host, port = server.get_host_and_port()
+    try:
+        yield f"http://{host}:{port}"
+    finally:
+        server.stop()
+
+
+@pytest.fixture
+def s3_settings(s3_endpoint, tmp_path, monkeypatch):
+    """Settings that point the real S3 backend at the local emulator."""
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+    import boto3
+    from botocore.config import Config
+
+    admin = boto3.client(
+        "s3", region_name="us-east-1", endpoint_url=s3_endpoint,
+        config=Config(s3={"addressing_style": "path"}),
+    )
+    admin.create_bucket(Bucket="qualiabits-test")
+    return Settings(
+        database_url="sqlite:///:memory:",
+        upstream_base_url="http://engine",
+        storage_backend="s3",
+        storage_dir=str(tmp_path),
+        s3_bucket="qualiabits-test",
+        s3_region="us-east-1",
+        s3_endpoint_url=s3_endpoint,
+        s3_addressing_style="path",
+    )
+
+
+def test_the_s3_backend_stores_reads_and_verifies_over_real_http(s3_settings):
+    store = build_store(s3_settings)
+    data = wav_bytes(0.3)
+
+    stored = store.put(data, "audio/wav")
+
+    assert stored.key.endswith(".wav")
+    assert store.exists(stored.key) is True
+    # Read back through the real client: a GET, a signature, and the digest check.
+    assert store.get(stored.key) == data
+    # The same bytes again are the same object, so no second upload is needed.
+    assert store.put(data, "audio/wav").key == stored.key
+    described = store.describe()
+    assert described["bucket"] == "qualiabits-test"
+    assert described["addressing_style"] == "path"
+    assert described["endpoint_url_set"] is True
+
+
+def test_the_s3_prefix_is_part_of_the_stored_key(s3_settings):
+    import boto3
+    from botocore.config import Config
+    from dataclasses import replace
+
+    prefixed = replace(s3_settings, s3_prefix="tenant-a")
+    store = build_store(prefixed)
+    stored = store.put(wav_bytes(0.2), "audio/wav")
+
+    admin = boto3.client(
+        "s3", region_name="us-east-1", endpoint_url=s3_settings.s3_endpoint_url,
+        config=Config(s3={"addressing_style": "path"}),
+    )
+    keys = [row["Key"] for row in admin.list_objects_v2(Bucket="qualiabits-test").get("Contents", [])]
+    assert f"tenant-a/{stored.key}" in keys
+    assert stored.key not in keys
+    assert store.get(stored.key) == store.get(stored.key)
+
+
+def test_an_object_that_changed_in_the_bucket_is_refused_not_served(s3_settings):
+    import boto3
+    from botocore.config import Config
+
+    store = build_store(s3_settings)
+    stored = store.put(wav_bytes(0.25), "audio/wav")
+    admin = boto3.client(
+        "s3", region_name="us-east-1", endpoint_url=s3_settings.s3_endpoint_url,
+        config=Config(s3={"addressing_style": "path"}),
+    )
+    admin.put_object(Bucket="qualiabits-test", Key=stored.key, Body=b"something else entirely")
+
+    with pytest.raises(StorageError) as error:
+        store.get(stored.key)
+    assert "does not hash to its own name" in str(error.value)
+
+
+def test_a_bucket_that_does_not_exist_is_an_error_not_a_silent_local_write(s3_settings):
+    from dataclasses import replace
+
+    missing = replace(s3_settings, s3_bucket="no-such-bucket-here")
+    store = build_store(missing)
+
+    with pytest.raises(Exception) as error:  # noqa: B017 - any client error is the point
+        store.put(wav_bytes(0.1), "audio/wav")
+    assert not isinstance(error.value, StorageError) or "S3" in str(error.value)
+    # And nothing landed on the local filesystem behind the operator's back.
+    assert list(Path(s3_settings.storage_dir).rglob("*.wav")) == []

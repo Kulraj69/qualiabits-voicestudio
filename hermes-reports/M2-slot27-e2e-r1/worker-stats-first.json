@@ -1,0 +1,11 @@
+{
+  "worker_id": "e2e-first",
+  "mode": "once",
+  "claimed": 1,
+  "succeeded": 1,
+  "failed": 0,
+  "requeued": 0,
+  "lost_lease": 0,
+  "idle_polls": 1,
+  "engine_seconds": 116.456
+}

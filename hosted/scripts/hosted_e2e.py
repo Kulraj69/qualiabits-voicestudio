@@ -553,6 +553,12 @@ def run(output: Path, model: Path) -> int:
             result["job_cancelled"] = {"id": cancellable["id"], "worker_stats": cancel_stats}
             result["checks"].append("a_cancelled_job_is_never_spoken_or_metered")
 
+            # The meter as it stands at the end of the run, including the job — the
+            # snapshot above was taken before any job existed, and a reader quoting
+            # these numbers should see the whole picture in one place.
+            result["usage_workspace_a_at_end"] = usage_now(a_key)
+            result["usage_workspace_b_at_end"] = usage_now(customers["b"]["key"])
+
             # ── a revoked key stops immediately ─────────────────────────────
             status, body, _ = http(plane_base, "/v1/api-keys", None, method="GET",
                                    token=customers["a"]["session"])

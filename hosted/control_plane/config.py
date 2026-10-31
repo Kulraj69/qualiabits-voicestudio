@@ -67,6 +67,10 @@ class Settings:
     s3_prefix: str = ""
     s3_region: str = ""
     s3_endpoint_url: str = ""
+    #: "path" or "virtual" — leave empty for botocore's default. S3-compatible
+    #: services (MinIO, and the emulator the tests use) generally need path style,
+    #: because bucket-name-as-subdomain needs DNS that a bare endpoint does not have.
+    s3_addressing_style: str = ""
     job_lease_seconds: int = DEFAULT_JOB_LEASE_SECONDS
     job_max_attempts: int = DEFAULT_JOB_MAX_ATTEMPTS
     job_poll_seconds: float = 1.0
@@ -96,6 +100,9 @@ class Settings:
             s3_prefix=os.environ.get("QUALI_S3_PREFIX", "").strip(),
             s3_region=os.environ.get("QUALI_S3_REGION", "").strip(),
             s3_endpoint_url=os.environ.get("QUALI_S3_ENDPOINT_URL", "").strip(),
+            s3_addressing_style=(
+                os.environ.get("QUALI_S3_ADDRESSING_STYLE", "").strip().lower()
+            ),
             job_lease_seconds=_env_int("QUALI_JOB_LEASE_SECONDS", DEFAULT_JOB_LEASE_SECONDS),
             job_max_attempts=_env_int("QUALI_JOB_MAX_ATTEMPTS", DEFAULT_JOB_MAX_ATTEMPTS),
             job_poll_seconds=_env_float("QUALI_JOB_POLL_SECONDS", 1.0),

@@ -1,0 +1,1792 @@
+You are a strict hackathon judge. Score the work below 1 to 5 on each of the seven criteria in the rubric, and be hard to please. Do not trust any summary: score what the artifacts show. If a claim is not backed by the artifacts, say so and treat it as an honesty flaw.
+
+# JUDGE RUBRIC (used in step 4 of the MANDATORY SELF-LOOP)
+Written Oct 28 2026 by Grok Bot for Kulraj. Priority order from Kulraj: 1) win and earn prize money, 2) act like a human, 3) be authentic, 4) have taste.
+
+## Hackathon work: score each 1 to 5, pass = every score 4 or more and no honesty flaw
+1. Originality: is the core idea one a judge has not seen ten times today? Is there one surprising, memorable moment?
+2. Taste: does it look and read designed (spacing, copy, naming, one clear thing on screen), not a template dump? Fewer features done well beats many features done thinly.
+3. Human feel: do README, UI copy, commit messages, demo narration and write-up read like one specific person wrote them? Flag any AI-generic phrase ("leverage", "seamless", "cutting-edge", "in today's fast-paced world", empty superlatives), em-dash spam, bullet walls and fluffy intros.
+4. Technical depth: does it really do the hard part, with tests that would fail if it broke? Is the sponsor technology used for something that matters?
+5. Criteria fit: map each official judging criterion and sponsor-prize requirement from the hackathon's own rules file to specific evidence in the project. Name any criterion with no evidence.
+6. Reviewer path: a stranger on a fresh clone can follow README "do X -> see Y" steps and see the claimed result in a few minutes, with no hidden setup. AI judges read the README first.
+7. Honesty: every claim (numbers, "works with", "tested on") is backed by code or a log. Mock or simulated data is labelled as such, in the demo too. No invented stats, users, prizes or session IDs. No pricing for QualiaBits.
+Output of the judge: score per criterion, the 5 most damaging flaws with file/line or timestamp, and one sentence on what would make it win.
+
+## Open-source work (PRs, fixes): score each 1 to 5, pass = all 4 or more
+1. Correct: bug reproduced before, fixed after, project tests run (command and result in the log). Regression test added where the project has tests.
+2. Minimal and in style: smallest diff that fixes the issue; matches the project's formatting, lint and naming; no drive-by changes.
+3. Process: issue was free (no assignee, no PR, no fresh claim), CONTRIBUTING and PR template followed exactly, AI policy respected, disclosure line added where the policy asks (AOSSIE requires one).
+4. Human text: PR and comment text is short, plain, specific, in own words, no boilerplate, no invented results.
+5. Safe: no secrets, no unrelated files, no CLA signing, within the daily limits (5 PRs, 8 comments).
+
+
+=== SETTING ===
+This is not a hackathon entry: it is a product milestone (M2 slice B) for QualiaBits Voice, a hosted speech product built on a fork of VoiceStudio. Criteria fit is therefore measured against the product plan: M2 is "wrap the local engine's API as a hosted service: auth (email login), workspaces, API keys, per-workspace job queue + storage (S3), usage metering. No desktop/Electron in the hosted path." Slice A (auth, one workspace per customer, API keys, metering, a metered passthrough of the speech route) is already built and pushed. This milestone is slice B: object storage and the per-workspace job queue, plus the migration path slice A admitted it lacked. Billing, email verification and deployment are explicitly NOT in this slice.
+Boundary conditions that are true and must be judged as stated: nothing is deployed; there is no public URL; there is no GPU run; no model terms have been accepted; the S3 backend has never been run against a bucket; no customer exists and nothing has been sold.
+
+=== ARTIFACT 1: hosted/README.md (the page a reviewer reads first) ===
+# The hosted control plane
+
+The product side of this fork: customers, logins, API keys, a usage meter, an object
+store and a job queue, in front of the engine. The engine stays what it is — a local
+speech server — and this layer is what turns it into something a business can buy.
+
+Not deployed. Not public. No GPU. Nothing here has been sold to anyone.
+
+```
+hosted/control_plane/         the plane itself
+hosted/control_plane/jobs.py  the queue: claims, leases, retries, the receipt
+hosted/control_plane/storage.py  where audio lives, and what the backends refuse
+hosted/control_plane/migrations.py  bringing an older database forward
+hosted/worker/runner.py       the worker: one job at a time, heartbeated
+hosted/scripts/hosted_e2e.py  the end-to-end proof: starts every process itself
+hosted/scripts/run_worker.py  the worker as a process, for a deployment or --once
+hosted/scripts/hosted_demo.sh one command around all of it, with the model handling
+tests/hosted/                 its tests
+```
+
+## See it work, one command
+
+```sh
+hosted/scripts/hosted_demo.sh
+```
+
+It finds the Kokoro bundle (or downloads it and checks three sha256 values against
+pinned ones), verifies the model bytes, then starts the engine, the plane and the
+worker on reserved loopback sockets, runs the whole proof, stops them, and prints
+what passed. Nothing to start by hand, nothing left running. Several minutes on a
+small CPU box — the queued job is the slow part, because this engine spends seconds
+of CPU per second of speech. Evidence lands in whatever work directory you pass
+(`.hosted-demo` by default).
+
+The tests are the faster path and need no model at all, about twenty-five seconds:
+
+```sh
+.venv/bin/python -m pytest tests/hosted -q
+```
+
+## What it does today
+
+| Route | Who may call it | What it does |
+| --- | --- | --- |
+| `GET /healthz` | anyone | is the plane up, on which schema, with how many jobs in each state |
+| `GET /healthz/upstream` | anyone | is the engine behind it up |
+| `POST /v1/workspaces` | anyone | signup: email + password, one workspace per customer |
+| `POST /v1/auth/token` | anyone | email + password → session token |
+| `POST /v1/api-keys` | session | mint a key; the key is returned once |
+| `GET /v1/api-keys` | session | list keys — never key material |
+| `DELETE /v1/api-keys/{id}` | session | revoke one of your own keys |
+| `GET /v1/usage` | session or key | this workspace's meter, and its key-by-key breakdown |
+| `POST /v1/audio/speech` | API key | metered passthrough to the engine, for one short request |
+| `POST /v1/jobs` | session or key | queue a longer piece of speech (up to 20,000 characters) |
+| `GET /v1/jobs` | session or key | your jobs, newest first, with a status filter |
+| `GET /v1/jobs/{id}` | session or key | one of your jobs, with its full text |
+| `DELETE /v1/jobs/{id}` | session or key | cancel a job that has not been claimed |
+| `GET /v1/jobs/{id}/audio` | session or key | the stored audio of a finished job |
+
+Not in yet, and named as the next slices: email verification, billing, deployment.
+
+## Run it by hand
+
+The demo script above is the short path. This is the same thing as three long-lived
+processes, which is what you want while working on it. It assumes a venv built
+with `uv sync --frozen --no-default-groups --group cpu --group dev`, and the
+Kokoro bundle from `docs/engines/sherpa-onnx.md`.
+
+```sh
+# terminal 1 — the engine, CPU, with the permissive Kokoro model
+export OMNIVOICE_SHERPA_MODEL="$PWD/kokoro-int8-multi-lang-v1_0"
+export OMNIVOICE_TTS_BACKEND=sherpa-onnx
+.venv/bin/python -m uvicorn backend.main:app --port 3900
+
+# terminal 2 — the control plane in front of it
+export QUALI_UPSTREAM_BASE_URL=http://127.0.0.1:3900
+export QUALI_DATABASE_URL="sqlite:///$PWD/.hosted/control-plane.db"
+export QUALI_STORAGE_DIR="$PWD/.hosted/objects"
+.venv/bin/python -m uvicorn hosted.control_plane.app:app --port 8080
+
+# terminal 3 — a worker, which is what actually speaks the queued jobs. Without
+# one, jobs sit in `queued` forever; that is the point of a queue.
+export QUALI_UPSTREAM_BASE_URL=http://127.0.0.1:3900
+export QUALI_DATABASE_URL="sqlite:///$PWD/.hosted/control-plane.db"
+export QUALI_STORAGE_DIR="$PWD/.hosted/objects"
+.venv/bin/python hosted/scripts/run_worker.py            # polls forever
+```
+
+Then, in a fourth terminal, do exactly this:
+
+```sh
+BASE=http://127.0.0.1:8080
+
+# 1. sign up. 201 with your workspace id.
+curl -sS -X POST $BASE/v1/workspaces \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"a real password"}'
+
+# 2. log in. Copy the token out of the answer.
+curl -sS -X POST $BASE/v1/auth/token \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"a real password"}'
+
+# 3. mint a key. The api_key value is shown this once; only its digest is stored.
+curl -sS -X POST $BASE/v1/api-keys \
+  -H "Authorization: Bearer TOKEN_FROM_STEP_2" \
+  -H 'content-type: application/json' -d '{"label":"laptop"}'
+
+# 4. speak. Real audio comes back, proxy-passed from the engine.
+curl -sS -X POST $BASE/v1/audio/speech \
+  -H "Authorization: Bearer KEY_FROM_STEP_3" \
+  -H 'content-type: application/json' \
+  -d '{"input":"यह एक हिन्दी वाक्य है।","voice":"hf_alpha","response_format":"wav"}' \
+  --output hindi.wav
+
+# 5. queue a longer piece of speech. 202 with an id. Nothing is spoken yet.
+curl -sS -X POST $BASE/v1/jobs \
+  -H "Authorization: Bearer KEY_FROM_STEP_3" \
+  -H 'content-type: application/json' \
+  -d '{"input":"नमस्ते। यह लंबा वाक्य कतार से बोला जाएगा।","voice":"hm_omega"}'
+
+# 6. poll it until the worker has spoken it, then take the audio out of the store.
+curl -sS $BASE/v1/jobs/1 -H "Authorization: Bearer KEY_FROM_STEP_3"
+curl -sS $BASE/v1/jobs/1/audio -H "Authorization: Bearer KEY_FROM_STEP_3" \
+  --output job1.wav
+file job1.wav        # RIFF 24 kHz mono; sha256 matches the job's own receipt
+
+# 7. read the meter. characters are what you asked for, audio_seconds are what
+#    arrived, measured from the WAV you actually received — both routes, once each.
+curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
+```
+
+What a pass looks like: see "Measured" below, which quotes
+`hermes-reports/M2-slot27-e2e-r1/result.json` — the clean-clone run.
+
+## How it is put together
+
+**Why a separate layer instead of editing the engine.** The engine loads models
+and serves the desktop app. Hosted customers need logins, keys and a meter. Those
+two sets of concerns change for different reasons, so they live in different
+processes and different databases. The plane imports nothing from `backend/`; it
+talks to the engine over HTTP, which also means an engine upgrade cannot alter
+how a customer authenticates.
+
+**Keys.** `qbv_<key_id>_<secret>`, 32 random bytes of secret. The database stores
+the key id and a SHA-256 digest of the whole key, never the key. A leak of the
+control-plane database therefore does not hand over working keys. Lookups go
+through the key id, comparisons through `hmac.compare_digest`.
+
+**Passwords.** scrypt (n=2¹⁴, r=8, p=1) with a per-user salt, parameters stored
+beside the digest so they can be raised later. Logins against an unknown address
+spend the same work as a real verify, so the endpoint is not an account-
+enumeration oracle.
+
+**Metering, two counters that mean different things.** `characters` is
+attempt-based: the text you asked the engine to speak, counted for every request
+that got past input validation, whether or not the engine answered.
+`audio_seconds` is delivery-based: measured from the WAV header of the audio you
+actually got, so a failed call adds a failure and no minutes. The response says
+which is which so nobody reads a blended number as a bill.
+
+**Per key, not just per workspace.** `GET /v1/usage` also breaks the same rows
+down by key (`by_key`), with each key's public id and label, so a customer with a
+laptop and a server can see which one is spending. Key material never appears
+there — not the key, not its digest — and the breakdown is asserted to add up to
+the workspace total rather than silently under-report.
+
+**What is deliberately absent.** No route takes a workspace id, so a customer
+cannot even ask for someone else's numbers. Speaking always requires a key, so
+every byte of audio is attributable. (A job may be queued from the dashboard
+instead, and then it is attributed to the workspace; the meter's `by_key` is empty
+rather than inventing a key.) Revoking twice is fine; revoking someone else's key
+is a 404, not a 403, so key ids are not a probe. A job id that belongs to another
+workspace answers exactly like one that does not exist.
+
+## How a job works
+
+`POST /v1/audio/speech` is a passthrough: it holds your connection open while the
+engine speaks. That is fine for a sentence and wrong for a paragraph, which is what
+`POST /v1/jobs` is for. A job is a row, not a thread: it survives a restart of
+anything, and its status is the answer to "what happened to my work".
+
+```
+POST /v1/jobs   -> 202, status queued, nothing spoken yet, meter untouched
+worker process  -> claims it, asks the engine, stores the bytes, settles the job
+GET /v1/jobs/{id}      -> queued | running | succeeded | failed | cancelled
+GET /v1/jobs/{id}/audio -> the stored WAV (409 until it is finished)
+```
+
+Three mechanisms keep "one worker per job" true, and each has its own test:
+
+1. **Claiming is a compare-and-swap.** The worker reads a candidate id, then issues
+   one `UPDATE ... WHERE id = :candidate AND <still claimable>` and believes only a
+   rowcount of 1. Two workers that read the same candidate both write, and the loser's
+   `WHERE` no longer matches. This is what SQLite has instead of
+   `SELECT ... FOR UPDATE SKIP LOCKED`, and it is checked with four worker threads
+   racing over twelve jobs.
+2. **A lease, not a lock.** A claim is valid until `lease_expires_at`; a worker that
+   dies holding a job releases it by not renewing. The worker heartbeats every third
+   of the lease while the engine works, so a slow job does not lose the lease it is
+   using.
+3. **Bounded attempts, and a sweep for the last one.** A claim requires an attempt
+   in hand, so a job whose lease expired on its final attempt would sit `running`
+   forever. The next claim pass fails it and writes the usage event it owes.
+
+**Which failures retry.** The engine not answering (502/504) is our side of the
+wire, so the job goes back to `queued` until its attempts run out. The engine's own
+refusal (400) is deterministic, so it fails the job on the first try with the
+engine's own message — spending two more minutes of CPU to be told the same thing
+is not diligence. **Cancelling** a queued job is free: nothing reached the engine, so
+the meter never sees it.
+
+**One usage event per job**, written when the job reaches a terminal state. A retry
+after our own 502 is not a second order, so the characters are counted once. Engine
+time burned on attempts that were discarded is kept separately as
+`wasted_engine_seconds`, so no single number implies we did work we threw away.
+
+## Where the audio lives
+
+Bytes go to an object store; the job row keeps the key, the digest and the length.
+Keys are content addresses — `<sha256[:2]>/<sha256[2:4]>/<sha256>.wav` — so two
+identical WAVs are one object, and the name is checkable: every read re-hashes the
+bytes and refuses to serve anything that does not match the name it was stored
+under. Writes go to a temp file, `fsync`, then `rename`, and are read back and
+verified before the write is reported as done.
+
+`QUALI_STORAGE_BACKEND=local` (the default) keeps objects under
+`QUALI_STORAGE_DIR`. `=s3` needs `QUALI_S3_BUCKET` and credentials, and with a
+bucket missing or `boto3` absent it **refuses at startup** rather than quietly
+falling back to local disk — finding out where customer audio went by watching a
+disk fill is not a debugging experience anybody should have. The S3 backend is
+written and its logic is tested against a stub client; no bucket has ever been
+used, and the page says so rather than implying otherwise.
+
+## Migrations
+
+The plane's database is its own (the engine has a separate one), and it now has two
+versions: `m2a1` (slice A: workspaces, keys, sessions, usage) and `m2b1` (slice B:
+the jobs table). `hosted/control_plane/migrations.py` applies ordered steps, each
+stamping its version in the same transaction as its DDL, so a crash halfway leaves
+the stamp alone and the next start retries — which is why every step is idempotent.
+
+A database from a version nobody knows is still refused, naming both versions: that
+is somebody else's schema, not a file to guess at. The tests build a real slice-A
+database (slice A's DDL, copied rather than generated from today's models, so the
+fixture cannot drift), put a customer, a key and a metered request in it, upgrade
+it through the real app, and check that customer can still log in and use their
+ledger afterwards.
+
+Why not alembic, which the engine's database already uses: the control plane owns
+one schema, applied linearly, with no branches and one consumer. When a step needs
+data from a table a later step drops, or two people ship steps at once, that is the
+moment to convert these functions into an alembic baseline revision — not before.
+
+## Testing
+
+Fast path, no model download, about twenty-five seconds:
+
+```sh
+.venv/bin/python -m pytest tests/hosted -q
+```
+
+Four suites, and the stub is the only substitution (a real ASGI app answering with a
+WAV of a known duration, so the meter is checked against audio rather than against a
+number the test invented; real connection refusals against a closed loopback port):
+
+- `test_hosted_accounts.py` / `test_hosted_metering.py` — signup, login, session
+  expiry, key lifecycle, revocation, cross-workspace isolation, every malformed
+  credential, the engine's errors passed through, timeouts, 502s, input that never
+  reaches the engine, and the two real bugs slice A hit.
+- `test_hosted_storage.py` — content addressing, one object for identical bytes,
+  atomic writes with no `.part` left behind, a corrupt object refused rather than
+  served (and repaired by storing the right bytes again), traversal-shaped keys
+  refused, and the S3 backend refusing when misconfigured.
+- `test_hosted_jobs.py` — queue, worker, stored audio, meter, isolation of job ids,
+  every refusal boundary (400 empty, 413 at 20,001, 422 past the body backstop),
+  cancellation, and a job that survives a plane restart.
+- `test_hosted_queue.py` — four threads racing for twelve jobs, leases that expire
+  and are reclaimed, a dead worker's last attempt swept into `failed` instead of
+  hanging, a worker that lost its lease being unable to overwrite the new owner's
+  result, retries that stay bounded, and characters counted once across them.
+- `test_hosted_migrations.py` — fresh create, in-place upgrade with the rows intact,
+  idempotent re-run, and refusals for unknown and newer schemas.
+
+The end-to-end run is the other half — the one-command script at the top calls
+it, and this is it directly when you already have a model directory:
+
+```sh
+.venv/bin/python hosted/scripts/hosted_e2e.py \
+  --output /tmp/hosted-evidence-run \
+  --model /path/to/kokoro-int8-multi-lang-v1_0
+```
+
+It starts the real engine, the real plane and real worker processes, signs up two
+workspaces, mints keys, speaks Hindi and English through the plane, queues a longer
+Hindi paragraph and has a worker process speak it, downloads the audio back out of
+the object store and checks it against the job's own digest, takes the same request
+straight from the engine for comparison, compares the engine's refusal byte for byte
+on both paths, checks a refused job fails once and a cancelled job is never spoken,
+reads both meters and revokes a key. `result.json` records every check, the worker
+counters, the model file hashes and the commit the run tested.
+
+## Measured
+
+From `hermes-reports/M2-slot27-e2e-r3/result.json` — engine, plane and worker
+processes all started fresh by the harness, on one t3a.medium with no GPU
+(31 Oct 2026). Numbers are copied from that file; the run records the commit it
+tested (`4372299f0`) and the model hashes below.
+
+```
+engine ready 10.2 s   control plane ready 12.0 s   whole run 234.8 s
+every process it started: clean shutdown
+
+three direct requests through the control plane, workspace A:
+  hf_alpha  hi   1.822 s audio, 24 kHz mono, peak 0.79   engine took 19.5 s
+  hm_omega  hi   1.829 s audio,              peak 0.78   engine took 10.6 s
+  hf_alpha  en   3.508 s audio,              peak 0.79   engine took 18.2 s
+  plus one request for a voice the model does not have, refused 400 by the
+  engine and passed through with the engine's own message naming its 54 voices.
+
+one queued job, spoken by a separate worker process (run_worker.py --once):
+  job 1  hm_omega  hi   208 characters -> 16.472 s of 24 kHz mono audio,
+                         790,682 bytes, engine took 108.5 s
+  worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
+  the object on disk, the job's receipt and the download all hash to
+  dac7e3e614e3f45ce5b6d3cf9a6d16be527f8057b1a669b09f700bd2a3429c72
+
+one refused job (a voice the model does not have):
+  failed 400 after 1 attempt, no retry, no audio served (409), error is the
+  engine's own sentence, truncated at the ledger's 200 characters
+one cancelled job:
+  never claimed by the next worker pass, and it moved the meter by nothing
+
+meter for A, at the end of the run: 6 requests, 388 characters, 23.630 s audio,
+              1,134,420 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+              requests_without_audio_seconds 2
+              by_key: one key, label "a", same six requests and 23.630 s
+meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
+
+same English request straight at the engine, for comparison:
+  direct 3.488 s / 167,458 bytes   through the plane 3.508 s / 168,414 bytes
+
+the engine's refusal for an unknown voice, taken both ways:
+  sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
+```
+
+The last two lines are the honest version of the pass-through claim. Speech
+cannot be compared byte for byte between two calls because the engine samples,
+and those two English numbers differ by 800 bytes — so no such claim is made
+anywhere. What is compared byte for byte is a response the engine computes
+deterministically: its refusal. That is checked against the real engine on every
+run, and the 200 path is checked against a deterministic stub in the unit suite.
+
+The model those numbers came from is the one `scripts/qualibits_quickstart.sh`
+downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); the
+run recorded the same hashes plus the commit it tested, in the same file.
+
+The CPU is not production, and this is the clearest evidence of it: 5 to 10
+seconds of compute per second of speech, from 10.6 s for the fastest of the
+three. The queued job is the same story told plainly: 16.5 seconds of audio cost
+108.5 seconds of engine time, about 6.6 s per second. That is why the GPU run is
+the owner's to approve, and exactly what this layer cannot work around — the plane
+can hold the request open for a paragraph, but nothing here makes the engine
+faster.
+
+## Licence
+
+AGPL-3.0, inherited from upstream VoiceStudio. Run this for customers and you owe
+them the corresponding source; keep the fork public and keep the attribution in
+`LICENSE` and `LICENSE-NOTICE.md`. The application licence does not cover speech
+weights or voices — that is a separate decision, and it is the owner's.
+
+=== ARTIFACT 2: the files (lines, path) ===
+   370  hosted/README.md
+    15  hosted/__init__.py
+    12  hosted/control_plane/__init__.py
+   577  hosted/control_plane/app.py
+   128  hosted/control_plane/auth.py
+   101  hosted/control_plane/config.py
+   264  hosted/control_plane/db.py
+   361  hosted/control_plane/jobs.py
+   178  hosted/control_plane/metering.py
+   132  hosted/control_plane/migrations.py
+   135  hosted/control_plane/security.py
+   342  hosted/control_plane/storage.py
+   115  hosted/control_plane/upstream.py
+   123  hosted/scripts/hosted_demo.sh
+   636  hosted/scripts/hosted_e2e.py
+    94  hosted/scripts/run_worker.py
+     5  hosted/worker/__init__.py
+   280  hosted/worker/runner.py
+   253  tests/hosted/conftest.py
+   235  tests/hosted/test_hosted_accounts.py
+   371  tests/hosted/test_hosted_jobs.py
+   242  tests/hosted/test_hosted_metering.py
+   280  tests/hosted/test_hosted_migrations.py
+   319  tests/hosted/test_hosted_queue.py
+   259  tests/hosted/test_hosted_storage.py
+
+
+=== ARTIFACT 3: test output from this tree, run just now (command shown) ===
+$ .venv/bin/python -m pytest tests/hosted tests/test_qualibits_voice_docs.py tests/test_sherpa_kokoro_and_speaker.py tests/test_headless_baseline.py -q
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+164 passed, 1 warning in 27.01s
+
+
+=== ARTIFACT 4: the real end-to-end run's result.json (engine, plane and worker processes all started by the harness; real speech; CPU, no GPU) ===
+{
+  "run": "hosted control plane end to end",
+  "passed": true,
+  "checks": [
+    "control_plane_and_engine_both_up",
+    "two_workspaces_signed_up_with_keys",
+    "hindi_and_english_audio_through_the_control_plane",
+    "engine_refusal_passed_through_as_400",
+    "refusal_bytes_identical_to_the_real_engine",
+    "key_refusals_are_401",
+    "meter_matches_the_audio_and_is_per_workspace",
+    "a_queued_job_is_spoken_by_a_real_worker_and_metered_once",
+    "a_refused_job_fails_once_with_the_engine_s_own_message",
+    "a_cancelled_job_is_never_spoken_or_metered",
+    "revoked_key_refused_and_other_workspace_untouched"
+  ],
+  "elapsed_seconds": 219.243,
+  "engine_ready_seconds": 9.437,
+  "plane_ready_seconds": 11.339,
+  "engine_shutdown": {
+    "started": true,
+    "exit_code": -15,
+    "forced": false,
+    "clean": true
+  },
+  "control_plane_shutdown": {
+    "started": true,
+    "exit_code": -15,
+    "forced": false,
+    "clean": true
+  },
+  "revision": {
+    "tested_commit": "4372299f0f58d5693c1a4a4f1022268be12288e0",
+    "tested_branch": "work/m1-headless",
+    "worktree_dirty": true,
+    "tracked_files_hashed": 4854,
+    "tracked_gitlinks": 1,
+    "tracked_entries": 4855
+  },
+  "workspaces": {
+    "a": {
+      "id": 1,
+      "email": "first@example.com"
+    },
+    "b": {
+      "id": 2,
+      "email": "second@example.com"
+    }
+  },
+  "speech": [
+    {
+      "label": "hindi_hf_alpha",
+      "voice": "hf_alpha",
+      "language": "hi",
+      "characters": 22,
+      "status": 200,
+      "bytes": 87844,
+      "seconds": 1.829,
+      "sample_rate": 24000,
+      "channels": 1,
+      "peak": 0.783203,
+      "engine_seconds_header": 19.935,
+      "audio_seconds_header": 1.829167,
+      "engine_marker_header": "0.5.7",
+      "sha256": "9a0b8380c86d832da48e8bae87a3ae614e36ae4e86b86359778535c335ad8707"
+    },
+    {
+      "label": "hindi_hm_omega",
+      "voice": "hm_omega",
+      "language": "hi",
+      "characters": 22,
+      "status": 200,
+      "bytes": 87826,
+      "seconds": 1.829,
+      "sample_rate": 24000,
+      "channels": 1,
+      "peak": 0.786133,
+      "engine_seconds_header": 10.682,
+      "audio_seconds_header": 1.828792,
+      "engine_marker_header": "0.5.7",
+      "sha256": "a8553b6cbc6ce59a15b20195a19ec24829082c7c4829e7bf6d50b0c7d9dab73f"
+    },
+    {
+      "label": "english",
+      "voice": "hf_alpha",
+      "language": "en",
+      "characters": 57,
+      "status": 200,
+      "bytes": 167346,
+      "seconds": 3.485,
+      "sample_rate": 24000,
+      "channels": 1,
+      "peak": 0.796814,
+      "engine_seconds_header": 17.769,
+      "audio_seconds_header": 3.485458,
+      "engine_marker_header": "0.5.7",
+      "sha256": "5f5a5f3b59562f0d82595aa5561be9b6d2e1fd367f2d2c74ecb29bd90b2122b3"
+    }
+  ],
+  "job": {
+    "id": 1,
+    "voice": "hm_omega",
+    "characters": 208,
+    "seconds": 16.472,
+    "bytes": 790700,
+    "sha256": "70bf78d90daf6f035d9cccde41aac145b26b2599eb2d1136cdcb9c24559d7563",
+    "object_sha256": "70bf78d90daf6f035d9cccde41aac145b26b2599eb2d1136cdcb9c24559d7563",
+    "engine_seconds": 108.965,
+    "worker_stats": {
+      "worker_id": "e2e-first",
+      "mode": "once",
+      "claimed": 1,
+      "succeeded": 1,
+      "failed": 0,
+      "requeued": 0,
+      "lost_lease": 0,
+      "idle_polls": 1,
+      "engine_seconds": 108.965
+    },
+    "object_path": "/home/ubuntu/.hermes/cache/scratch/hosted-e2e-2exko5s6/objects/70/bf/70bf78d90daf6f035d9cccde41aac145b26b2599eb2d1136cdcb9c24559d7563.wav"
+  },
+  "job_refused": {
+    "id": 2,
+    "status": "failed",
+    "status_code": 400,
+    "attempts": 1,
+    "error": "Unknown voice 'no_such_voice_here' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), j",
+    "engine_detail_for_this_voice": "Unknown voice 'no_such_voice_here' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.",
+    "engine_detail_was_truncated_by_the_ledger": true,
+    "worker_stats": {
+      "worker_id": "e2e-refused",
+      "mode": "once",
+      "claimed": 1,
+      "succeeded": 0,
+      "failed": 1,
+      "requeued": 0,
+      "lost_lease": 0,
+      "idle_polls": 1,
+      "engine_seconds": 0.279
+    }
+  },
+  "job_cancelled": {
+    "id": 3,
+    "worker_stats": {
+      "worker_id": "e2e-after-cancel",
+      "mode": "once",
+      "claimed": 0,
+      "succeeded": 0,
+      "failed": 0,
+      "requeued": 0,
+      "lost_lease": 0,
+      "idle_polls": 1,
+      "engine_seconds": 0.0
+    }
+  },
+  "usage_workspace_a": {
+    "workspace_id": 1,
+    "requests": 4,
+    "characters": 158,
+    "audio_seconds": 7.143,
+    "audio_bytes": 343016,
+    "failed_requests": 1,
+    "requests_without_audio_seconds": 1,
+    "by_status": {
+      "200": 3,
+      "400": 1
+    },
+    "by_key": [
+      {
+        "api_key_id": 1,
+        "key_id": "9451c63306f340d0",
+        "label": "a",
+        "requests": 4,
+        "characters": 158,
+        "audio_seconds": 7.143,
+        "failed_requests": 1,
+        "last_request_at": "2026-10-31T12:17:04.680268"
+      }
+    ],
+    "first_request_at": "2026-10-31T12:16:18.238568",
+    "last_request_at": "2026-10-31T12:17:04.680268",
+    "characters_note": "text sent to the engine, counted whether or not it answered",
+    "audio_seconds_note": "audio received, measured from the returned WAV header",
+    "by_key_note": "spend per key, so a customer can tell which integration is talking. Input the engine never saw appears here too, with zero characters."
+  },
+  "direct_vs_proxied": {
+    "direct_seconds": 3.489,
+    "proxied_seconds": 3.485,
+    "direct_bytes": 167508,
+    "proxied_bytes": 167346,
+    "note": "Same request, both paths, same engine. Byte identity is not asserted: the engine samples, so two calls need not be identical. Equality of the bytes the proxy returned with the bytes the engine sent is proven in the unit suite against a deterministic stub."
+  },
+  "refusal_passthrough": {
+    "proxied_sha256": "f9426105824c9597049f4268b53380e9535c31875e724d64d0e83418dac9c2c9",
+    "direct_sha256": "f9426105824c9597049f4268b53380e9535c31875e724d64d0e83418dac9c2c9",
+    "identical": true,
+    "bytes": 699
+  },
+  "usage_workspace_b": {
+    "workspace_id": 2,
+    "requests": 0,
+    "characters": 0,
+    "audio_seconds": 0.0,
+    "audio_bytes": 0,
+    "failed_requests": 0,
+    "requests_without_audio_seconds": 0,
+    "by_status": {},
+    "by_key": [],
+    "first_request_at": null,
+    "last_request_at": null,
+    "characters_note": "text sent to the engine, counted whether or not it answered",
+    "audio_seconds_note": "audio received, measured from the returned WAV header",
+    "by_key_note": "spend per key, so a customer can tell which integration is talking. Input the engine never saw appears here too, with zero characters."
+  },
+  "model_files": {
+    "tokens.txt": "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425",
+    "voices.bin": "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "m1_complete": false,
+  "gpu_verified": false,
+  "listening_verified": false,
+  "deployed": false,
+  "public_url": null,
+  "what_this_proves": "A signed-up workspace, holding a key minted by the control plane, got real 24 kHz WAV speech in Hindi and English from the fork's own engine through the hosted layer, and the usage meter matched the audio's own duration and stayed inside that workspace. A longer Hindi paragraph was queued and spoken by a separate worker process; the audio was fetched back out of the object store and hashed to the digest on the job. A refusal failed once with the engine's own message, and a cancelled job was never spoken or billed.",
+  "what_this_does_not_prove": "Not deployed, no public URL, no HTTPS, no GPU, no human listening check, no S3 bucket or credentials, no email delivery, no billing, and no claim that the voice is good enough to sell. The store is the local filesystem backend; the S3 backend is written and refuses when misconfigured but has never been run against a bucket. M1 stays open until the owner's GPU run and listening check."
+}
+
+=== ARTIFACT 5: the source, verbatim ===
+--- hosted/control_plane/jobs.py ---
+"""The job queue: claim a job, do the work, settle it once.
+
+Why a queue at all, when slice A already proxies ``POST /v1/audio/speech``. A
+paragraph of Hindi on CPU is minutes of compute; an HTTP request is not where that
+belongs. A caller needs to hand over the work, get an id back, and come back for
+the file — and when the engine is down or the box reboots mid-synthesis, somebody
+has to be able to say what happened to that work. That record is the job row.
+
+The hard part is not the table, it is one rule: **exactly one worker does a job**.
+Three mechanisms hold that up, and each is tested:
+
+1. Claiming is an optimistic compare-and-swap. The worker selects a candidate id,
+   then issues one ``UPDATE ... WHERE id = :candidate AND <still claimable>`` and
+   believes only a rowcount of 1. Two workers that read the same candidate both
+   write, and the loser's WHERE no longer matches. That works on SQLite, which has
+   no ``SELECT ... FOR UPDATE SKIP LOCKED``.
+2. A lease, not a lock. A worker that dies holding a job does not hold it forever:
+   the claim is valid until ``lease_expires_at``, after which another worker may
+   take it. The worker heartbeats while a slow engine call runs, so a live worker
+   does not lose a job it is still doing.
+3. A bounded number of attempts, and a sweep for the last one. A job whose lease
+   expired after its final attempt is not claimable (the claim requires
+   ``attempts < max_attempts``) and would sit ``running`` forever, so ``claim_one``
+   fails it and writes the one usage event it owes.
+
+One usage event per job, written when the job reaches a terminal state. A retry
+after our own failure is not a second order, so the characters are counted once.
+The engine time burned on attempts that were thrown away is recorded separately as
+``wasted_engine_seconds`` rather than added to ``engine_seconds``, so nobody can
+read a blended number as work done for the customer. Cancelling a queued job is
+free: nothing was ever sent to the engine, so the meter never sees it.
+"""
+from __future__ import annotations
+
+from datetime import timedelta
+from typing import Any
+
+from sqlalchemy import and_, func, or_, select, update
+from sqlalchemy.orm import Session
+
+from . import metering
+from .db import ApiKey, Database, Job, utcnow
+from .storage import StoredObject
+
+#: Jobs exist for the long text the single-request route refuses; 5,000 is that
+#: route's ceiling, so this is deliberately larger and still a stated limit.
+MAX_JOB_CHARS = 20000
+INPUT_PREVIEW_CHARS = 80
+
+QUEUED = "queued"
+RUNNING = "running"
+SUCCEEDED = "succeeded"
+FAILED = "failed"
+CANCELLED = "cancelled"
+
+TERMINAL_STATUSES = (SUCCEEDED, FAILED, CANCELLED)
+
+#: The engine's own refusals are deterministic: asking again changes nothing, so
+#: they fail the job on the first try instead of spending two more attempts and
+#: two more minutes of CPU to be told the same thing.
+RETRYABLE_STATUS_CODES = (502, 503, 504)
+
+
+def claimable(now) -> Any:
+    return or_(
+        Job.status == QUEUED,
+        and_(
+            Job.status == RUNNING,
+            Job.lease_expires_at.is_not(None),
+            Job.lease_expires_at < now,
+        ),
+    )
+
+
+def enqueue(
+    session: Session,
+    *,
+    workspace_id: int,
+    api_key_id: int | None,
+    text: str,
+    voice: str = "",
+    response_format: str = "wav",
+    max_attempts: int = 3,
+) -> Job:
+    """Queue one job. The caller validates and commits."""
+    job = Job(
+        workspace_id=workspace_id,
+        api_key_id=api_key_id,
+        status=QUEUED,
+        input_text=text,
+        voice=voice,
+        response_format=response_format,
+        characters=len(text),
+        attempts=0,
+        max_attempts=max_attempts,
+    )
+    session.add(job)
+    session.flush()
+    return job
+
+
+def job_dict(job: Job, *, full_input: bool = False) -> dict:
+    """What a customer sees. Never another workspace's row, never a worker id."""
+    text = job.input_text or ""
+    out: dict = {
+        "id": job.id,
+        "status": job.status,
+        "voice": job.voice,
+        "response_format": job.response_format,
+        "characters": job.characters,
+        "attempts": job.attempts,
+        "max_attempts": job.max_attempts,
+        "created_at": job.created_at.isoformat(),
+        "started_at": job.started_at.isoformat() if job.started_at else None,
+        "finished_at": job.finished_at.isoformat() if job.finished_at else None,
+        "status_code": job.status_code,
+        "error": job.error or "",
+        "input": text if full_input else text[:INPUT_PREVIEW_CHARS],
+        "input_truncated": len(text) > INPUT_PREVIEW_CHARS and not full_input,
+        "audio": None,
+        "audio_url": None,
+    }
+    if job.object_key and job.status == SUCCEEDED:
+        out["audio"] = {
+            "sha256": job.object_sha256,
+            "bytes": job.audio_bytes,
+            "seconds": job.audio_seconds,
+            "engine_seconds": job.engine_seconds,
+            "wasted_engine_seconds": job.wasted_engine_seconds,
+        }
+        out["audio_url"] = f"/v1/jobs/{job.id}/audio"
+    return out
+
+
+def _sweep_unclaimable_running(db: Database, now) -> int:
+    """Fail the jobs that are running, out of attempts, and past their lease.
+
+    These are the last attempt of a worker that then died. Nothing else will ever
+    claim them (the claim needs an attempt in hand), so leaving them ``running``
+    would be a job that is neither going to finish nor going to fail — the worst
+    answer for a customer and for anyone reading the log later.
+    """
+    with db.session() as session:
+        rows = session.execute(
+            select(Job).where(
+                Job.status == RUNNING,
+                Job.lease_expires_at.is_not(None),
+                Job.lease_expires_at < now,
+                Job.attempts >= Job.max_attempts,
+            )
+        ).scalars().all()
+        for job in rows:
+            job.status = FAILED
+            job.status_code = 504
+            job.error = "the worker's lease expired on the final attempt"
+            job.finished_at = now
+            metering.record(
+                session,
+                workspace_id=job.workspace_id,
+                api_key_id=job.api_key_id,
+                route=JOBS_ROUTE,
+                status_code=504,
+                characters=job.characters,
+                error="worker lease expired on the final attempt",
+            )
+        session.commit()
+        return len(rows)
+
+
+def claim_one(
+    db: Database, *, worker_id: str, lease_seconds: int, candidates: int = 64
+) -> Job | None:
+    """Claim one job for ``worker_id``, or return None when there is nothing to do.
+
+    Each attempt in the loop reads one candidate and then tries the compare-and-
+    swap on it. Losing means another worker got there first, so the loop reads the
+    next candidate rather than the same one.
+    """
+    _sweep_unclaimable_running(db, utcnow())
+    for _ in range(candidates):
+        with db.session() as session:
+            now = utcnow()
+            candidate_id = session.execute(
+                select(Job.id)
+                .where(Job.attempts < Job.max_attempts, claimable(now))
+                .order_by(Job.id)
+                .limit(1)
+            ).scalar_one_or_none()
+            if candidate_id is None:
+                return None
+            result = session.execute(
+                update(Job)
+                .where(
+                    Job.id == candidate_id,
+                    Job.attempts < Job.max_attempts,
+                    claimable(now),
+                )
+                .values(
+                    status=RUNNING,
+                    worker_id=worker_id,
+                    attempts=Job.attempts + 1,
+                    started_at=func.coalesce(Job.started_at, now),
+                    lease_expires_at=now + timedelta(seconds=lease_seconds),
+                    finished_at=None,
+                )
+            )
+            if result.rowcount == 1:
+                session.commit()
+                job = session.get(Job, candidate_id)
+                return job
+            # Somebody else claimed it between our SELECT and our UPDATE. Their
+            # claim stands; we go round again and look at the next candidate.
+            session.rollback()
+    return None
+
+
+def heartbeat(db: Database, *, job_id: int, worker_id: str, lease_seconds: int) -> bool:
+    """Extend our own lease. Returns False when the job is no longer ours."""
+    now = utcnow()
+    with db.session() as session:
+        result = session.execute(
+            update(Job)
+            .where(Job.id == job_id, Job.status == RUNNING, Job.worker_id == worker_id)
+            .values(lease_expires_at=now + timedelta(seconds=lease_seconds))
+        )
+        session.commit()
+        return result.rowcount == 1
+
+
+JOBS_ROUTE = "/v1/jobs"
+
+
+def _own_job(session: Session, *, job_id: int, worker_id: str) -> Job | None:
+    """The job row, but only if this worker still holds it.
+
+    A worker whose lease expired and was reclaimed by somebody else must not write
+    its result over the new worker's: the row is the receipt, and the second worker
+    owns it now. Returning None here means the worker drops its work on the floor
+    and says so in its log.
+    """
+    return session.execute(
+        select(Job).where(Job.id == job_id, Job.worker_id == worker_id, Job.status == RUNNING)
+    ).scalar_one_or_none()
+
+
+def succeed(
+    db: Database,
+    *,
+    job_id: int,
+    worker_id: str,
+    stored: StoredObject,
+    store,
+    engine_seconds: float,
+    status_code: int = 200,
+) -> Job | None:
+    """Record delivered audio: terminal, one usage event, audio measured for real.
+
+    ``store`` is passed in rather than looked up so that the meter is fed the bytes
+    the backend can actually hand back. If the store cannot return them, the audio
+    seconds stay unknown (``None``) and the request lands in
+    ``requests_without_audio_seconds`` — an invented duration would be worse.
+    """
+    try:
+        stored_bytes = store.get(stored.key)
+    except Exception:  # noqa: BLE001 - the meter must not turn a delivered job into a failure
+        stored_bytes = None
+    with db.session() as session:
+        job = _own_job(session, job_id=job_id, worker_id=worker_id)
+        if job is None:
+            return None
+        job.status = SUCCEEDED
+        job.status_code = status_code
+        job.error = ""
+        job.object_key = stored.key
+        job.object_sha256 = stored.sha256
+        job.audio_bytes = stored.size
+        job.engine_seconds = engine_seconds
+        job.finished_at = utcnow()
+        # The duration is measured from the stored object's own header, the same
+        # way the single-request route measures the bytes it hands back.
+        event = metering.record(
+            session,
+            workspace_id=job.workspace_id,
+            api_key_id=job.api_key_id,
+            route=JOBS_ROUTE,
+            status_code=status_code,
+            characters=job.characters,
+            body=stored_bytes,
+            engine_seconds=engine_seconds,
+        )
+        job.audio_seconds = event.audio_seconds
+        _touch_key(session, job.api_key_id)
+        session.commit()
+        return job
+
+
+def fail(
+    db: Database,
+    *,
+    job_id: int,
+    worker_id: str,
+    status_code: int,
+    error: str,
+    engine_seconds: float = 0.0,
+    retryable: bool | None = None,
+) -> Job | None:
+    """Record a failed attempt, and decide whether it is also the failed job.
+
+    Retryable means our side of the wire broke — the engine did not answer. Then
+    the job goes back to ``queued`` and no usage event is written, because the job
+    has not reached a terminal state. Anything else, or the last allowed attempt,
+    is terminal: one usage event, characters counted, no audio.
+    """
+    if retryable is None:
+        retryable = status_code in RETRYABLE_STATUS_CODES
+    with db.session() as session:
+        job = _own_job(session, job_id=job_id, worker_id=worker_id)
+        if job is None:
+            return None
+        job.wasted_engine_seconds = (job.wasted_engine_seconds or 0.0) + engine_seconds
+        exhausted = job.attempts >= job.max_attempts
+        if retryable and not exhausted:
+            job.status = QUEUED
+            job.worker_id = ""
+            job.lease_expires_at = None
+            job.error = error[:200]
+            session.commit()
+            return job
+        job.status = FAILED
+        job.status_code = status_code
+        job.error = error[:200]
+        job.finished_at = utcnow()
+        metering.record(
+            session,
+            workspace_id=job.workspace_id,
+            api_key_id=job.api_key_id,
+            route=JOBS_ROUTE,
+            status_code=status_code,
+            characters=job.characters,
+            error=error,
+        )
+        _touch_key(session, job.api_key_id)
+        session.commit()
+        return job
+
+
+def cancel(session: Session, job: Job) -> bool:
+    """Cancel a queued job. Nothing was sent to the engine, so the meter is untouched."""
+    if job.status != QUEUED:
+        return False
+    job.status = CANCELLED
+    job.finished_at = utcnow()
+    job.error = "cancelled before it was claimed"
+    return True
+
+
+def _touch_key(session: Session, api_key_id: int | None) -> None:
+    if api_key_id is None:
+        return
+    key = session.get(ApiKey, api_key_id)
+    if key is not None:
+        metering.touch_key(session, key)
+
+--- hosted/control_plane/storage.py ---
+"""Where generated audio lives.
+
+The plane does not keep customer audio in a process's memory or in its own
+database. It writes bytes to an object store and keeps the key, the digest and the
+length in the job row, so a restart loses nothing, two workers can serve the same
+object, and a downloaded file can be checked against the receipt that describes it.
+
+Two backends, and one rule about them: the configuration decides, and a backend
+that cannot work refuses instead of quietly doing something else. ``local`` is the
+directory next to the plane's state; ``s3`` needs a bucket and credentials, and
+without them it raises at startup. There is no path where somebody who asked for
+S3 silently gets a local directory and finds out when the disk fills.
+
+Keys are content addresses: ``<sha256[:2]>/<sha256[2:4]>/<sha256>.<ext>``. Two
+identical WAVs are therefore one object, and a key is checkable — the digest is
+in the name, so ``get`` can prove the bytes it read are the bytes it stored. That
+proof runs on every read here. It costs one hash of a small file, and the
+alternative is serving a customer corrupted audio under a receipt that says the
+audio was fine; when objects get big enough for that to matter, the check moves
+to a background scrubber and this comment gets deleted.
+
+Written by Hermes for QualiaBits. AGPL-3.0, like the rest of the fork.
+"""
+from __future__ import annotations
+
+import hashlib
+import os
+import re
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Protocol
+
+#: A stored key, exactly as this module writes them. Anything else is refused
+#: rather than resolved, so no key — from a request, a database row or a log —
+#: can point outside the storage root.
+KEY_RE = re.compile(r"^[0-9a-f]{2}/[0-9a-f]{2}/[0-9a-f]{64}\.(wav|mp3|json|bin)$")
+
+CONTENT_TYPE_EXTENSIONS = {
+    "audio/wav": "wav",
+    "audio/x-wav": "wav",
+    "audio/wave": "wav",
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "application/json": "json",
+}
+EXTENSION_CONTENT_TYPES = {
+    "wav": "audio/wav",
+    "mp3": "audio/mpeg",
+    "json": "application/json",
+    "bin": "application/octet-stream",
+}
+
+
+class StorageError(RuntimeError):
+    """Storage cannot do what it was asked. Always loud, never a silent fallback."""
+
+
+@dataclass(frozen=True)
+class StoredObject:
+    """The receipt for one stored object."""
+
+    key: str
+    sha256: str
+    size: int
+    content_type: str
+    backend: str
+
+    def as_dict(self) -> dict:
+        return {
+            "key": self.key,
+            "sha256": self.sha256,
+            "size": self.size,
+            "content_type": self.content_type,
+            "backend": self.backend,
+        }
+
+
+class ObjectStore(Protocol):
+    backend: str
+
+    def put(self, data: bytes, content_type: str) -> StoredObject: ...
+
+    def get(self, key: str) -> bytes: ...
+
+    def exists(self, key: str) -> bool: ...
+
+    def describe(self) -> dict: ...
+
+
+def content_type_for_key(key: str) -> str:
+    extension = key.rsplit(".", 1)[-1] if "." in key else "bin"
+    return EXTENSION_CONTENT_TYPES.get(extension, "application/octet-stream")
+
+
+def key_for(data: bytes, content_type: str) -> str:
+    """The content address of ``data``. Raises on an empty object."""
+    if not data:
+        raise StorageError("refusing to store an empty object")
+    digest = hashlib.sha256(data).hexdigest()
+    extension = CONTENT_TYPE_EXTENSIONS.get(
+        (content_type or "").split(";")[0].strip().lower(), "bin"
+    )
+    return f"{digest[:2]}/{digest[2:4]}/{digest}.{extension}"
+
+
+def validate_key(key: str) -> str:
+    if not isinstance(key, str) or not KEY_RE.match(key):
+        raise StorageError(f"not a storage key: {key[:80]!r}")
+    return key
+
+
+def digest_of_key(key: str) -> str:
+    return validate_key(key).rsplit("/", 1)[-1].split(".")[0]
+
+
+class LocalObjectStore:
+    """The filesystem backend: a directory, atomic writes, verified reads."""
+
+    backend = "local"
+
+    def __init__(self, root: str | os.PathLike[str]) -> None:
+        if not str(root).strip():
+            raise StorageError("QUALI_STORAGE_DIR is empty")
+        self.root = Path(root).expanduser()
+        self.root.mkdir(parents=True, exist_ok=True)
+        if not self.root.is_dir():
+            raise StorageError(f"storage root {self.root} is not a directory")
+
+    # ── paths ────────────────────────────────────────────────────────────────
+    def path_for(self, key: str) -> Path:
+        """The file behind a validated key. Belt and braces on top of KEY_RE."""
+        validate_key(key)
+        candidate = (self.root / key).resolve()
+        root = self.root.resolve()
+        if root != candidate and root not in candidate.parents:
+            # Unreachable while KEY_RE holds, and left in place so that a future
+            # relaxation of the pattern cannot become a path traversal.
+            raise StorageError(f"key escapes the storage root: {key!r}")
+        return candidate
+
+    # ── writes ───────────────────────────────────────────────────────────────
+    def put(self, data: bytes, content_type: str = "audio/wav") -> StoredObject:
+        if not data:
+            raise StorageError("refusing to store an empty object")
+        key = key_for(data, content_type)
+        destination = self.path_for(key)
+        digest = digest_of_key(key)
+        if not self._is_intact(destination, key):
+            # Either the object is not here yet, or something is sitting under this
+            # name that does not hash to it — a truncated write from an older
+            # crash, a bad disk. Either way it is replaced, and the read-back below
+            # is what proves the replacement: "the file exists" is not "the file
+            # is right", and inheriting somebody else's half-object as good is how
+            # a customer receives audio that is quietly wrong.
+            self._write_atomically(destination, data)
+        stored = self._read_and_verify(destination, key)
+        if len(stored) != len(data) or hashlib.sha256(stored).hexdigest() != digest:
+            destination.unlink(missing_ok=True)
+            raise StorageError(
+                f"stored object {key} did not read back as what was written; "
+                "the object was removed rather than left as a half-truth"
+            )
+        return StoredObject(key, digest, len(data), content_type_for_key(key), self.backend)
+
+    def _is_intact(self, path: Path, key: str) -> bool:
+        if not path.is_file():
+            return False
+        try:
+            self._read_and_verify(path, key)
+        except (StorageError, OSError):
+            return False
+        return True
+
+    def _write_atomically(self, destination: Path, data: bytes) -> None:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        handle, temp_name = tempfile.mkstemp(
+            dir=str(destination.parent), prefix=".tmp-", suffix=".part"
+        )
+        try:
+            with os.fdopen(handle, "wb") as temp_file:
+                temp_file.write(data)
+                temp_file.flush()
+                # fsync before the rename: on a crash, either the old file or the
+                # whole new one exists, never a renamed-but-empty one.
+                os.fsync(temp_file.fileno())
+            os.chmod(temp_name, 0o600)
+            os.replace(temp_name, destination)
+        except BaseException:
+            Path(temp_name).unlink(missing_ok=True)
+            raise
+
+    def _read_and_verify(self, path: Path, key: str) -> bytes:
+        data = path.read_bytes()
+        expected = digest_of_key(key)
+        if hashlib.sha256(data).hexdigest() != expected:
+            raise StorageError(
+                f"object {key} on disk does not hash to its own name; the stored "
+                "bytes are corrupt and will not be served"
+            )
+        return data
+
+    # ── reads ────────────────────────────────────────────────────────────────
+    def get(self, key: str) -> bytes:
+        path = self.path_for(key)
+        if not path.is_file():
+            raise StorageError(f"no such object: {key}")
+        return self._read_and_verify(path, key)
+
+    def exists(self, key: str) -> bool:
+        try:
+            return self.path_for(key).is_file()
+        except StorageError:
+            return False
+
+    def describe(self) -> dict:
+        return {"backend": self.backend, "root": str(self.root)}
+
+
+class S3ObjectStore:
+    """The S3 backend. Written, and deliberately NOT exercised here.
+
+    There is no bucket and no credentials on this machine, and inventing a fake
+    endpoint to "test" it would produce evidence for a decision nobody made. What
+    the tests do cover is the behaviour that matters when it is misconfigured:
+    with no bucket, no credentials or no ``boto3``, constructing this raises, so a
+    plane configured for S3 cannot start up quietly writing to local disk.
+
+    When a bucket exists, ``put`` verifies with a HEAD (length and the checksum the
+    service recorded) and ``get`` verifies the digest against the key, the same
+    property the local store has.
+    """
+
+    backend = "s3"
+
+    def __init__(
+        self,
+        bucket: str,
+        *,
+        prefix: str = "",
+        region: str = "",
+        endpoint_url: str = "",
+        client=None,
+    ) -> None:
+        if not bucket:
+            raise StorageError(
+                "QUALI_STORAGE_BACKEND=s3 needs QUALI_S3_BUCKET; refusing to fall "
+                "back to local storage, which would put customer audio somewhere "
+                "the operator did not choose"
+            )
+        self.bucket = bucket
+        self.prefix = prefix.strip("/")
+        self.region = region
+        self.endpoint_url = endpoint_url
+        if client is None:
+            try:
+                import boto3  # noqa: PLC0415 - optional dependency
+            except ImportError as exc:  # pragma: no cover - depends on the box
+                raise StorageError(
+                    "QUALI_STORAGE_BACKEND=s3 needs boto3 installed; it is not"
+                ) from exc
+            try:
+                client = boto3.client(
+                    "s3",
+                    region_name=region or None,
+                    endpoint_url=endpoint_url or None,
+                )
+            except Exception as exc:  # noqa: BLE001 - any client error is this
+                raise StorageError(
+                    f"could not build an S3 client for bucket {bucket!r}: "
+                    f"{type(exc).__name__}"
+                ) from exc
+        self._client = client
+
+    def _full_key(self, key: str) -> str:
+        validate_key(key)
+        return f"{self.prefix}/{key}" if self.prefix else key
+
+    def put(self, data: bytes, content_type: str = "audio/wav") -> StoredObject:
+        if not data:
+            raise StorageError("refusing to store an empty object")
+        key = key_for(data, content_type)
+        digest = digest_of_key(key)
+        self._client.put_object(
+            Bucket=self.bucket,
+            Key=self._full_key(key),
+            Body=data,
+            ContentType=content_type_for_key(key),
+        )
+        head = self._client.head_object(Bucket=self.bucket, Key=self._full_key(key))
+        if int(head.get("ContentLength", -1)) != len(data):
+            raise StorageError(
+                f"S3 accepted {key} but reports {head.get('ContentLength')} bytes "
+                f"instead of {len(data)}"
+            )
+        return StoredObject(key, digest, len(data), content_type_for_key(key), self.backend)
+
+    def get(self, key: str) -> bytes:
+        validate_key(key)
+        body = self._client.get_object(Bucket=self.bucket, Key=self._full_key(key))[
+            "Body"
+        ].read()
+        expected = digest_of_key(key)
+        if hashlib.sha256(body).hexdigest() != expected:
+            raise StorageError(
+                f"object {key} in S3 does not hash to its own name; refusing to serve it"
+            )
+        return body
+
+    def exists(self, key: str) -> bool:
+        try:
+            self._client.head_object(Bucket=self.bucket, Key=self._full_key(key))
+        except Exception:  # noqa: BLE001 - absent, forbidden and error all mean "not ours"
+            return False
+        return True
+
+    def describe(self) -> dict:
+        return {
+            "backend": self.backend,
+            "bucket": self.bucket,
+            "prefix": self.prefix,
+            "region": self.region or "default",
+            "endpoint_url_set": bool(self.endpoint_url),
+            "note": "credentials and object contents are never reported here",
+        }
+
+
+def build_store(settings) -> ObjectStore:
+    """The store the operator asked for, or a loud refusal."""
+    backend = (settings.storage_backend or "local").strip().lower()
+    if backend == "local":
+        return LocalObjectStore(settings.storage_dir)
+    if backend == "s3":
+        return S3ObjectStore(
+            settings.s3_bucket,
+            prefix=settings.s3_prefix,
+            region=settings.s3_region,
+            endpoint_url=settings.s3_endpoint_url,
+        )
+    raise StorageError(
+        f"QUALI_STORAGE_BACKEND={backend!r} is not a backend this plane has "
+        "(local, s3)"
+    )
+
+--- hosted/control_plane/migrations.py ---
+"""Bringing the control plane's own database forward, one ordered step at a time.
+
+Slice A refused to start on a database stamped with anything but its own version,
+because it had no migration path. That was the right refusal then and the wrong
+answer now: slice B adds the queue table, so every slice-A database in existence
+(old local runs, and any customer the moment this ships) would have been refused
+instead of upgraded. This module is that migration path.
+
+How it works, and why it is this small. The plane owns exactly one schema, applied
+linearly; there is no branching and no second consumer, which is the shape
+``alembic`` is built for but not the shape we need yet. So the versions live in a
+list, each step is a function that receives one transaction, and a database is
+stamped with the last version it has actually been brought to, inside the same
+transaction as that step's DDL. A step interrupted half way therefore leaves the
+stamp alone and the next start retries it, which is why every step must be
+idempotent (``checkfirst=True`` and friends, never ``DROP``). When the schema
+stops being linear — a step that needs data from a table a later step drops, or
+two people shipping steps at once — that is the moment to switch to alembic and
+turn these functions into a baseline revision; doing it before then would be
+paying for machinery this code does not use.
+
+``KNOWN_VERSIONS`` is deliberately exhaustive. A database stamped with something
+that is not in that list is not "probably fine": it is somebody else's schema, and
+the honest answer stays a refusal that names both versions.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Callable
+
+from sqlalchemy import inspect, text
+from sqlalchemy.engine import Connection
+
+from .db import Base, Database, Job
+
+#: Oldest first. A database is stamped with the last entry it has been brought to.
+#: m2a1 — slice A (workspaces, api_keys, session_tokens, usage_events).
+#: m2b1 — slice B (adds the jobs queue).
+KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1")
+
+MIGRATION_VERSION = KNOWN_VERSIONS[-1]
+
+
+def _ensure_directory(url: str) -> None:
+    # The directory is made here, not on import, so importing the app
+    # (``uvicorn hosted.control_plane.app:app`` resolves the module before the
+    # lifespan runs) still writes nothing to disk.
+    if url.startswith("sqlite:///"):
+        Path(url[len("sqlite:///"):]).parent.mkdir(parents=True, exist_ok=True)
+
+
+def _stamp(connection: Connection, version: str) -> None:
+    connection.execute(
+        text("UPDATE schema_meta SET value = :v WHERE key = 'schema_version'"),
+        {"v": version},
+    )
+
+
+# ── the steps ─────────────────────────────────────────────────────────────────
+
+
+def _add_jobs_table(connection: Connection) -> None:
+    """m2b1: the queue.
+
+    ``CREATE TABLE IF NOT EXISTS`` semantics via ``checkfirst``: a start that
+    crashed after the DDL but before the stamp re-runs this and changes nothing.
+    """
+    Job.__table__.create(connection, checkfirst=True)
+
+
+#: (version this step produces, work to do). Order matters; the stamp is written
+#: in the same transaction as the work.
+MIGRATIONS: tuple[tuple[str, Callable[[Connection], None]], ...] = (
+    ("m2b1", _add_jobs_table),
+)
+
+
+def _order(version: str) -> int:
+    return KNOWN_VERSIONS.index(version)
+
+
+def migrate(db: Database, *, expected_version: str) -> str:
+    """Create a fresh schema, or bring an older one forward.
+
+    Returns what happened — ``"created"``, ``"current"`` or ``"upgraded:m2a1->m2b1"``
+    — so the plane can say it in ``/healthz`` and the tests can assert on it
+    instead of on a side effect.
+    """
+    _ensure_directory(db.url)
+    if expected_version not in KNOWN_VERSIONS:
+        raise RuntimeError(
+            f"this build claims schema {expected_version!r}, which is not in "
+            f"KNOWN_VERSIONS {KNOWN_VERSIONS!r}; add it to migrations.py before shipping"
+        )
+    present = (
+        db.schema_version() if inspect(db.engine).has_table("schema_meta") else None
+    )
+    if present is None:
+        Base.metadata.create_all(db.engine)
+        with db.engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO schema_meta (key, value) "
+                    "VALUES ('schema_version', :v)"
+                ),
+                {"v": expected_version},
+            )
+        return "created"
+    if present not in KNOWN_VERSIONS:
+        raise RuntimeError(
+            f"control-plane database holds schema {present!r}, and this build "
+            f"knows {KNOWN_VERSIONS!r}; refusing to guess what that schema is. "
+            "Point QUALI_DATABASE_URL at the right database, or write the "
+            "migration that brings the old one forward."
+        )
+    if _order(present) > _order(expected_version):
+        # An older build against a newer database: refuse rather than run
+        # queries against columns it does not know about.
+        raise RuntimeError(
+            f"control-plane database holds schema {present!r}, newer than this "
+            f"build's {expected_version!r}; run the newer build against it instead"
+        )
+    applied: list[str] = []
+    for target, step in MIGRATIONS:
+        if _order(target) <= _order(present):
+            continue
+        with db.engine.begin() as connection:
+            step(connection)
+            _stamp(connection, target)
+        applied.append(target)
+    if not applied:
+        return "current"
+    return f"upgraded:{present}->{applied[-1]}"
+
+--- hosted/worker/runner.py ---
+"""The worker: claims queued jobs, asks the engine, stores what comes back.
+
+A second process, on purpose. The plane answers HTTP and must never spend ten
+minutes synthesising; the worker spends minutes per job and must never hold an HTTP
+request open. They share one database file and one object store, which is exactly
+why the claim is a compare-and-swap and the claim is a lease (see ``jobs``).
+
+What this process does with a claimed job:
+
+    claim -> heartbeat while the engine works -> POST /v1/audio/speech
+          -> delivered: store the bytes, settle the job and its one usage event
+          -> refused: settle it failed (the engine's own refusal is deterministic)
+          -> our failure (timeout, connection): requeue it, up to the attempt limit
+
+Two things it deliberately does not do. It does not retry a refusal — the engine
+saying "I do not have that voice" will say it again, and spending two more minutes
+of CPU to confirm it is not diligence. And it does not write a result for a job it
+no longer holds: if the lease expired while the engine was working and another
+worker took over, ``succeed``/``fail`` return None and this worker drops its result
+and logs that it did.
+"""
+from __future__ import annotations
+
+import asyncio
+import json
+import sys
+from dataclasses import dataclass, field
+
+from ..control_plane import jobs, storage
+from ..control_plane.config import Settings
+from ..control_plane.db import Database
+from ..control_plane.upstream import UpstreamClient
+
+
+def error_from(result) -> str:
+    """A short, honest reason from an engine response. Never a stack trace."""
+    body = result.body or b""
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        payload = None
+    if isinstance(payload, dict):
+        detail = payload.get("detail") or payload.get("error") or payload.get("message")
+        if isinstance(detail, str) and detail.strip():
+            return detail.strip()[:200]
+        if detail is not None:
+            return json.dumps(detail)[:200]
+    if result.error:
+        return result.error
+    return f"engine answered {result.status}"
+
+
+def payload_for(job) -> dict:
+    """What the engine is asked. An empty voice means the engine's own default."""
+    payload: dict = {"input": job.input_text}
+    if job.voice:
+        payload["voice"] = job.voice
+    if job.response_format:
+        payload["response_format"] = job.response_format
+    return payload
+
+
+@dataclass
+class WorkerStats:
+    claimed: int = 0
+    succeeded: int = 0
+    failed: int = 0
+    requeued: int = 0
+    lost_lease: int = 0
+    idle_polls: int = 0
+    engine_seconds: float = field(default=0.0)
+
+    def as_dict(self) -> dict:
+        return {
+            "claimed": self.claimed,
+            "succeeded": self.succeeded,
+            "failed": self.failed,
+            "requeued": self.requeued,
+            "lost_lease": self.lost_lease,
+            "idle_polls": self.idle_polls,
+            "engine_seconds": round(self.engine_seconds, 3),
+        }
+
+
+class Worker:
+    """One worker's worth of state. ``db``/``store``/``upstream`` are injectable."""
+
+    def __init__(
+        self,
+        settings: Settings,
+        worker_id: str,
+        *,
+        db: Database | None = None,
+        store: storage.ObjectStore | None = None,
+        upstream: UpstreamClient | None = None,
+        log=None,
+    ) -> None:
+        self.settings = settings
+        self.worker_id = worker_id
+        self.db = db or Database(settings.database_url)
+        self.store = store or storage.build_store(settings)
+        self.upstream = upstream or UpstreamClient(
+            settings.upstream_base_url, settings.upstream_timeout_seconds
+        )
+        self.stats = WorkerStats()
+        self.log = log or (lambda line: print(line, file=sys.stderr, flush=True))
+
+    async def aclose(self) -> None:
+        await self.upstream.aclose()
+        self.db.dispose()
+
+    async def _heartbeat_until(self, job_id: int, done: asyncio.Event) -> None:
+        """Keep the lease fresh while the engine works, until ``done`` is set.
+
+        The interval is a third of the lease, so two heartbeats can fail before the
+        lease is at risk. The database call is synchronous; it runs in a thread so
+        the heartbeat does not block the await on the engine.
+        """
+        interval = max(1.0, self.settings.job_lease_seconds / 3)
+        while not done.is_set():
+            try:
+                await asyncio.wait_for(done.wait(), timeout=interval)
+            except asyncio.TimeoutError:
+                pass
+            if done.is_set():
+                return
+            try:
+                held = await asyncio.to_thread(
+                    jobs.heartbeat,
+                    self.db,
+                    job_id=job_id,
+                    worker_id=self.worker_id,
+                    lease_seconds=self.settings.job_lease_seconds,
+                )
+            except Exception as exc:  # noqa: BLE001 - a heartbeat must not kill the job
+                self.log(f"worker {self.worker_id}: heartbeat failed: {type(exc).__name__}")
+                continue
+            if not held:
+                self.log(
+                    f"worker {self.worker_id}: job {job_id} is no longer ours; "
+                    "we are not renewing its lease"
+                )
+                return
+
+    async def process_one(self) -> str:
+        """Claim and finish one job. Returns "worked", "idle" or "lost"."""
+        job = await asyncio.to_thread(
+            jobs.claim_one,
+            self.db,
+            worker_id=self.worker_id,
+            lease_seconds=self.settings.job_lease_seconds,
+        )
+        if job is None:
+            self.stats.idle_polls += 1
+            return "idle"
+        self.stats.claimed += 1
+        self.log(
+            f"worker {self.worker_id}: claimed job {job.id} "
+            f"({job.characters} characters, attempt {job.attempts}/{job.max_attempts})"
+        )
+        done = asyncio.Event()
+        heartbeat = asyncio.create_task(self._heartbeat_until(job.id, done))
+        try:
+            result = await self.upstream.speech(payload_for(job))
+        finally:
+            done.set()
+            await heartbeat
+
+        self.stats.engine_seconds += result.elapsed_seconds
+        if result.delivered:
+            assert result.body is not None  # ``delivered`` means 2xx with a body
+            try:
+                stored = await asyncio.to_thread(
+                    self.store.put, result.body, result.media_type or "audio/wav"
+                )
+            except storage.StorageError as exc:
+                # Our storage refused the audio. Retryable: the job is not the
+                # customer's mistake, and the next attempt may find storage well.
+                settled = await asyncio.to_thread(
+                    jobs.fail,
+                    self.db,
+                    job_id=job.id,
+                    worker_id=self.worker_id,
+                    status_code=500,
+                    error=f"storage refused the object: {exc}",
+                    engine_seconds=result.elapsed_seconds,
+                    retryable=True,
+                )
+                self._log_settle(job.id, settled, "storage refused")
+                return "worked"
+            settled = await asyncio.to_thread(
+                jobs.succeed,
+                self.db,
+                job_id=job.id,
+                worker_id=self.worker_id,
+                stored=stored,
+                store=self.store,
+                engine_seconds=result.elapsed_seconds,
+                status_code=result.status,
+            )
+            self._log_settle(job.id, settled, f"stored {stored.key}")
+            return "worked" if settled is not None else "lost"
+
+        settled = await asyncio.to_thread(
+            jobs.fail,
+            self.db,
+            job_id=job.id,
+            worker_id=self.worker_id,
+            status_code=result.status,
+            error=error_from(result),
+            engine_seconds=result.elapsed_seconds,
+        )
+        self._log_settle(job.id, settled, f"engine answered {result.status}")
+        return "worked" if settled is not None else "lost"
+
+    def _log_settle(self, job_id: int, settled, what: str) -> None:
+        if settled is None:
+            self.stats.lost_lease += 1
+            self.log(
+                f"worker {self.worker_id}: job {job_id} was reclaimed by another "
+                f"worker while we were working; discarding our result ({what})"
+            )
+        elif settled.status == jobs.SUCCEEDED:
+            self.stats.succeeded += 1
+            self.log(
+                f"worker {self.worker_id}: job {job_id} succeeded, "
+                f"{settled.audio_seconds} s of audio ({what})"
+            )
+        elif settled.status == jobs.QUEUED:
+            self.stats.requeued += 1
+            self.log(
+                f"worker {self.worker_id}: job {job_id} requeued for another "
+                f"attempt ({what}: {settled.error})"
+            )
+        else:
+            self.stats.failed += 1
+            self.log(
+                f"worker {self.worker_id}: job {job_id} failed, {settled.status_code} "
+                f"({what}: {settled.error})"
+            )
+
+    async def drain(
+        self, *, max_jobs: int = 0, idle_polls_before_exit: int = 1, poll_seconds: float | None = None
+    ) -> WorkerStats:
+        """Work until the queue is empty (or a limit is reached), then stop.
+
+        ``idle_polls_before_exit`` is what makes this usable from a test and from
+        the end-to-end script: an idle poll means a claim found nothing claimable,
+        which for a single-writer queue is the end of the work in front of it.
+        """
+        poll = self.settings.job_poll_seconds if poll_seconds is None else poll_seconds
+        idle = 0
+        while True:
+            outcome = await self.process_one()
+            if max_jobs and self.stats.claimed >= max_jobs:
+                break
+            if outcome == "idle":
+                idle += 1
+                if idle >= idle_polls_before_exit:
+                    break
+                if poll:
+                    await asyncio.sleep(poll)
+            else:
+                idle = 0
+        return self.stats
+
+    async def serve(
+        self, *, poll_seconds: float | None = None, idle_exit: bool = False, max_jobs: int = 0
+    ) -> WorkerStats:
+        """Keep polling forever, unless ``idle_exit`` says one empty pass is the end."""
+        if idle_exit:
+            return await self.drain(
+                max_jobs=max_jobs, idle_polls_before_exit=1, poll_seconds=poll_seconds
+            )
+        poll = self.settings.job_poll_seconds if poll_seconds is None else poll_seconds
+        while True:
+            await self.process_one()
+            if max_jobs and self.stats.claimed >= max_jobs:
+                break
+            await asyncio.sleep(poll)
+        return self.stats

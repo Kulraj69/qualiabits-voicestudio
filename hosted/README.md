@@ -6,6 +6,26 @@ speech server — and this layer is what turns it into something a business can 
 
 Not deployed. Not public. No GPU. Nothing here has been sold to anyone.
 
+**Start here.** Three ways in, cheapest first — none of them needs a GPU:
+
+```sh
+# 1. about 25 seconds, no model, no download: the tests, which are the real thing
+#    except for the engine (a stub that answers with a WAV of a known duration).
+.venv/bin/python -m pytest tests/hosted -q
+
+# 2. about 4 minutes: the whole product, on the real engine. One command; it finds
+#    or downloads the 132 MB model, hash-checks its bytes, and starts and stops
+#    every process itself.
+hosted/scripts/hosted_demo.sh
+
+# 3. read on: "How a job works" is the part of this slice worth arguing about.
+```
+
+Both commands assume a venv built once with
+`uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12`.
+The first is the honest short path for a reviewer on a timer; the second is the one
+that proves audio comes out.
+
 ```
 hosted/control_plane/         the plane itself
 hosted/control_plane/jobs.py  the queue: claims, leases, retries, the receipt
@@ -130,8 +150,11 @@ file job1.wav        # RIFF 24 kHz mono; sha256 matches the job's own receipt
 curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
 ```
 
-What a pass looks like: see "Measured" below, which quotes
-`hermes-reports/M2-slot27-e2e-r1/result.json` — the clean-clone run.
+What a pass looks like: the "Measured" section below, which quotes
+`hermes-reports/M2-slot27-e2e-r4/result.json` — a clone of the pushed revision, so
+the run and the page describe the same code. The two earlier runs (`-r1/`, which
+failed on a comparison this page's author wrote wrong, and `-r2`/`-r3`, from the
+working tree) are kept beside it.
 
 ## How it is put together
 
@@ -302,12 +325,46 @@ counters, the model file hashes and the commit the run tested.
 
 ## Measured
 
-From `hermes-reports/M2-slot27-e2e-r1/result.json` — engine, plane and worker all
-started fresh by the harness, on one t3a.medium with no GPU (31 Oct 2026). Numbers
-are copied from that file.
+From `hermes-reports/M2-slot27-e2e-r3/result.json` — engine, plane and worker
+processes all started fresh by the harness, on one t3a.medium with no GPU
+(31 Oct 2026). Numbers are copied from that file; the run records the commit it
+tested (`4372299f0`) and the model hashes below.
 
 ```
-PLACEHOLDER_MEASURED
+engine ready 10.2 s   control plane ready 12.0 s   whole run 234.8 s
+every process it started: clean shutdown
+
+three direct requests through the control plane, workspace A:
+  hf_alpha  hi   1.822 s audio, 24 kHz mono, peak 0.79   engine took 19.5 s
+  hm_omega  hi   1.829 s audio,              peak 0.78   engine took 10.6 s
+  hf_alpha  en   3.508 s audio,              peak 0.79   engine took 18.2 s
+  plus one request for a voice the model does not have, refused 400 by the
+  engine and passed through with the engine's own message naming its 54 voices.
+
+one queued job, spoken by a separate worker process (run_worker.py --once):
+  job 1  hm_omega  hi   208 characters -> 16.472 s of 24 kHz mono audio,
+                         790,682 bytes, engine took 108.5 s
+  worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
+  the object on disk, the job's receipt and the download all hash to
+  dac7e3e614e3f45ce5b6d3cf9a6d16be527f8057b1a669b09f700bd2a3429c72
+
+one refused job (a voice the model does not have):
+  failed 400 after 1 attempt, no retry, no audio served (409), error is the
+  engine's own sentence, truncated at the ledger's 200 characters
+one cancelled job:
+  never claimed by the next worker pass, and it moved the meter by nothing
+
+meter for A, at the end of the run: 6 requests, 388 characters, 23.630 s audio,
+              1,134,420 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+              requests_without_audio_seconds 2
+              by_key: one key, label "a", same six requests and 23.630 s
+meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
+
+same English request straight at the engine, for comparison:
+  direct 3.488 s / 167,458 bytes   through the plane 3.508 s / 168,414 bytes
+
+the engine's refusal for an unknown voice, taken both ways:
+  sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
 ```
 
 The last two lines are the honest version of the pass-through claim. Speech
@@ -323,8 +380,11 @@ run recorded the same hashes plus the commit it tested, in the same file.
 
 The CPU is not production, and this is the clearest evidence of it: 5 to 10
 seconds of compute per second of speech, from 10.6 s for the fastest of the
-three. That is why the GPU run is the owner's to approve, and exactly what this
-layer cannot work around.
+three. The queued job is the same story told plainly: 16.5 seconds of audio cost
+108.5 seconds of engine time, about 6.6 s per second. That is why the GPU run is
+the owner's to approve, and exactly what this layer cannot work around — the plane
+can hold the request open for a paragraph, but nothing here makes the engine
+faster.
 
 ## Licence
 
