@@ -158,18 +158,23 @@ engine, and the two real bugs this slice hit: a key whose secret contains an
 underscore being refused as malformed, and a short password answering 422 instead
 of 400.
 
-The end-to-end run is the other half:
+The end-to-end run is the other half — the one-command script at the top calls
+it, and this is it directly when you already have a model directory:
 
 ```sh
 .venv/bin/python hosted/scripts/hosted_e2e.py \
-  --output hermes-reports/M2-slot25-e2e-r1 \
+  --output /tmp/hosted-evidence-run \
   --model /path/to/kokoro-int8-multi-lang-v1_0
 ```
 
 It starts the real engine and the real plane, signs up two workspaces, mints
-keys, speaks Hindi and English through the plane, compares with a direct engine
-call, checks the refusals, reads both meters and revokes a key. `result.json`
-records every check, the model file hashes and the commit the run tested.
+keys, speaks Hindi and English through the plane, takes the same request straight
+from the engine for comparison, compares the engine's refusal byte for byte on
+both paths, checks the credential refusals, reads both meters and revokes a key.
+`result.json` records every check, the model file hashes and the commit the run
+tested. The committed runs are `hermes-reports/M2-slot25-e2e-r1/` (passed, dirty
+worktree, superseded), `-r2/` (failed, kept) and `-r3-freshclone/` (the clean
+clone whose numbers this page quotes).
 
 ## Measured
 
