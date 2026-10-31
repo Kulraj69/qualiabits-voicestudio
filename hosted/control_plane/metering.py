@@ -60,6 +60,7 @@ class UsageSummary:
     failed_requests: int = 0
     requests_without_audio_seconds: int = 0
     by_status: dict[str, int] = field(default_factory=dict)
+    by_key: list[dict] = field(default_factory=list)
     first_request_at: datetime | None = None
     last_request_at: datetime | None = None
 
@@ -73,10 +74,15 @@ class UsageSummary:
             "failed_requests": self.failed_requests,
             "requests_without_audio_seconds": self.requests_without_audio_seconds,
             "by_status": dict(sorted(self.by_status.items())),
+            "by_key": self.by_key,
             "first_request_at": _iso(self.first_request_at),
             "last_request_at": _iso(self.last_request_at),
             "characters_note": "text sent to the engine, counted whether or not it answered",
             "audio_seconds_note": "audio received, measured from the returned WAV header",
+            "by_key_note": (
+                "spend per key, so a customer can tell which integration is talking. "
+                "Input the engine never saw appears here too, with zero characters."
+            ),
         }
 
 
@@ -116,11 +122,16 @@ def record(
 
 
 def summary(session: Session, workspace_id: int) -> UsageSummary:
-    """Aggregate one workspace's ledger. Never crosses workspaces."""
+    """Aggregate one workspace's ledger. Never crosses workspaces.
+
+    Two views of the same rows: the workspace total, and a per-key breakdown, so
+    a customer with a laptop and a server can see which one is spending.
+    """
     rows = session.execute(
         select(UsageEvent).where(UsageEvent.workspace_id == workspace_id)
     ).scalars().all()
     out = UsageSummary(workspace_id=workspace_id)
+    keys: dict[int, dict] = {}
     for row in rows:
         out.requests += 1
         out.characters += row.characters or 0
@@ -137,6 +148,29 @@ def summary(session: Session, workspace_id: int) -> UsageSummary:
             out.first_request_at = row.created_at
         if out.last_request_at is None or row.created_at > out.last_request_at:
             out.last_request_at = row.created_at
+        if row.api_key_id is not None:
+            bucket = keys.setdefault(row.api_key_id, {
+                "api_key_id": row.api_key_id, "key_id": None, "label": "",
+                "requests": 0, "characters": 0, "audio_seconds": 0.0,
+                "failed_requests": 0, "last_request_at": None,
+            })
+            bucket["requests"] += 1
+            bucket["characters"] += row.characters or 0
+            bucket["audio_seconds"] += row.audio_seconds or 0.0
+            if row.status_code >= 400:
+                bucket["failed_requests"] += 1
+            if bucket["last_request_at"] is None or row.created_at > bucket["last_request_at"]:
+                bucket["last_request_at"] = row.created_at
+    for api_key_id, bucket in keys.items():
+        record = session.get(ApiKey, api_key_id)
+        if record is not None and record.workspace_id == workspace_id:
+            # The public key id only. The digest and the key itself never leave
+            # the database.
+            bucket["key_id"] = record.key_id
+            bucket["label"] = record.label
+        bucket["audio_seconds"] = round(bucket["audio_seconds"], 3)
+        bucket["last_request_at"] = _iso(bucket["last_request_at"])
+    out.by_key = sorted(keys.values(), key=lambda item: item["api_key_id"])
     return out
 
 

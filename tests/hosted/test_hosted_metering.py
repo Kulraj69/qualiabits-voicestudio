@@ -5,6 +5,8 @@ can be checked against the audio rather than against a number this test made up.
 """
 from __future__ import annotations
 
+import json
+
 import httpx
 import pytest
 
@@ -186,6 +188,29 @@ def test_a_second_key_from_the_same_workspace_spends_the_same_meter(client):
     listed = client.get("/v1/api-keys", headers={"Authorization": f"Bearer {token}"}).json()
     used = [row["last_used_at"] is not None for row in listed["api_keys"]]
     assert used == [True, True]
+
+
+def test_the_meter_breaks_down_by_key_without_leaking_key_material(client):
+    signup(client)
+    token = login(client)
+    first, second = mint_key(client, token, "laptop"), mint_key(client, token, "server")
+    assert speak(client, first, ENGLISH).status_code == 200
+    assert speak(client, second, HINDI).status_code == 200
+    assert speak(client, second, "and again").status_code == 200
+
+    meter = usage(client, first)
+    assert [row["label"] for row in meter["by_key"]] == ["laptop", "server"]
+    laptop, server = meter["by_key"]
+    assert laptop["requests"] == 1 and laptop["characters"] == len(ENGLISH)
+    assert server["requests"] == 2 and server["characters"] == len(HINDI) + len("and again")
+    assert server["audio_seconds"] == pytest.approx(2 * 1.25, abs=1e-3)
+    assert all(len(row["key_id"]) == 16 for row in meter["by_key"])
+    assert "digest" not in json.dumps(meter)
+    assert first.split("_", 2)[2] not in json.dumps(meter)
+    assert "never saw appears here too" in meter["by_key_note"]
+    # The breakdown adds up to the total, so it cannot quietly under-report.
+    assert sum(row["requests"] for row in meter["by_key"]) == meter["requests"]
+    assert sum(row["characters"] for row in meter["by_key"]) == meter["characters"]
 
 
 def test_an_mp3_response_is_counted_but_its_seconds_are_not_invented(client, engine):

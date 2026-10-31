@@ -334,6 +334,21 @@ def run(output: Path, model: Path) -> int:
             result["unknown_voice_refusal"] = json_body(raw)
             result["checks"].append("engine_refusal_passed_through_as_400")
 
+            # Byte identity against the real engine, on the one response that is
+            # deterministic: an error body. A 200 body cannot be compared this
+            # way, because the engine samples and two calls legitimately differ.
+            status, direct_raw, _ = http(engine_base, "/v1/audio/speech", held_out())
+            require(status == 400, f"the direct engine call returned {status}, not 400")
+            result["refusal_passthrough"] = {
+                "proxied_sha256": hashlib.sha256(raw).hexdigest(),
+                "direct_sha256": hashlib.sha256(direct_raw).hexdigest(),
+                "identical": raw == direct_raw,
+                "bytes": len(raw),
+            }
+            require(raw == direct_raw,
+                    "the plane did not return the engine's refusal bytes unchanged")
+            result["checks"].append("refusal_bytes_identical_to_the_real_engine")
+
             status, _raw, _ = http(plane_base, "/v1/audio/speech",
                                    speech_payload(ENGLISH, HINDI_VOICE, "en"),
                                    token="qbv_" + "0" * 16 + "_nope")

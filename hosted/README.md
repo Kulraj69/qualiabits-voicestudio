@@ -23,7 +23,7 @@ tests/hosted/               its tests
 | `POST /v1/api-keys` | session | mint a key; the key is returned once |
 | `GET /v1/api-keys` | session | list keys — never key material |
 | `DELETE /v1/api-keys/{id}` | session | revoke one of your own keys |
-| `GET /v1/usage` | session or key | this workspace's meter |
+| `GET /v1/usage` | session or key | this workspace's meter, and its key-by-key breakdown |
 | `POST /v1/audio/speech` | API key | metered passthrough to the engine |
 
 Not in yet, and named as the next slices: object storage (S3) for generated
@@ -108,12 +108,20 @@ that got past input validation, whether or not the engine answered.
 actually got, so a failed call adds a failure and no minutes. The response says
 which is which so nobody reads a blended number as a bill.
 
+**Per key, not just per workspace.** `GET /v1/usage` also breaks the same rows
+down by key (`by_key`), with each key's public id and label, so a customer with a
+laptop and a server can see which one is spending. Key material never appears
+there — not the key, not its digest — and the breakdown is asserted to add up to
+the workspace total rather than silently under-report.
+
 **What is deliberately absent.** No route takes a workspace id, so a customer
 cannot even ask for someone else's numbers. Speaking always requires a key, so
 every byte of audio is attributable. Revoking twice is fine; revoking someone
 else's key is a 404, not a 403, so key ids are not a probe.
 
 ## Testing
+
+Fast path, no model download, about eleven seconds:
 
 ```sh
 .venv/bin/python -m pytest tests/hosted -q
@@ -144,10 +152,38 @@ records every check, the model file hashes and the commit the run tested.
 
 ## Measured
 
-From `hermes-reports/M2-slot25-e2e-r1/result.json` (31 Oct 2026, one t3a.medium,
-no GPU) — filled in from the run, not from intention:
+From `hermes-reports/M2-slot25-e2e-r1/result.json` — a run on 31 Oct 2026 on one
+t3a.medium with no GPU, engine and plane both started fresh. Numbers are copied
+from that file, not from intention.
 
-<!-- MEASURED -->
+```
+engine ready            9.0 s        control plane ready   (11.6 s from start)
+whole run               83.9 s       both processes        clean shutdown
+
+workspace A, three requests through the control plane:
+  hf_alpha  hi  1.832 s audio, 24 kHz mono, peak 0.79, engine took 19.7 s
+  hm_omega  hi  1.826 s audio,                       engine took 10.3 s
+  hf_alpha  en  3.486 s audio, peak 0.80,            engine took 17.6 s
+  a fourth request, an unknown voice, refused 400 by the engine and passed
+  through with the engine's own message listing the model's 54 voices.
+
+meter for A   4 requests, 158 characters, 7.144 s audio, 343,022 bytes,
+              failed_requests 1, by_status {"200": 3, "400": 1}
+meter for B   0 requests, 0 characters, 0.000 s audio
+
+same English request straight at the engine, for comparison:
+  direct 3.488 s / 167,476 bytes, through the plane 3.486 s / 167,374 bytes
+```
+
+The model those numbers came from is the one `scripts/qualibits_quickstart.sh`
+downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); the
+run recorded those same hashes, plus the commit it tested. Byte identity is not
+claimed between two *speech* calls, because the engine samples:
+so two identical calls differ by a hundred bytes. What is claimed, and tested
+against a deterministic stub, is that the bytes the plane returns are the bytes
+the engine sent. The CPU is also plainly not production: 5 to 10 seconds of
+compute per second of speech, which is exactly why the GPU run is the owner's to
+approve and not something this layer can work around.
 
 ## Licence
 
