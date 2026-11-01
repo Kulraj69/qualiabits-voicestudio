@@ -1,0 +1,33 @@
+Verdict: FAIL. The work is substantial, but the evidence package contains a material contradiction, so it cannot pass the rubric’s “no honesty flaw” requirement.
+
+Scores
+
+| Criterion | Score | Judge’s basis |
+|---|---:|---|
+| Originality | 3/5 | A hosted speech API with accounts, metering, storage, queues, and workers is competent but familiar. The strongest memorable element is the content-addressed audio plus revision-bound evidence manifest. |
+| Taste | 3/5 | The naming and architecture are deliberate, but `hosted/README.md` is 344 lines and tries to be landing page, operations manual, test report, design document, and evidence bundle. It is thorough rather than tightly designed. |
+| Human feel | 4/5 | The writing is specific and candid, including the Hermes authorship disclosure and explicit limitations. It avoids most generic AI language. The README still has bullet-wall and documentation-heavy sections that reduce the sense of one person presenting one product. |
+| Technical depth | 4/5 | The queue has compare-and-swap claiming, leases, heartbeats, bounded retries, lost-lease protection, migrations, content-addressed storage, and meaningful concurrency/storage tests. The score is not 5 because production S3 behavior is unproven and only the local filesystem backend was used in the real end-to-end run. |
+| Criteria fit | 4/5 | Evidence maps well to M2 Slice B: queue in `hosted/control_plane/jobs.py`, worker in `hosted/worker/runner.py`, storage in `hosted/control_plane/storage.py`, and migration from `m2a1` to `m2b1` in `hosted/control_plane/migrations.py`. No evidence exists for real-bucket operation, deployment, billing, email verification, GPU operation, or customer use, but those are explicitly outside this slice. A full official hackathon-rules file was not supplied, so stronger mapping cannot be verified. |
+| Reviewer path | 4/5 | The documented test command is reproducible and the supplied fresh-clone log shows 178 passing tests. The full demo is also scripted. It still requires a model download, several minutes on CPU, and the reviewer must understand that the cited E2E run is from `e875b116`, while the final clean-clone suite also references later revisions. |
+| Honesty | 2/5 | Most limitations are unusually well disclosed, but Artifact 7 directly conflicts with Artifact 4: for example, `english.wav` is reported as 6.971 seconds while the cited receipt reports 3.486 seconds; the Hindi files and queued file show the same exact 2× discrepancy. No definition explains why. That makes the evidence bundle unreliable until corrected. |
+
+Five most damaging flaws
+
+1. Evidence duration contradiction  
+   `hermes-reports/M2-slot32-e2e-r5/audio/*` listing versus `result.json`: Artifact 7 reports every WAV as exactly twice the receipt duration. This is the clearest honesty failure.
+
+2. The S3 claim stops at an emulator  
+   `hosted/control_plane/storage.py`, `S3ObjectStore` documentation; `hosted/README.md`, Testing/Measured sections. The implementation and moto tests are useful, but no real S3-compatible production bucket, IAM policy, lifecycle behavior, or credentialed deployment is demonstrated.
+
+3. The README is overburdened  
+   `hosted/README.md`, entire 344-line file. It contains setup, API reference, manual operations, architecture rationale, test inventory, measured benchmark, licensing, and historical evidence-process discussion. A stranger can find the path, but the presentation lacks the “one clear thing” standard.
+
+4. Unsupported or weakly supported numeric claims remain  
+   `hosted/README.md`, opening setup paragraph: “132 MB model” is not substantiated by the supplied result, manifest, or test output. The runtime figures are supported; this one is not. It should be removed or backed by a recorded file-size check.
+
+5. The strongest run is not rerun on the final cited revision  
+   `hermes-reports/M2-slot32-e2e-r5/result.json` identifies `e875b116`; Artifact 6’s final clean-clone test is at `d594cce`. The supplied reasoning says measured subjects did not change, which is plausible and tested, but the artifact still does not show a fresh real-engine E2E run on the final pushed revision. That weakens the headline proof.
+
+What would make it win: fix and regenerate the audio evidence so every reported duration, hash, and file agrees, then present a much shorter reviewer path with a credentialed S3 run or clearly demote S3 to “tested emulator only.”
+judge exit=0

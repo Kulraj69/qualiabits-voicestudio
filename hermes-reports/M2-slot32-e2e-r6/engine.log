@@ -1,0 +1,328 @@
+INFO:     Started server process [675515]
+INFO:     Waiting for application startup.
+2026-11-01 08:06:33,756 INFO [omnivoice.api] Startup watchdog armed: thread dump if startup exceeds 300s (#632).
+INFO:     Application startup complete.
+INFO:     Uvicorn running on socket ('127.0.0.1', 43051) (Press CTRL+C to quit)
+INFO:     127.0.0.1:45178 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45192 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 08:06:34,173 INFO [omnivoice.api] Published 2 media-tool directories on PATH so dependencies can find ffmpeg/ffprobe (#1256)
+INFO:     127.0.0.1:45196 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45200 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45204 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45216 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45222 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45238 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45250 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45264 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45270 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45280 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:45286 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36596 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36600 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 08:06:38,133 INFO [omnivoice.hf_progress] hf_progress: installed tqdm patch on huggingface_hub.utils.tqdm
+INFO:     127.0.0.1:36610 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36618 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36624 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36632 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 08:06:39,456 INFO [omnivoice.setup.models] Loaded 42 models from /workspace/s32-clone-r6/backend/config/models.yaml
+INFO:     127.0.0.1:36640 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36648 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36650 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36658 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:36664 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 08:06:40,650 INFO [omnivoice.model] downloads: Xet disabled → legacy LFS (hf_xet 1.6.0 installed=True), high_perf=False
+2026-11-01 08:06:42,554 INFO [omnivoice.mcp] MCP app mounted at /mcp
+2026-11-01 08:06:42,558 INFO [omnivoice.api] No web UI build at /workspace/s32-clone-r6/backend/../frontend/dist; "/" serves an explanation to other devices.
+2026-11-01 08:06:43,773 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.schemas
+2026-11-01 08:06:43,773 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.tables
+2026-11-01 08:06:43,773 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.types
+2026-11-01 08:06:43,774 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.constraints
+2026-11-01 08:06:43,774 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.defaults
+2026-11-01 08:06:43,774 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.comments
+2026-11-01 08:06:43,774 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.checkconstraint_byname
+2026-11-01 08:06:43,842 WARNING [omnivoice.loop_stall] Event loop has not run for 4.0s; /health cannot answer. Stacks of all threads follow - the main thread's frame is the blocking call.
+Thread 0x000077fec9efd6c0 (most recent call first):
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 89 in _worker
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Current thread 0x000077feca6fe6c0 (most recent call first):
+  File "/workspace/s32-clone-r6/backend/core/loop_stall_monitor.py", line 50 in _dump_threads
+  File "/workspace/s32-clone-r6/backend/core/loop_stall_monitor.py", line 75 in _run
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077feceb69080 (most recent call first):
+  File "<frozen importlib._bootstrap_external>", line 1187 in get_data
+  File "<frozen importlib._bootstrap_external>", line 1128 in get_code
+  File "<frozen importlib._bootstrap_external>", line 991 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1415 in _handle_fromlist
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/alembic/__init__.py", line 2 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/backend/core/db.py", line 606 in _run_alembic_upgrade
+  File "/workspace/s32-clone-r6/backend/core/db.py", line 519 in init_db
+  File "/workspace/s32-clone-r6/backend/main.py", line 1042 in _phase_b
+  File "/workspace/s32-clone-r6/backend/main.py", line 962 in _deferred_startup
+  File "/usr/lib/python3.12/asyncio/events.py", line 88 in _run
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 1987 in _run_once
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 641 in run_forever
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 674 in run_until_complete
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118 in run
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194 in run
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 77 in run
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 621 in run
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 440 in main
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/click/core.py", line 907 in invoke
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/click/core.py", line 1353 in invoke
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/click/core.py", line 1490 in main
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/click/core.py", line 1569 in __call__
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/uvicorn/__main__.py", line 4 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+2026-11-01 08:06:43,915 INFO [omnivoice.db.backup] Pre-migration DB backup written: /home/ubuntu/.hermes/cache/scratch/hosted-e2e-i0u4k2xq/data/omnivoice.db.backup-0.5.7-1 (0.2 MB)
+2026-11-01 08:06:43,940 INFO [alembic.runtime.migration] Context impl SQLiteImpl.
+2026-11-01 08:06:43,940 INFO [alembic.runtime.migration] Will assume non-transactional DDL.
+2026-11-01 08:06:43,959 INFO [alembic.runtime.migration] Running upgrade  -> 0001_phase1_settings, Phase 1: settings table for encrypted HF token persistence
+2026-11-01 08:06:43,966 INFO [alembic.runtime.migration] Running upgrade 0001_phase1_settings -> 0002_voice_profile_demo_fields, Phase 3: voice_profile description + is_demo columns
+2026-11-01 08:06:43,973 INFO [alembic.runtime.migration] Running upgrade 0002_voice_profile_demo_fields -> 0003_voice_profile_consent, Parity program Wave 0.2: consent-locked voice profiles
+2026-11-01 08:06:43,979 INFO [alembic.runtime.migration] Running upgrade 0003_voice_profile_consent -> 0004_mcp_client_bindings, Parity program Wave 2.2: per-agent MCP voice bindings
+2026-11-01 08:06:43,985 INFO [alembic.runtime.migration] Running upgrade 0004_mcp_client_bindings -> 0005_unified_profiles, Voice Studio unification: profile `kind` discriminator + design params
+2026-11-01 08:06:43,990 INFO [alembic.runtime.migration] Running upgrade 0005_unified_profiles -> 0006_strip_object_object_instruct, Heal voice_profiles.instruct poisoned with the "[object Object]" sentinel.
+2026-11-01 08:06:43,996 INFO [alembic.runtime.migration] Running upgrade 0006_strip_object_object_instruct -> 0007_rebuild_poisoned_design_instruct, Rebuild design-profile instructs poisoned with prose / "[object Object]".
+2026-11-01 08:06:44,003 INFO [alembic.runtime.migration] Running upgrade 0007_rebuild_poisoned_design_instruct -> 0008_pronunciation_dictionary, Expressive-TTS Spec 01 Phase 1: user pronunciation dictionary
+2026-11-01 08:06:44,008 INFO [alembic.runtime.migration] Running upgrade 0008_pronunciation_dictionary -> 0009_generation_history_starred, Generation takes: starred flag on generation_history
+2026-11-01 08:06:44,015 INFO [alembic.runtime.migration] Running upgrade 0009_generation_history_starred -> 0010_remote_worker_schema, Remote worker control-plane schema.
+2026-11-01 08:06:44,023 INFO [alembic.runtime.migration] Running upgrade 0010_remote_worker_schema -> 0011_remote_attempt_deadlines, Retain the dispatch-time deadline policy across worker/control-plane loss.
+2026-11-01 08:06:44,028 INFO [alembic.runtime.migration] Running upgrade 0011_remote_attempt_deadlines -> 0012_call_sessions, Phone call agent: persisted call sessions
+2026-11-01 08:06:44,034 INFO [alembic.runtime.migration] Running upgrade 0012_call_sessions -> 0013_generation_history_design_recipe, Keep the inputs needed to recreate designed-voice generations.
+2026-11-01 08:06:44,039 INFO [alembic.runtime.migration] Running upgrade 0013_generation_history_design_recipe -> 0014_cloud_sync, VoiceStudio Cloud settings sync tables (S1)
+2026-11-01 08:06:44,045 INFO [alembic.runtime.migration] Running upgrade 0014_cloud_sync -> 0015_voice_sync_prep, Prepare voice profiles for consent-aware synchronization.
+2026-11-01 08:06:44,054 INFO [alembic.runtime.migration] Running upgrade 0015_voice_sync_prep -> 0016_profile_design_recipe, Persist the full native Voice Design recipe on saved voice profiles.
+2026-11-01 08:06:44,059 INFO [alembic.runtime.migration] Running upgrade 0016_profile_design_recipe -> 0017_job_events_unique_seq, job_events: one row per (job_id, seq)
+2026-11-01 08:06:44,097 INFO [core.onboarding] 🎉 Seeded demo voice profile 'Demo Voice'
+2026-11-01 08:06:44,104 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager started
+2026-11-01 08:06:44,105 INFO [omnivoice.api] MCP server mounted at /mcp
+2026-11-01 08:06:44,152 INFO [omnivoice.api] Deferred startup complete — all routes live.
+2026-11-01 08:06:48,200 INFO [omnivoice.tts] Loading sherpa-onnx TTS from /workspace/m1-models/kokoro-int8-multi-lang-v1_0 (model_type=kokoro)
+2026-11-01 08:06:52,156 INFO [omnivoice.model] Native TTS preload skipped: another TTS engine is selected.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: kokoro at line 1:kokoro k ˈ O k ə ɹ O. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: misaki at line 2:misaki m i s ˈ ɑ k i. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aahing at line 3:aahing ˈ ɑ ɪ ŋ. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aaron at line 4:aaron ˈ ɛ ɹ ə n. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aaronic at line 5:aaronic ə ɹ ˈ ɑ n ɪ k. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: ab at line 6:ab ˈ ɑ b. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abactor at line 9:abactor ə b ˈ æ k t ə ɹ. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abaddon at line 10:abaddon ə b ˈ æ d ə n. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abalienating at line 15:abalienating ə b ˈ A l i ə n ˌ A ɾ ɪ ŋ. Ignore it.
+Downloading: "https://huggingface.co/facebook/audioseal/resolve/main/generator_base.pth" to /home/ubuntu/.hermes/cache/scratch/hosted-e2e-i0u4k2xq/.cache/audioseal/0f195d476dd87ca1bd7b09e6
+  0%|          | 0.00/56.1M [00:00<?, ?B/s]  0%|          | 128k/56.1M [00:00<01:30, 646kB/s]  1%|          | 384k/56.1M [00:00<00:41, 1.40MB/s]  2%|▏         | 1.00M/56.1M [00:00<00:18, 3.21MB/s]  5%|▌         | 3.00M/56.1M [00:00<00:06, 9.07MB/s] 16%|█▌        | 9.00M/56.1M [00:00<00:01, 26.4MB/s] 33%|███▎      | 18.2M/56.1M [00:00<00:00, 44.0MB/s] 65%|██████▍   | 36.4M/56.1M [00:01<00:00, 59.0MB/s]100%|██████████| 56.1M/56.1M [00:01<00:00, 54.1MB/s]
+/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:144: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-11-01 08:07:07,824 INFO [omnivoice.watermark] AudioSeal generator loaded (16-bit message mode)
+INFO:     127.0.0.1:36690 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+2026-11-01 08:07:14,105 INFO [omnivoice.api] Capture ASR preload skipped: <4GB free RAM; dictation ASR will load on first use.
+2026-11-01 08:07:19,106 INFO [omnivoice.watermark] Watermark prefetch skipped: AudioSeal checkpoint is not cached
+INFO:     127.0.0.1:36690 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36690 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38600 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+2026-11-01 08:07:57,100 WARNING [omnivoice.openai_compat] OpenAI TTS failed (typed): Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.
+INFO:     127.0.0.1:54912 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+2026-11-01 08:07:57,121 WARNING [omnivoice.openai_compat] OpenAI TTS failed (typed): Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.
+INFO:     127.0.0.1:54926 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+2026-11-01 08:08:02,967 WARNING [omnivoice.loop_stall] Event loop has not run for 4.0s; /health cannot answer. Stacks of all threads follow - the main thread's frame is the blocking call.
+Thread 0x000077fe556306c0 (most recent call first):
+  File "/usr/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/lib/python3.12/queue.py", line 171 in get
+  File "/workspace/s32-clone-r6/backend/services/model_manager.py", line 1332 in _run
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077fe565316c0 (most recent call first):
+  File "/usr/lib/python3.12/threading.py", line 355 in wait
+  File "/usr/lib/python3.12/queue.py", line 171 in get
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1022 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077fe5f3ff6c0 (most recent call first):
+  File "/usr/lib/python3.12/threading.py", line 359 in wait
+  File "/usr/lib/python3.12/threading.py", line 655 in wait
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077fe701ff6c0 (most recent call first):
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 89 in _worker
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077fe83dff6c0 (most recent call first):
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 89 in _worker
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077fecaeff6c0 (most recent call first):
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 89 in _worker
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077fec9efd6c0 (most recent call first):
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 89 in _worker
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Current thread 0x000077feca6fe6c0 (most recent call first):
+  File "/workspace/s32-clone-r6/backend/core/loop_stall_monitor.py", line 50 in _dump_threads
+  File "/workspace/s32-clone-r6/backend/core/loop_stall_monitor.py", line 75 in _run
+  File "/usr/lib/python3.12/threading.py", line 1010 in run
+  File "/usr/lib/python3.12/threading.py", line 1073 in _bootstrap_inner
+  File "/usr/lib/python3.12/threading.py", line 1030 in _bootstrap
+
+Thread 0x000077feceb69080 (most recent call first):
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 1059 in source_to_code
+  File "<frozen importlib._bootstrap_external>", line 1129 in get_code
+  File "<frozen importlib._bootstrap_external>", line 991 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/mpmath/libmp/__init__.py", line 1 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1310 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/mpmath/ctx_base.py", line 3 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/mpmath/ctx_fp.py", line 1 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/mpmath/__init__.py", line 5 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/sympy/__init__.py", line 23 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/fx/experimental/symbolic_shapes.py", line 3 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/_dynamo/utils.py", line 69 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/_dynamo/exc.py", line 41 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/_dynamo/symbolic_convert.py", line 52 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/_dynamo/convert_frame.py", line 53 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1415 in _handle_fromlist
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/_dynamo/__init__.py", line 13 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1310 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/distributed/tensor/parallel/_utils.py", line 11 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/distributed/tensor/parallel/api.py", line 9 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/torch/distributed/tensor/parallel/__init__.py", line 2 in <module>
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  File "<frozen importlib._bootstrap_external>", line 995 in exec_module
+  File "<frozen importlib._bootstrap>", line 935 in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1331 in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 1360 in _find_and_load
+  File "<frozen importlib._bootstrap>", line 488 in _call_with_frames_removed
+  ...
+/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/pydub/utils.py:300: SyntaxWarning: invalid escape sequence '\('
+  m = re.match('([su]([0-9]{1,2})p?) \(([0-9]{1,2}) bit\)$', token)
+/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/pydub/utils.py:301: SyntaxWarning: invalid escape sequence '\('
+  m2 = re.match('([su]([0-9]{1,2})p?)( \(default\))?$', token)
+/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/pydub/utils.py:310: SyntaxWarning: invalid escape sequence '\('
+  elif re.match('(flt)p?( \(default\))?$', token):
+/workspace/s32-clone-r6/.venv/lib/python3.12/site-packages/pydub/utils.py:314: SyntaxWarning: invalid escape sequence '\('
+  elif re.match('(dbl)p?( \(default\))?$', token):
+2026-11-01 08:08:24,368 INFO [omnivoice.tts] Loading sherpa-onnx TTS from /workspace/m1-models/kokoro-int8-multi-lang-v1_0 (model_type=kokoro)
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: kokoro at line 1:kokoro k ˈ O k ə ɹ O. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: misaki at line 2:misaki m i s ˈ ɑ k i. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aahing at line 3:aahing ˈ ɑ ɪ ŋ. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aaron at line 4:aaron ˈ ɛ ɹ ə n. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aaronic at line 5:aaronic ə ɹ ˈ ɑ n ɪ k. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: ab at line 6:ab ˈ ɑ b. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abactor at line 9:abactor ə b ˈ æ k t ə ɹ. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abaddon at line 10:abaddon ə b ˈ æ d ə n. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abalienating at line 15:abalienating ə b ˈ A l i ə n ˌ A ɾ ɪ ŋ. Ignore it.
+INFO:     127.0.0.1:53736 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+2026-11-01 08:10:07,730 WARNING [omnivoice.openai_compat] OpenAI TTS failed (typed): Unknown voice 'no_such_voice_here' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.
+INFO:     127.0.0.1:50272 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+2026-11-01 08:10:08,201 WARNING [omnivoice.openai_compat] OpenAI TTS failed (typed): Unknown voice 'no_such_voice_here' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.
+INFO:     127.0.0.1:58946 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-11-01 08:10:10,154 INFO [omnivoice.api] Shutdown: cleaning up…
+2026-11-01 08:10:10,154 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager shutting down
+2026-11-01 08:10:24,487 INFO [omnivoice.api] Shutdown: model runtimes unloaded.
+2026-11-01 08:10:25,299 INFO [omnivoice.api] Shutdown: done.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [675515]

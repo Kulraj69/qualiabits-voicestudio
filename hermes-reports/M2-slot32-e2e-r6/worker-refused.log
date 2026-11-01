@@ -1,0 +1,4 @@
+{"claimed": 1, "engine_seconds": 0.173, "failed": 1, "idle_polls": 1, "lost_lease": 0, "mode": "once", "requeued": 0, "succeeded": 0, "worker_id": "e2e-refused"}
+worker e2e-refused: schema current, upstream http://127.0.0.1:43051, storage local
+worker e2e-refused: claimed job 2 (22 characters, attempt 1/3)
+worker e2e-refused: job 2 failed, 400 (engine answered 400: Unknown voice 'no_such_voice_here' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), j)
