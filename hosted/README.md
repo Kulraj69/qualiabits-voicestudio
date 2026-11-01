@@ -157,7 +157,7 @@ curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
 ```
 
 What a pass looks like: the "Measured" section below. It is rendered from
-`hermes-reports/M2-slot32-e2e-r2/result.json` by `hosted/scripts/render_measured.py`,
+`hermes-reports/M2-slot32-e2e-r3/result.json` by `hosted/scripts/render_measured.py`,
 so the page and that file cannot drift; a test also checks the run's own manifest of
 tracked-file hashes against git, so a run over edited code cannot be quoted as a run
 of the pushed revision. The earlier runs are kept beside it and labelled in their own
@@ -250,12 +250,12 @@ counters, the model file hashes and the commit the run tested.
 
 ## Measured
 
-From `hermes-reports/M2-slot32-e2e-r2/result.json` — engine, plane and worker processes all started fresh by the
+From `hermes-reports/M2-slot32-e2e-r3/result.json` — engine, plane and worker processes all started fresh by the
 harness on one CPU box (x86_64, 2 CPUs, Python 3.12.3, no
 GPU). The section is rendered from that file by
 `hosted/scripts/render_measured.py`, and a test fails if the page and the file
 disagree. The run records the commit it tested
-(85647e058, worktree clean), the model hashes below, and the
+(e064bd6a9, worktree clean), the model hashes below, and the
 sha256 of every tracked file as it was at run time -- so a run over edited code
 cannot pass itself off as a run of the pushed revision.
 
@@ -269,22 +269,22 @@ itself dirty and its numbers would be worth less than these.
 ```
 
 ```
-engine ready 9.3 s   control plane ready 11.0 s   whole run 201.5 s
+engine ready 9.3 s   control plane ready 11.3 s   whole run 228.4 s
 every process it started: clean shutdown
 
 three direct requests through the control plane, workspace A:
-  hf_alpha  hi   1.832 s audio, 24 kHz mono, peak 0.79   engine took 18.7 s
-  hm_omega  hi   1.826 s audio, 24 kHz mono, peak 0.80   engine took 10.4 s
-  hf_alpha  en   3.507 s audio, 24 kHz mono, peak 0.80   engine took 17.4 s
+  hf_alpha  hi   1.832 s audio, 24 kHz mono, peak 0.80   engine took 18.6 s
+  hm_omega  hi   1.825 s audio, 24 kHz mono, peak 0.78   engine took 10.7 s
+  hf_alpha  en   3.487 s audio, 24 kHz mono, peak 0.79   engine took 18.1 s
   plus one request for a voice the model does not have, refused 400 by the
   engine and passed through with the engine's own message naming its 54 voices.
 
 one queued job, spoken by a separate worker process (run_worker.py --once):
-  job 1  hm_omega  hi   208 characters -> 16.472 s of 24 kHz mono audio,
-                         790,678 bytes, engine took 102.6 s
+  job 1  hm_omega  hi   208 characters -> 16.466 s of 24 kHz mono audio,
+                         790,426 bytes, engine took 109.1 s
   worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
   the object on disk, the job's receipt and the download all hash to
-  f16713ccc9aa74a14bb64e212a58bb168b43f60b15ca8c28a6b97fc555644a44
+  f8c5c9d80aa537cc789d86f13825a31e9734e574e463e8865366dfd22c27a029
 
 one refused job (a voice the model does not have):
   failed 400 after 1 attempt, no retry, no audio served (409), error is the
@@ -292,14 +292,14 @@ one refused job (a voice the model does not have):
 one cancelled job:
   never claimed by the next worker pass, and it moved the meter by nothing
 
-meter for A, at the end of the run: 6 requests, 388 characters, 23.637 s audio,
-              1,134,746 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+meter for A, at the end of the run: 6 requests, 388 characters, 23.611 s audio,
+              1,133,514 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
               requests_without_audio_seconds 2
-              by_key: one key, label "a", same 6 requests and 23.637 s
+              by_key: one key, label "a", same 6 requests and 23.611 s
 meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
 
 same English request straight at the engine, for comparison:
-  direct 3.511 s / 168,564 bytes   through the plane 3.507 s / 168,398 bytes
+  direct 3.508 s / 168,438 bytes   through the plane 3.487 s / 167,442 bytes
 
 the engine's refusal for an unknown voice, taken both ways:
   sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
@@ -307,13 +307,13 @@ the engine's refusal for an unknown voice, taken both ways:
 engine seconds spent per second of speech, the number that decides whether this
 is sellable on a box like this one:
   hindi_hf_alpha     10.2 s
-  hindi_hm_omega     5.7 s
-  english            5.0 s
+  hindi_hm_omega     5.9 s
+  english            5.2 s
 ```
 
 The English lines differ because the engine samples: the two numbers above are the
 same request taken both ways, and they differ by
-166 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
+996 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
 computes deterministically: its refusal, checked against the real engine on every
 run; the 200 path is compared against a deterministic stub in the unit suite.
 
@@ -322,7 +322,7 @@ downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); 
 recorded the same hashes plus the commit it tested, in the same file.
 
 The CPU is not production, and the rates above are the clearest evidence of it: the
-queued job spent 102.6 s of engine time on 16.472 s of audio, about 6.2 s
+queued job spent 109.1 s of engine time on 16.466 s of audio, about 6.6 s
 per second. That is why the GPU run is the owner's to approve, and exactly what
 this layer cannot work around — the plane can hold a request open for a paragraph,
 but nothing here makes the engine faster.
