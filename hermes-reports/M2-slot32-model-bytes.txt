@@ -1,0 +1,28 @@
+# What the setup paragraph's sizes are, measured rather than estimated
+# recorded 2026-11-01 on the box the end-to-end numbers came from (Linux 7.0.0-1014-aws, x86_64)
+
+$ curl -sIL https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_0.tar.bz2 | grep -i '^content-length' | tail -1
+content-length: 132353410
+
+$ stat -c '%s bytes  %n' /tmp/qs-dl/kokoro-int8-multi-lang-v1_0.tar.bz2
+132353410 bytes  /tmp/qs-dl/kokoro-int8-multi-lang-v1_0.tar.bz2
+
+$ sha256sum /tmp/qs-dl/kokoro-int8-multi-lang-v1_0.tar.bz2
+72c347230107ef8a31098ec4d468a605244beef5f1ed00db97efa13518800653  /tmp/qs-dl/kokoro-int8-multi-lang-v1_0.tar.bz2
+
+$ du -sh /workspace/m1-models/kokoro-int8-multi-lang-v1_0        # unpacked, disk usage (1 KiB blocks)
+183M	/workspace/m1-models/kokoro-int8-multi-lang-v1_0
+$ du -sb /workspace/m1-models/kokoro-int8-multi-lang-v1_0        # unpacked, apparent bytes
+189881734	/workspace/m1-models/kokoro-int8-multi-lang-v1_0
+
+$ find /workspace/m1-models/kokoro-int8-multi-lang-v1_0 -type f -printf '%s %f\n' | sort -rn | head -3
+114202993 model.int8.onnx
+28200960 voices.bin
+8532392 ru_dict
+$ find /workspace/m1-models/kokoro-int8-multi-lang-v1_0 -type f | wc -l
+377
+
+# The three files the scripts pin, hashed on this box:
+75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e  model.int8.onnx  114202993 bytes
+6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425  tokens.txt  687 bytes
+1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29  voices.bin  28200960 bytes
