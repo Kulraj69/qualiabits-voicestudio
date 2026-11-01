@@ -339,7 +339,12 @@ def test_build_store_refuses_an_addressing_style_it_does_not_have(tmp_path):
 def s3_endpoint():
     """A real S3-compatible server on loopback (moto). Not a bucket, not S3."""
     server_module = pytest.importorskip(
-        "moto.server", reason="moto is a test-only dependency and is not installed"
+        "moto.server",
+        reason=(
+            "moto is not installed, so the S3 path is not exercised over a socket in "
+            "this environment; it is in the dev group, so "
+            "`uv sync --frozen --no-default-groups --group cpu --group dev` installs it"
+        ),
     )
     server = server_module.ThreadedMotoServer(ip_address="127.0.0.1", port=0)
     server.start()

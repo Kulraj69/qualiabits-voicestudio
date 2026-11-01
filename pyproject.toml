@@ -352,6 +352,11 @@ dev = [
     "pytest>=9.0.3",
     "pytest-asyncio>=1.3.0",
     "pytest-xdist>=3.6",
+    # The hosted control plane's S3 path is tested over real HTTP against an
+    # in-process S3-compatible server. Without this in the dev group the four
+    # socket tests skip in a fresh clone, and a page that says they run would be
+    # describing a machine where somebody installed this by hand.
+    "moto[s3]>=5.0.28",
 ]
 
 [tool.pytest.ini_options]
