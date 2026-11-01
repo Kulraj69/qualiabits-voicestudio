@@ -6,7 +6,7 @@ speech server — and this layer is what turns it into something a business can 
 
 Not deployed. Not public. No GPU. Nothing here has been sold to anyone.
 
-**Start here.** From nothing, in a fresh clone — the whole bootstrap is four commands:
+**Start here.** From nothing, in a fresh clone:
 
 ```sh
 git clone https://github.com/Kulraj69/qualiabits-voicestudio.git
@@ -24,8 +24,9 @@ hosted/scripts/hosted_demo.sh
 ```
 
 The first is the honest short path for a reviewer on a timer; the second is the one
-that proves audio comes out. The run that produced the numbers under "Measured" is
-committed in `hermes-reports/`, and the reasoning behind the design is in
+that proves audio comes out, and the four WAVs it produces are committed under
+`hermes-reports/` if you would rather just listen. The run that produced the numbers
+under "Measured" is committed there too, and the reasoning behind the design is in
 [`hosted/DESIGN.md`](DESIGN.md).
 
 ```

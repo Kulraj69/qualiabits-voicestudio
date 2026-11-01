@@ -1,0 +1,21 @@
+Score: FAIL — honesty flaw present
+
+| Criterion | Score | Judge’s basis |
+|---|---:|---|
+| Originality | 3/5 | Hosted speech API + queue + storage is conventional. The memorable parts are content-addressed audio integrity and evidence-manifest verification, but neither makes the product concept unusual. |
+| Taste | 4/5 | Clear route table, explicit boundaries, and a focused M2 scope. The README is still too long for the first-review path and contains dense implementation detail that DESIGN.md was supposed to absorb. |
+| Human feel | 3/5 | The writing has a specific engineering voice and admits limitations. However, `hosted/control_plane/storage.py:22` says “Written by Hermes for QualiaBits,” which directly weakens authenticity. There is also frequent em-dash usage and several long bullet-heavy sections. |
+| Technical depth | 5/5 | Strong implementation evidence: 178 passing tests, queue races, leases, retries, migration tests, storage corruption checks, real HTTP against moto, and a real CPU end-to-end run. The sponsor technology itself is not identified in the supplied artifacts, so sponsor depth cannot be credited separately. |
+| Criteria fit | 4/5 | The supplied product plan is mapped well: auth, workspaces, keys, metering, local storage, S3 backend logic, queue workers, leases, retries, and migrations are all represented in code and tests. No official hackathon rules file or sponsor-prize requirements were supplied, so those cannot be verified; any unlisted criterion remains unsupported. |
+| Reviewer path | 3/5 | The README gives runnable commands and a fast test path, but the evidence path is internally inconsistent. The cited E2E run names commit `e875b116b`; Artifact 6 identifies the clean-clone test run as commit `05ba314...`, and says the venv was reused rather than freshly built. The README also says the bootstrap is four commands while showing clone, cd, sync, tests, and demo. |
+| Honesty | 2/5 | The project is unusually explicit about what it does not prove, and the manifest-check design is good. But the cited clean-clone evidence does not match the claimed revision, and the README claims a fresh venv while Artifact 6 says “venv reused from the working copy.” Those are material evidence discrepancies, not wording issues. |
+
+Five most damaging flaws
+
+1. Evidence revision mismatch — `hosted/README.md:161–163` claims the clean-clone log is from the same revision as E2E commit `e875b116b`; Artifact 6 says its clone is `05ba314...` at `2026-11-01T08:25:07+05:30`.
+2. Fresh-environment claim contradicted — `hosted/README.md:161–162` says the venv was built by the README commands; Artifact 6 says “venv reused from the working copy.”
+3. AI attribution in product source — `hosted/control_plane/storage.py:22` says “Written by Hermes for QualiaBits,” undermining the required human/authentic presentation.
+4. The core product is not actually deployed — Artifact 4 records `deployed: false`, `public_url: null`, and `listening_verified: false`; this is acceptable for the stated milestone, but prevents any claim of a hosted customer-ready service.
+5. S3 is not production-verified — `hosted/control_plane/storage.py:135–143` explicitly says the S3 backend has never run against a real bucket. Emulator and stub tests prove client logic, not credentials, IAM, lifecycle, region, or real-bucket behavior.
+
+What would make it win: remove the evidence contradictions, rerun the clean-clone tests and E2E on one immutable revision in a genuinely fresh environment, and present one concise reviewer path with a real hosted demo or verifiable deployment.
