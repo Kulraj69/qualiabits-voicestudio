@@ -355,8 +355,9 @@ dev = [
     # The hosted control plane's S3 path is tested over real HTTP against an
     # in-process S3-compatible server. Without this in the dev group the four
     # socket tests skip in a fresh clone, and a page that says they run would be
-    # describing a machine where somebody installed this by hand.
-    "moto[s3]>=5.0.28",
+    # describing a machine where somebody installed this by hand. `[server]` is
+    # not optional: `moto.server` imports flask, and `[s3]` alone still skipped.
+    "moto[server,s3]>=5.0.28",
 ]
 
 [tool.pytest.ini_options]
