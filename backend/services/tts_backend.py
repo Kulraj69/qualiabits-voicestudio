@@ -30,7 +30,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from contextlib import contextmanager
-from typing import Literal, Optional
+from typing import Callable, Literal, Optional
 
 import torch
 
@@ -3872,6 +3872,23 @@ class SherpaOnnxBackend(TTSBackend):
         # never has to re-read the graph.
         self._metadata = _sherpa_onnx_string_metadata(model_file)
         self._speaker_ids = _sherpa_speaker_ids(self._metadata)
+        # Publish the model's own voice table. The class declares no
+        # PRESET_VOICES (the ids live in the graph), so without this the engine
+        # catalogue offered the 13 OpenAI aliases and none of Kokoro's 54
+        # voices — a picker built from the catalogue could not name a single
+        # Hindi voice, while /v1/audio/speech happily accepted `hf_alpha`.
+        ordered = [
+            name for name, _ in sorted(self._speaker_ids.items(), key=lambda kv: kv[1])
+        ]
+        default = next(
+            (name for name, index in self._speaker_ids.items() if index == 0), None
+        )
+        record_model_voices(type(self).id, ordered, default=default)
+        if ordered:
+            logger.info(
+                "sherpa-onnx model %s declares %d voices (default %s)",
+                self.model_identity(), len(ordered), default,
+            )
 
         logger.info(
             "Loading sherpa-onnx TTS from %s (model_type=%s)",
@@ -4249,12 +4266,123 @@ def voice_design_support(cls) -> Optional[bool]:
     return value if isinstance(value, bool) else None
 
 
+#: Voice ids a *loaded model* declares when its class cannot. sherpa-onnx reads
+#: its voice table out of the .onnx graph (``id2speaker``), so nothing is known
+#: about a Kokoro bundle until that bundle is loaded. Keyed by backend id,
+#: because ``preset_voices_of`` is handed the class, not the instance.
+_LOADED_PRESET_VOICES: dict[str, list[str]] = {}
+_LOADED_DEFAULT_VOICES: dict[str, str] = {}
+
+
 def preset_voices_of(cls) -> list[str]:
-    """Built-in voice ids an engine class exposes for selection (empty if none)."""
+    """Voice ids an engine exposes for selection (empty if none).
+
+    A class may declare them (``PRESET_VOICES``). When it does not, the ids a
+    loaded model declared are used — the only route by which a Kokoro bundle's
+    54 voices reach ``/engines``, ``/v1/audio/voices`` and any voice picker
+    built from them.
+    """
     voices = getattr(cls, "PRESET_VOICES", None)
-    if not isinstance(voices, (list, tuple)):
-        return []
-    return [v for v in voices if isinstance(v, str)]
+    if isinstance(voices, (list, tuple)):
+        declared = [v for v in voices if isinstance(v, str)]
+        if declared:
+            return declared
+    return list(_LOADED_PRESET_VOICES.get(getattr(cls, "id", "") or "", []))
+
+
+def default_voice_of(cls) -> Optional[str]:
+    """The voice a request that names none is spoken with, when that is known.
+
+    ``None`` means unverified: either nothing is loaded yet or the engine picks
+    its own default without telling us which one.
+    """
+    declared = getattr(cls, "DEFAULT_VOICE", None)
+    if isinstance(declared, str) and declared:
+        return declared
+    return _LOADED_DEFAULT_VOICES.get(getattr(cls, "id", "") or "")
+
+
+def record_model_voices(
+    backend_id: str, names: list[str], default: Optional[str] = None
+) -> None:
+    """Remember the voice ids a loaded model offers, in the model's own order.
+
+    Called from the load path of engines whose voice table lives in the model
+    file rather than in the class.
+    """
+    ordered = [name for name in names if isinstance(name, str) and name]
+    if ordered:
+        _LOADED_PRESET_VOICES[backend_id] = ordered
+    else:
+        _LOADED_PRESET_VOICES.pop(backend_id, None)
+    if default and default in ordered:
+        _LOADED_DEFAULT_VOICES[backend_id] = default
+    else:
+        _LOADED_DEFAULT_VOICES.pop(backend_id, None)
+
+
+def _sherpa_voice_table(directory: str) -> tuple[list[str], Optional[str]]:
+    """The voice ids a sherpa-onnx model file declares, from its metadata."""
+    model_file = _sherpa_model_file(directory)
+    if model_file is None:
+        return [], None
+    speaker_ids = _sherpa_speaker_ids(_sherpa_onnx_string_metadata(model_file))
+    ordered = [name for name, _ in sorted(speaker_ids.items(), key=lambda kv: kv[1])]
+    default = next((name for name, index in speaker_ids.items() if index == 0), None)
+    return ordered, default
+
+
+#: Engines whose voice table the model file declares, and how to read it:
+#: backend id -> (the environment variable naming the model directory, reader).
+_MODEL_VOICE_READERS: dict[str, tuple[str, "Callable[[str], tuple[list[str], Optional[str]]]"]] = {
+    "sherpa-onnx": ("OMNIVOICE_SHERPA_MODEL", _sherpa_voice_table),
+}
+
+#: Backends whose configured model has already been read, or was unreadable.
+_VOICE_HYDRATION_ATTEMPTED: set[str] = set()
+
+
+def hydrate_declared_voices() -> None:
+    """Publish the voice table of a configured model, before anything loads it.
+
+    Three routes lead to a voice id: the class table, the loaded model's table,
+    and this one. A fresh process has loaded nothing, so without this
+    ``preset_voices_of`` answered ``[]`` for sherpa-onnx — every consumer of it,
+    ``/engines/tts``, ``/v1/audio/voices`` and any picker built from them, could
+    not name one of the model's 54 voices, while ``/v1/audio/speech`` accepted
+    them all.
+
+    Reading the graph's metadata costs about 15 ms on the 132 MB Kokoro bundle
+    and the answer is cached, so this is done once per backend per process. A
+    directory that is absent or unreadable is remembered as attempted, so a
+    broken configuration is read once instead of on every listing, and a listing
+    never fails because of it.
+    """
+    for backend_id, (env_var, reader) in _MODEL_VOICE_READERS.items():
+        if backend_id in _VOICE_HYDRATION_ATTEMPTED:
+            continue
+        try:
+            cls = get_backend_class(backend_id)
+        except ValueError:
+            continue
+        if preset_voices_of(cls):
+            continue  # the class declares its own voices; nothing to infer
+        directory = os.environ.get(env_var, "").strip()
+        if not directory or not os.path.isdir(directory):
+            continue
+        _VOICE_HYDRATION_ATTEMPTED.add(backend_id)
+        try:
+            ordered, default = reader(directory)
+        except Exception as exc:  # a voice listing must not fail over this
+            logger.debug("could not read voice ids from %s: %s", directory, exc)
+            continue
+        record_model_voices(backend_id, ordered, default=default)
+        if ordered:
+            logger.info(
+                "%s is configured with a model declaring %d voices (default %s); "
+                "published before the model is loaded",
+                backend_id, len(ordered), default,
+            )
 
 
 def list_backends(*, include_hidden: bool = False) -> list[dict]:
@@ -4308,6 +4436,11 @@ def list_backends(*, include_hidden: bool = False) -> list[dict]:
     serialized — :func:`_mask_hf_tokens`. The frontend can render these
     fields verbatim without leaking credentials.
     """
+    # A model whose voice table lives in the file can be named before anything
+    # loads it; without this the first listing of a fresh process reports no
+    # voices for such an engine at all.
+    hydrate_declared_voices()
+
     # Detect subprocess-isolated backends via a duck-typed marker rather
     # than `issubclass(cls, SubprocessBackend)`. Test fixtures (e.g. the
     # token_resolver suite) purge `sys.modules["services"]` between tests
@@ -4424,7 +4557,7 @@ def list_backends(*, include_hidden: bool = False) -> list[dict]:
             # engine really uses and how it picks it. None = not verified.
             "max_ref_seconds": getattr(cls, "max_ref_seconds", None),
             "preset_voices": preset_voices_of(cls),
-            "default_voice": getattr(cls, "DEFAULT_VOICE", None) if preset_voices_of(cls) else None,
+            "default_voice": default_voice_of(cls) if preset_voices_of(cls) else None,
             "ref_strategy": getattr(cls, "ref_strategy", None),
             "install_hint": _INSTALL_HINTS.get(bid),
             # Exact `export VAR=...` line for path-gated opt-in engines, or None.

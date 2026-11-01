@@ -260,3 +260,105 @@ def test_returned_audio_keeps_its_shape():
     backend, _ = _backend_with({"hf_alpha": 31})
     wav = backend.generate("hi", voice="hf_alpha")
     assert tuple(wav.shape) == (1, 2)
+
+
+# ── the voice table is published before the model is loaded ────────────────
+
+@pytest.fixture(autouse=True)
+def _fresh_voice_caches():
+    """These three dicts are process-wide memory; each test starts empty."""
+    tts = _tts()
+    for cache in (tts._LOADED_PRESET_VOICES, tts._LOADED_DEFAULT_VOICES):
+        cache.clear()
+    tts._VOICE_HYDRATION_ATTEMPTED.clear()
+    yield
+    for cache in (tts._LOADED_PRESET_VOICES, tts._LOADED_DEFAULT_VOICES):
+        cache.clear()
+    tts._VOICE_HYDRATION_ATTEMPTED.clear()
+
+
+def test_a_configured_kokoro_model_publishes_its_voices_before_it_loads(tmp_path, monkeypatch,
+                                                                       _stub_sherpa):
+    """The dashboard's picker asks before anybody has spoken a word.
+
+    Found by running the browser end-to-end against the real engine: a fresh
+    process answered /engines/tts with `sherpa-onnx: 0 voices`, so the plane's
+    voice list held the OpenAI aliases and not one of the model's 54 ids, and
+    the Speak page could not select the voice the engine actually speaks with.
+    """
+    tts = _tts()
+    d = _model_dir(tmp_path, kokoro=True,
+                   metadata={"model_type": "kokoro", "n_speakers": "54",
+                             "id2speaker": "0->af_alloy,31->hf_alpha,32->hm_omega"})
+    monkeypatch.setenv("OMNIVOICE_SHERPA_MODEL", str(d))
+
+    tts.hydrate_declared_voices()
+
+    assert tts.preset_voices_of(tts.SherpaOnnxBackend) == ["af_alloy", "hf_alpha", "hm_omega"]
+    assert tts.default_voice_of(tts.SherpaOnnxBackend) == "af_alloy"
+    # Nothing was loaded: no config was built, no graph was read by the runtime.
+    assert _stub_sherpa == {}
+    # And the listing a dashboard reads carries them.
+    sherpa = [e for e in tts.list_backends() if e["id"] == "sherpa-onnx"][0]
+    assert sherpa["preset_voices"] == ["af_alloy", "hf_alpha", "hm_omega"]
+    assert sherpa["default_voice"] == "af_alloy"
+
+
+def test_an_engine_that_declares_its_own_voices_is_left_alone(tmp_path, monkeypatch):
+    tts = _tts()
+    d = _model_dir(tmp_path, kokoro=True,
+                   metadata={"model_type": "kokoro", "id2speaker": "0->af_alloy"})
+    monkeypatch.setenv("OMNIVOICE_SHERPA_MODEL", str(d))
+    monkeypatch.setattr(tts.SherpaOnnxBackend, "PRESET_VOICES", ["fixed-a", "fixed-b"],
+                        raising=False)
+
+    tts.hydrate_declared_voices()
+
+    assert tts.preset_voices_of(tts.SherpaOnnxBackend) == ["fixed-a", "fixed-b"]
+    assert "sherpa-onnx" not in tts._VOICE_HYDRATION_ATTEMPTED
+
+
+def test_an_unset_or_missing_directory_never_raises_and_stays_retryable(tmp_path, monkeypatch):
+    tts = _tts()
+    monkeypatch.delenv("OMNIVOICE_SHERPA_MODEL", raising=False)
+    tts.hydrate_declared_voices()
+    assert tts.preset_voices_of(tts.SherpaOnnxBackend) == []
+
+    monkeypatch.setenv("OMNIVOICE_SHERPA_MODEL", str(tmp_path / "not-here"))
+    tts.hydrate_declared_voices()
+    assert tts.preset_voices_of(tts.SherpaOnnxBackend) == []
+    # A directory that is not there is not a failed read: configure it late and
+    # the next listing still picks the voices up.
+    assert "sherpa-onnx" not in tts._VOICE_HYDRATION_ATTEMPTED
+
+    d = _model_dir(tmp_path, kokoro=True,
+                   metadata={"model_type": "kokoro", "id2speaker": "0->af_alloy"})
+    monkeypatch.setenv("OMNIVOICE_SHERPA_MODEL", str(d))
+    tts.hydrate_declared_voices()
+    assert tts.preset_voices_of(tts.SherpaOnnxBackend) == ["af_alloy"]
+
+
+def test_a_broken_model_directory_is_read_once_and_never_breaks_a_listing(tmp_path, monkeypatch):
+    """The listing route must survive a pointed-at-garbage configuration."""
+    tts = _tts()
+    d = tmp_path / "broken-model"
+    d.mkdir()
+    (d / "model.onnx").write_bytes(b"not an onnx graph at all")
+    (d / "tokens.txt").write_text("a 1\n")
+    monkeypatch.setenv("OMNIVOICE_SHERPA_MODEL", str(d))
+
+    reads = []
+    real_reader = tts._MODEL_VOICE_READERS["sherpa-onnx"][1]
+
+    def counting_reader(directory):
+        reads.append(directory)
+        return real_reader(directory)
+
+    monkeypatch.setitem(tts._MODEL_VOICE_READERS, "sherpa-onnx",
+                        ("OMNIVOICE_SHERPA_MODEL", counting_reader))
+
+    tts.hydrate_declared_voices()
+    tts.hydrate_declared_voices()
+    assert reads == [str(d)], "the same directory was read twice"
+    assert tts.preset_voices_of(tts.SherpaOnnxBackend) == []
+    assert [e for e in tts.list_backends() if e["id"] == "sherpa-onnx"], "the list still answers"
