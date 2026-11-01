@@ -1,0 +1,44 @@
+# What changed after cheap+ pass 2 (2/4/4/5/2/4/3, FAIL)
+
+Pass 2's findings, one by one. Three were this lane's and are fixed and shown;
+the other two are the owner's and are not dressed up.
+
+1. "The second cheap+ judge artifact is not actually supplied —
+   `M3-slot44-review2.txt` is empty." True, and it was a hole in the bundle
+   rather than a missing round: the bundle was built in order to run that pass,
+   so it could not contain its own output. Both passes are now committed
+   artifacts and both are pasted into this bundle, and `M3-slot44-since-review.txt`
+   is labelled for what it is — the builder's response, not a judge's.
+
+2. "Stub-path evidence is missing." True: the bundle pointed at a stub run file
+   that did not exist. The stub smoke run's own result is now committed beside
+   the real one (`hermes-reports/M3-slot44-e2e-stub-r2.json`, 42 of 42, engine
+   `engine-stub.py`), and both are pasted here.
+
+3. "Real-engine reproducibility has an external dependency — `/workspace/m1-models/…`."
+   True as the artifacts stood, and now fixed in the harness rather than in a
+   sentence. `real-engine.sh` resolves the model the way the hosted proof's
+   script does: five places it might already be, then it downloads the pinned
+   release asset, checks the three sha256 values and starts nothing until they
+   match. No fallback to the stub. Demonstrated rather than asserted: with the
+   Kokoro model moved off the machine, one command in a fresh clone at
+   `fe879d7ce` downloaded it (126 MiB), verified `model.int8.onnx`, `tokens.txt`
+   and `voices.bin`, and ran the suite at the downloaded bytes — 46 of 46, in
+   `hermes-reports/M3-slot44-e2e-r3/`, whose transcript shows the download and
+   whose result records the model directory and the three hashes. That is also
+   why this bundle is built from r3.
+
+4. "Criteria fit 2 — most of the V0 milestone is absent: cloning, voice design,
+   dubbing, transcription, audiobooks, agents, phone calls, deployment, real S3,
+   GPU, the M7 growth work." All true, and true of a first slice by construction:
+   the V0 plan's M3 line is a whole new web UI, and this slice is its first
+   slice — the four things a customer does first. Later slices hold the rest and
+   `hosted/web/README.md` names them as not built rather than stubbing them. The
+   bundle now carries the milestone so the mapping is against a stated target
+   instead of an implied one, and this D-list is scoped to the slice. Scoring the
+   slice against M1-M7 is a fair reading of the goal — it is just not the slice's
+   claim.
+
+5. "No user-facing differentiator; originality 2." True, unchanged, and the
+   owner's. D8 says so before the code was written, and the honest fix is a
+   product decision this lane cannot make for him.

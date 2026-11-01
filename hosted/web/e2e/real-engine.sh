@@ -64,6 +64,7 @@ if [ -z "$MODEL" ]; then
              "$WORK/$TARBALL" "$WORK"
   fi
   MODEL="$WORK/$MODEL_NAME"
+  MODEL_SOURCE="downloaded and hash-checked by this script into $WORK"
   echo "==> verifying the model bytes against the pinned hashes"
   check() { # file expected
     actual=$(sha256sum "$1" | cut -d' ' -f1)
@@ -84,6 +85,7 @@ fi
 STATE=${QUALI_E2E_ENGINE_STATE:-${TMPDIR:-/tmp}/qb-real-engine-state}
 mkdir -p "$STATE"
 
+MODEL_SOURCE=${QUALI_MODEL_SOURCE:-${MODEL_SOURCE:-"found at $MODEL"}}
 echo "==> engine: sherpa-onnx on $MODEL"
 echo "==> CPU synthesis is slower than real time; this run takes minutes, not seconds."
 
@@ -97,4 +99,6 @@ HF_HUB_OFFLINE=1 \
 QB_E2E_ENGINE_CMD="$PY -m uvicorn backend.main:app --host 127.0.0.1 --port {port}" \
 QB_E2E_SPEAK_TIMEOUT_MS="${QB_E2E_SPEAK_TIMEOUT_MS:-300000}" \
 QB_E2E_UPSTREAM_TIMEOUT_SECONDS="${QB_E2E_UPSTREAM_TIMEOUT_SECONDS:-300}" \
+QB_E2E_ENGINE_LABEL="sherpa-onnx on $MODEL_NAME (QB_E2E_ENGINE_CMD)" \
+QB_E2E_MODEL_SOURCE="$MODEL_SOURCE" \
   node e2e/dashboard.mjs "$@"

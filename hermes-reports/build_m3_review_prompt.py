@@ -110,14 +110,23 @@ def milestone() -> str:
 
 
 def since_text() -> str:
-    """What was fixed since the previous pass, when the builder was told."""
-    path = REPORTS / "M3-slot44-since-review.txt"
-    if not path.exists():
+    """What was fixed after each previous pass, in pass order.
+
+    One file per pass (`M3-slot44-since-review<N>.txt`), because the response to
+    pass 2 is not a replacement for the response to pass 1: a judge checking D8
+    needs to see what each pass found and what happened to it.
+    """
+    def pass_number(path: Path) -> int:
+        match = re.search(r"review(\d+)", path.name)
+        return int(match.group(1)) if match else 0
+
+    files = sorted(REPORTS.glob("M3-slot44-since-review*.txt"), key=pass_number)
+    if not files:
         return "nothing: this is the first pass on the slice"
-    return path.read_text(encoding="utf-8", errors="replace")
+    return "\n\n".join(p.read_text(encoding="utf-8", errors="replace") for p in files)
 
 
-def review_files(limit: int = 2) -> str:
+def review_files(limit: int = 3) -> str:
     """The judge passes already run on this slice, so D8 is checkable."""
     found = sorted(REPORTS.glob("M3-slot44-review*.txt"))
     if not found:
@@ -126,9 +135,29 @@ def review_files(limit: int = 2) -> str:
                        for p in found[-limit:])
 
 
+def stub_summary(path: Path) -> str:
+    """The stub smoke run, so the clone-friendly path is checkable too."""
+    if not path.exists():
+        raise SystemExit(f"missing stub end-to-end result: {path}")
+    data = json.loads(path.read_text())
+    lines = [
+        f"{path.name}: {data.get('passed')} passed, {data.get('failed')} failed, "
+        f"ok={data.get('ok')}, engine={data.get('engine')} "
+        f"(engine_is_stub={data.get('engine_is_stub')})",
+        f"revision: {json.dumps(data.get('revision'))}",
+        f"pages: {json.dumps(data.get('pages'))}",
+        f"audio: {json.dumps(data.get('audio'))}",
+        f"usage: {json.dumps(data.get('usage'))}",
+    ]
+    for check in data.get("checks", []):
+        if not check["ok"]:
+            lines.append(f"  [FAIL] {check['name']}  ({str(check.get('detail'))[:160]})")
+    return "\n".join(lines)
+
+
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
-    evidence = REPORTS / "M3-slot44-e2e-r2" / "result.json"
+    evidence = REPORTS / "M3-slot44-e2e-r3" / "result.json"
     stub = REPORTS / "M3-slot44-e2e-stub-r2.json"
     tests = REPORTS / "M2-slot44-clean-tests-r1.log"
     unit = REPORTS / "M3-slot44-web-unit-r1.log"
@@ -181,8 +210,7 @@ def main() -> None:
         "## The end-to-end, real engine, this revision (fresh clone, --keep)\n",
         e2e_summary(evidence), "\n",
         "## The end-to-end, stub engine (the default smoke path)\n",
-        json.loads(stub.read_text())["run"] if stub.exists() else "missing",
-        "\n",
+        stub_summary(stub), "\n",
         "## Suite results, from a clean clone of the pushed revision\n",
         show(tests) if tests.exists() else "missing clean-clone suite log",
         "\n",

@@ -12,7 +12,11 @@ runs on this machine on loopback.
 
 You need three processes. The dashboard is one of them; the engine and the
 control plane are the other two, and running them is described in
-[`hosted/RUN-IT-BY-HAND.md`](../RUN-IT-BY-HAND.md). The short version, from the
+[`hosted/RUN-IT-BY-HAND.md`](../RUN-IT-BY-HAND.md). You do not need any of that
+for either test path below — `npm run e2e` and
+[`e2e/real-engine.sh`](e2e/real-engine.sh) start all three themselves, on their
+own ports and their own state directory, and stop them again. Start them by hand
+only when you want to poke at the app in a browser. The short version, from the
 repository root, in two terminals:
 
 ```sh

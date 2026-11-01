@@ -1,0 +1,41 @@
+# What changed after cheap+ pass 3 (2/4/4/5/2/4/3, FAIL)
+
+Pass 3's findings. Three were this lane's, and all three are fixed and then shown
+by a re-taken evidence set rather than by a sentence.
+
+1. "Real-engine evidence has a provenance mismatch — the result says the engine
+   was operator-supplied, while the surrounding account claims a fresh-clone
+   download demonstration." True, and it was this lane's own labelling: the
+   harness labelled any `QB_E2E_ENGINE_CMD` run "operator-supplied", which is
+   about how the engine process was started and says nothing about the model.
+   `result.json` now carries `engine_model_source`, which the real-engine script
+   sets to "downloaded and hash-checked by this script into …" or "found at …",
+   and an engine label naming the backend and the model. A reader can now see
+   both where the engine came from and where its bytes came from.
+
+2. "The fresh-clone evidence is split across revisions." True: the four pieces
+   had been taken over a working session and named three commits. All four are
+   now taken in one clone at one revision — the Python suites, the web unit
+   checks, the stub browser run and the real-engine browser run — and each log
+   records its own revision and command, so the claim "this all applies to the
+   pushed revision" is one line rather than an inference.
+
+3. "The reviewer path remains operationally heavy — a reviewer must start three
+   processes." Half true, and the README was misleading: neither test path asks
+   a reviewer to start anything. `npm run e2e` and `e2e/real-engine.sh` start the
+   engine, the plane and the web server themselves, on their own ports and state
+   directory, and stop them. The README now says so and adds that the
+   three-terminal flow is for poking at the app in a browser, not for testing it.
+
+4. "Most of the V0 goal is not implemented: cloning, voice design, dubbing,
+   transcription, audiobooks, agents, phone calls, deployment, billing,
+   marketing." True by construction and unchanged: the V0 plan's M3 line is a
+   whole new web UI and this is its first slice — the four things a customer does
+   first. The later slices are named in the README as not built rather than
+   stubbed, and the milestone is supplied so the mapping is against a stated
+   target. Scoring the slice against M1-M7 is a fair reading of the goal; it is
+   simply not the slice's claim.
+
+5. "No distinctive user-facing idea; originality 2." True, unchanged, and the
+   owner's decision — D8 says so before the code was written, and inventing a
+   differentiator in this lane would be the dishonest fix.

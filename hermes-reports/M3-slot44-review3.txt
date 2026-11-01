@@ -1,0 +1,63 @@
+Verdict: FAIL
+
+1. Originality — 2/5
+
+This is a competent but conventional speech SaaS dashboard: authentication, voice selection, synthesis, API keys, usage, and jobs. The artifacts explicitly acknowledge that there is no user-facing differentiator or surprising product moment (`hermes-reports/M3-slot44-since-review.txt:44-48`).
+
+2. Taste — 4/5
+
+The product has a coherent dark-first visual direction, one accent, focused pages, explicit scope boundaries, and visible keyboard focus. The browser evidence records screenshots and focus checks for all five routes, though the supplied text does not let me visually inspect those screenshots directly, so 5 is not justified.
+
+3. Human feel — 4/5
+
+The README uses specific, candid language such as “Not deployed. Not public. No GPU” and clearly distinguishes implemented work from later slices. It is still dense and acceptance-test-heavy in places, but it avoids the generic promotional phrases and empty superlatives the rubric forbids.
+
+4. Technical depth — 5/5
+
+The evidence shows real session handling with an httpOnly token, plane-served voices, engine-originated errors, API-key lifecycle and revocation, WAV-based metering, queued and cancelled jobs, a worker, content-addressed storage, and browser coverage against Chromium, Next.js, the control plane, and a non-stub engine. The reported results are substantial: 46/46 real-engine browser checks, 42/42 stub checks, 29/29 web unit checks, and 201 Python checks.
+
+5. Criteria fit — 2/5
+
+Against the supplied V0 milestone, this slice demonstrates only the first web-dashboard subset: signup/login, speech, keys, usage, and jobs. Voice cloning, voice design, dubbing, transcription, audiobooks, agents, phone calls, deployment, public signup, real S3, GPU operation, and M7 growth work are explicitly absent (`hosted/web/README.md:151-156`; `hosted/README.md`, “Not in yet”). There is no official hackathon rules or sponsor-prize file, so those mappings cannot be verified either.
+
+6. Reviewer path — 4/5
+
+The two READMEs provide concrete setup commands, expected results, and a do-X/see-Y walkthrough, and the clean-clone evidence supports the core local path. It still requires multiple long-running processes, a local engine, and model setup for the real-engine path; it is a workable technical review path, not a few-minute frictionless demo.
+
+7. Honesty — 3/5
+
+The submission is unusually candid about being local-only, undeployed, CPU-only, non-S3, and not human-listened, and it labels the stub engine clearly. However, the evidence spans different revisions, and the supplied real-engine `result.json` identifies the engine as `operator-supplied (QB_E2E_ENGINE_CMD)` with a model under `/tmp/qb-dl-model`, while the surrounding claim says the run demonstrated downloading from a fresh clone; that download claim is not established by the supplied result itself. This is an evidence-boundary inconsistency, so the no-honesty-flaw requirement is not met.
+
+Five most damaging flaws
+
+1. No distinctive user-facing idea  
+   `hermes-reports/M3-slot44-since-review.txt:44-48`  
+   The implementation is technically deep but visually and product-wise interchangeable with many speech dashboards. The owner’s stated decision not to add a differentiator is honest, but it prevents a pass.
+
+2. Most of the V0 goal is not implemented  
+   `hosted/web/README.md:151-156`  
+   Cloning, voice design, dubbing, transcription, audiobooks, agents, phone calls, deployment, billing, and marketing/growth are explicitly deferred. That makes criteria fit 2/5 against the milestone supplied for judging.
+
+3. Real-engine evidence has a provenance mismatch  
+   `result.json`, generated `2026-11-01T16:41:17.247Z`; `hosted/web/README.md:103-125`  
+   The result says the engine was operator-supplied, while the surrounding account claims a fresh-clone download demonstration. The result proves a real engine run, but not the claimed self-contained download replay.
+
+4. The fresh-clone evidence is split across revisions  
+   The real-engine run uses `fe879d7cef9a...`; the Python clean-clone run uses `51343aa0346e...`; the web unit run uses `618584f389...`. This weakens the claim that all acceptance evidence applies to one pushed revision.
+
+5. The reviewer path remains operationally heavy  
+   `hosted/web/README.md:11-63` and `hosted/web/README.md:103-125`  
+   A reviewer must start the engine, control plane, and dashboard, then manage model availability for the strongest path. The stub path is easier, but its clean-clone result and revision alignment are not as strong as the real-engine claim.
+
+D status
+
+- D1: Demonstrated — real Next.js app, signup/login, httpOnly session cookie, and browser verification that JavaScript cannot read the session token.
+- D2: Demonstrated — plane-served voice catalogue, real-engine WAV output, measured duration, download, and engine-originated unknown-voice error.
+- D3: Demonstrated — one-time key display, public-id-only listing, revocation, next-request refusal, usage totals, and per-key breakdown.
+- D4: Demonstrated — queued, cancelled, and completed jobs; cancellation leaves the meter unchanged; completed audio is stored and downloaded byte-for-byte.
+- D5: Partly demonstrated — the test coverage is strong and multiple clean-clone results are supplied, but the evidence is split across revisions and the real-engine download provenance is not established by the supplied result.
+- D6: Partly demonstrated — route status, headings, focus visibility, navigation, dead-link checks, and screenshots are instrumented. Full visual inspection and complete cross-revision coverage are not independently established in the supplied material.
+- D7: Demonstrated — both READMEs give concrete setup steps, expected outcomes, and explicit boundaries.
+- D8: Demonstrated — two prior cheap+ verdicts and the claimed responses are included, with the remaining owner-level failures explicitly left unresolved.
+
+What would make it win: add a memorable user-facing differentiator, implement or narrow the stated V0 target, and align every test and real-engine replay artifact to one revision with directly verifiable provenance.

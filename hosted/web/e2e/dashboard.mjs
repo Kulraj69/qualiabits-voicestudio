@@ -274,7 +274,11 @@ async function main() {
 
   const result = {
     run: "qualiabits voice — browser dashboard end to end",
-    engine: ENGINE_CMD ? "operator-supplied (QB_E2E_ENGINE_CMD)" : "engine_stub.py",
+    engine: process.env.QB_E2E_ENGINE_LABEL
+      || (ENGINE_CMD ? "operator-supplied (QB_E2E_ENGINE_CMD)" : "engine_stub.py"),
+    // Where the model bytes came from, when the operator named it: the
+    // real-engine script says whether it found them or downloaded them.
+    engine_model_source: process.env.QB_E2E_MODEL_SOURCE || null,
     engine_command: ENGINE_CMD || null,
     engine_is_stub: !ENGINE_CMD,
     engine_model: modelFingerprint(),
