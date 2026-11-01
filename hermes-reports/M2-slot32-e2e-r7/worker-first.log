@@ -1,0 +1,4 @@
+{"claimed": 1, "engine_seconds": 137.822, "failed": 0, "idle_polls": 1, "lost_lease": 0, "mode": "once", "requeued": 0, "succeeded": 1, "worker_id": "e2e-first"}
+worker e2e-first: schema current, upstream http://127.0.0.1:44499, storage local
+worker e2e-first: claimed job 1 (208 characters, attempt 1/3)
+worker e2e-first: job 1 succeeded, 16.475833 s of audio (stored d7/17/d717439abf1ad09fe9fe882fe1b0aab7086ebd78f5f064f4c178c8d68bb8bde5.wav)

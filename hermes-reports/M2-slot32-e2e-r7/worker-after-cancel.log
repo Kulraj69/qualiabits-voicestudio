@@ -1,0 +1,2 @@
+{"claimed": 0, "engine_seconds": 0.0, "failed": 0, "idle_polls": 1, "lost_lease": 0, "mode": "once", "requeued": 0, "succeeded": 0, "worker_id": "e2e-after-cancel"}
+worker e2e-after-cancel: schema current, upstream http://127.0.0.1:44499, storage local

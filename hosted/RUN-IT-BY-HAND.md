@@ -71,18 +71,3 @@ file job1.wav        # RIFF 24 kHz mono; sha256 matches the job's own receipt
 #    arrived, measured from the WAV you actually received — both routes, once each.
 curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
 ```
-
-What a pass looks like: the "Measured" section below, rendered from
-`hermes-reports/M2-slot32-e2e-r6/result.json` by `hosted/scripts/render_measured.py`.
-That run tested `5702c9955` in a fresh clone whose venv was built by the commands
-above, and the suite log beside it (`hermes-reports/M2-slot32-clean-tests-r6.log`)
-is from that same revision, run in that same clone. The four WAVs it produced are
-committed with it under `hermes-reports/M2-slot32-e2e-r6/audio/`, so a reader who
-does not want to wait four minutes can still hear what came out — they are that run's
-output, and nothing about the voice is claimed beyond "this is what the engine
-returned".
-
-A test refuses this citation if any file under `hosted/control_plane`, `hosted/worker`
-or `hosted/scripts` changes afterwards, so a run over edited code cannot be quoted as
-a run of what is pushed. The earlier runs are kept beside it and labelled in their own
-files, including the ones that failed and why.

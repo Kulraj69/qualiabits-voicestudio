@@ -165,14 +165,31 @@ on both paths, checks a refused job fails once and a cancelled job is never spok
 reads both meters and revokes a key. `result.json` records every check, the worker
 counters, the model file hashes and the commit the run tested.
 
+What a pass looks like: the "Measured" section below, rendered from
+`hermes-reports/M2-slot32-e2e-r7/result.json` by `hosted/scripts/render_measured.py`.
+That run is the one-command path at the top of this page — `hosted/scripts/hosted_demo.sh`
+in a fresh clone, with no copy of the model where the script looks, so it downloaded the
+bundle, checked the three pinned hashes and then ran the proof. The transcript is
+`hermes-reports/M2-slot32-demo-r7.log`, and the suite log beside it
+(`hermes-reports/M2-slot32-clean-tests-r7.log`) is from that same clone at the same
+revision, `82de450e9`. The four WAVs it produced are committed with it under
+`hermes-reports/M2-slot32-e2e-r7/audio/`, so a reader who would rather not wait five
+minutes can hear what came out — they are that run's output, and nothing about the voice
+is claimed beyond "this is what the engine returned".
+
+A test refuses this citation if any file under `hosted/control_plane`, `hosted/worker`
+or `hosted/scripts` changes afterwards, so a run over edited code cannot be quoted as
+a run of what is pushed. The earlier runs are kept beside it and labelled in their own
+files, including the ones that failed and why.
+
 ## Measured
 
-From `hermes-reports/M2-slot32-e2e-r6/result.json` — engine, plane and worker processes all started fresh by the
+From `hermes-reports/M2-slot32-e2e-r7/result.json` — engine, plane and worker processes all started fresh by the
 harness on one CPU box (x86_64, 2 CPUs, Python 3.12.3, no
 GPU). The section is rendered from that file by
 `hosted/scripts/render_measured.py`, and a test fails if the page and the file
 disagree. The run records the commit it tested
-(5702c9955, worktree clean), the model hashes below, and the
+(82de450e9, worktree clean), the model hashes below, and the
 sha256 of every tracked file as it was at run time -- so a run over edited code
 cannot pass itself off as a run of the pushed revision.
 
@@ -186,22 +203,22 @@ itself dirty and its numbers would be worth less than these.
 ```
 
 ```
-engine ready 12.0 s   control plane ready 14.6 s   whole run 238.7 s
+engine ready 11.9 s   control plane ready 14.9 s   whole run 276.8 s
 every process it started: clean shutdown
 
 three direct requests through the control plane, workspace A:
-  hf_alpha  hi   1.823 s audio, 24 kHz mono, peak 0.80   engine took 21.4 s
-  hm_omega  hi   1.825 s audio, 24 kHz mono, peak 0.77   engine took 10.6 s
-  hf_alpha  en   3.485 s audio, 24 kHz mono, peak 0.79   engine took 19.0 s
+  hf_alpha  hi   1.831 s audio, 24 kHz mono, peak 0.79   engine took 19.9 s
+  hm_omega  hi   1.826 s audio, 24 kHz mono, peak 0.78   engine took 12.8 s
+  hf_alpha  en   3.508 s audio, 24 kHz mono, peak 0.79   engine took 29.6 s
   plus one request for a voice the model does not have, refused 400 by the
   engine and passed through with the engine's own message naming its 54 voices.
 
 one queued job, spoken by a separate worker process (run_worker.py --once):
-  job 1  hm_omega  hi   208 characters -> 16.472 s of 24 kHz mono audio,
-                         790,680 bytes, engine took 121.3 s
+  job 1  hm_omega  hi   208 characters -> 16.476 s of 24 kHz mono audio,
+                         790,884 bytes, engine took 137.8 s
   worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
   the object on disk, the job's receipt and the download all hash to
-  29479f7ec18c474e8af4931432b04b4035d9f35aedb76932e4b64559f544aa6e
+  d717439abf1ad09fe9fe882fe1b0aab7086ebd78f5f064f4c178c8d68bb8bde5
 
 one refused job (a voice the model does not have):
   failed 400 after 1 attempt, no retry, no audio served (409), error is the
@@ -209,28 +226,28 @@ one refused job (a voice the model does not have):
 one cancelled job:
   never claimed by the next worker pass, and it moved the meter by nothing
 
-meter for A, at the end of the run: 6 requests, 388 characters, 23.605 s audio,
-              1,133,220 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+meter for A, at the end of the run: 6 requests, 388 characters, 23.641 s audio,
+              1,134,928 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
               requests_without_audio_seconds 2
-              by_key: one key, label "a", same 6 requests and 23.605 s
+              by_key: one key, label "a", same 6 requests and 23.641 s
 meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
 
 same English request straight at the engine, for comparison:
-  direct 3.486 s / 167,380 bytes   through the plane 3.485 s / 167,346 bytes
+  direct 3.508 s / 168,414 bytes   through the plane 3.508 s / 168,412 bytes
 
 the engine's refusal for an unknown voice, taken both ways:
   sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
 
 engine seconds spent per second of speech, the number that decides whether this
 is sellable on a box like this one:
-  hindi_hf_alpha     11.8 s
-  hindi_hm_omega     5.8 s
-  english            5.5 s
+  hindi_hf_alpha     10.8 s
+  hindi_hm_omega     7.0 s
+  english            8.4 s
 ```
 
 The English lines differ because the engine samples: the two numbers above are the
 same request taken both ways, and they differ by
-34 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
+2 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
 computes deterministically: its refusal, checked against the real engine on every
 run; the 200 path is compared against a deterministic stub in the unit suite.
 
@@ -239,7 +256,7 @@ downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); 
 recorded the same hashes plus the commit it tested, in the same file.
 
 The CPU is not production, and the rates above are the clearest evidence of it: the
-queued job spent 121.3 s of engine time on 16.472 s of audio, about 7.4 s
+queued job spent 137.8 s of engine time on 16.476 s of audio, about 8.4 s
 per second. That is why the GPU run is the owner's to approve, and exactly what
 this layer cannot work around — the plane can hold a request open for a paragraph,
 but nothing here makes the engine faster.

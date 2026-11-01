@@ -1,0 +1,45 @@
+# the documented one-command path, run verbatim in a fresh clone, with no copy of
+# the model anywhere the script looks, so the download and the hash check run for real
+# clone at 82de450e9395949bf2a14dfcdd30cab87f75629d; venv built by the README's own uv sync command
+2026-11-01T14:01:17+05:30
+
+$ hosted/scripts/hosted_demo.sh /tmp/s32-demo-r7
+
+==> downloading kokoro-int8-multi-lang-v1_0.tar.bz2 (about 132 MB)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+ 84  126M   84  107M    0     0   105M      0  0:00:01  0:00:01 --:--:--  105M100  126M  100  126M    0     0   113M      0  0:00:01  0:00:01 --:--:--  198M
+==> extracting
+==> verifying the model bytes against the pinned hashes
+    ok model.int8.onnx
+    ok tokens.txt
+    ok voices.bin
+==> running the end-to-end proof (several minutes on a small CPU box; the
+    queued job is the slow part — this engine spends seconds of CPU per
+    second of speech)
+    evidence goes to /tmp/s32-demo-r7/evidence-20261101-140144
+  PASS  control_plane_and_engine_both_up
+  PASS  two_workspaces_signed_up_with_keys
+  PASS  hindi_and_english_audio_through_the_control_plane
+  PASS  engine_refusal_passed_through_as_400
+  PASS  refusal_bytes_identical_to_the_real_engine
+  PASS  key_refusals_are_401
+  PASS  meter_matches_the_audio_and_is_per_workspace
+  PASS  a_queued_job_is_spoken_by_a_real_worker_and_metered_once
+  PASS  a_refused_job_fails_once_with_the_engine_s_own_message
+  PASS  a_cancelled_job_is_never_spoken_or_metered
+  PASS  revoked_key_refused_and_other_workspace_untouched
+  hindi_hf_alpha   hf_alpha  hi  1.831 s at 24000 Hz, peak 0.79483, engine took 19.861 s
+  hindi_hm_omega   hm_omega  hi  1.826 s at 24000 Hz, peak 0.779327, engine took 12.808 s
+  english          hf_alpha  en  3.508 s at 24000 Hz, peak 0.794678, engine took 29.55 s
+  queued job 1      208 characters, 16.476 s at 24 kHz, sha256 d717439abf1a…, engine took 137.822 s, worker claimed/succeeded 1/1
+  refused job 2    failed 400 after 1 attempt: Unknown voice 'no_such_voice_here' for the loaded sherpa-onn
+  cancelled job 3    never claimed (worker claimed 0)
+  meter for workspace A: 4 requests, 158 characters, 7.165 s of audio
+  meter for workspace B: 0 requests
+
+audio in /tmp/s32-demo-r7/evidence-20261101-140144/audio
+full result in /tmp/s32-demo-r7/evidence-20261101-140144/result.json
+not a listening check, not GPU evidence, not deployed, and not M1 acceptance.
+demo exit=0
