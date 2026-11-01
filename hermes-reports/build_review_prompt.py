@@ -55,16 +55,20 @@ def quoted_run() -> Path:
     return path
 
 
-def cited_logs() -> list[str]:
-    """The clean-clone logs the page names, so the bundle cannot show another one.
+def cited_logs(require_exists: bool = True) -> list[str]:
+    """Every log the page names, so the bundle cannot show another one, or miss one.
 
-    The previous round's bundle pasted a fixed filename while the page cited a
-    different log, and the judge read that as the repository contradicting itself.
-    It was the prompt builder, but the judge was right to score what it was given.
+    Two rounds of this were wrong in opposite directions. The first pasted a fixed
+    filename while the page cited a different log, and the judge read the repository
+    contradicting itself. The second collected only the clean-clone suite logs, while
+    the page also points a reviewer at the demo transcript -- so the path the page
+    promised was the one artifact the judge could not check.
     """
     names = sorted(
-        set(re.findall(r"hermes-reports/[A-Za-z0-9._-]*clean-tests[A-Za-z0-9._-]*\.log", README.read_text()))
+        set(re.findall(r"hermes-reports/[A-Za-z0-9._/-]+\.log", README.read_text()))
     )
+    if require_exists:
+        names = [name for name in names if (ROOT / name).is_file()]
     return names or ["hermes-reports/M2-slot32-clean-tests.log"]
 
 
@@ -286,7 +290,7 @@ $ {TEST_COMMAND}
 === ARTIFACT 5: that same run's manifest.json (680 KB of hashes, so only its head and three example entries) ===
 {json.dumps(manifest_head, indent=2)}
 
-=== ARTIFACT 6: the clean-clone suite runs the page names, pasted from those files ===
+=== ARTIFACT 6: every log the page names, pasted from those files ===
 {clean_log}
 
 === ARTIFACT 7: every committed file under {audio_dir}/, with the size, the sample format and the hash of the bytes on disk, plus what git tracks and which receipt in result.json names those same bytes (so the page's claim that the audio is committed, and is the audio that run produced, is checkable here rather than asserted) ===

@@ -15,7 +15,7 @@ quietly become a description of a previous version of the code.
 | The plan asks for | Code | Tests | Something in the run |
 | --- | --- | --- | --- |
 | Object storage for the audio, content-addressed | `hosted/control_plane/storage.py` | `tests/hosted/test_hosted_storage.py` | `a_queued_job_is_spoken_by_a_real_worker_and_metered_once` |
-| An S3 path beside the local one, signed requests over a socket | `hosted/control_plane/storage.py` | `tests/hosted/test_hosted_storage.py` | `"backend": "local"` |
+| An S3 path beside the local one, signed requests over a socket | `hosted/control_plane/storage.py` | `tests/hosted/test_hosted_storage.py` | no run evidence: emulator only, no bucket |
 | A queue that survives a worker dying mid-job | `hosted/control_plane/jobs.py` | `tests/hosted/test_hosted_queue.py` | `a_cancelled_job_is_never_spoken_or_metered` |
 | A worker as its own process, speaking jobs one at a time | `hosted/worker/runner.py` | `tests/hosted/test_hosted_jobs.py` | `a_queued_job_is_spoken_by_a_real_worker_and_metered_once` |
 | One job refused, one cancelled, and neither metered twice | `hosted/control_plane/jobs.py` | `tests/hosted/test_hosted_jobs.py` | `a_refused_job_fails_once_with_the_engine_s_own_message` |

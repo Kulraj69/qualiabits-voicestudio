@@ -27,22 +27,15 @@ uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
 hosted/scripts/hosted_demo.sh
 ```
 
-The first is the honest short path for a reviewer on a timer; the second is the one
-that proves audio comes out. It starts everything on reserved loopback sockets,
-leaves nothing running, and drops its evidence in the directory you pass
-(`.hosted-demo` by default); the four WAVs it produces are committed under
-`hermes-reports/` if you would rather just listen. The run that produced the numbers
-under "Measured" is committed there too, and the reasoning behind the design is in
+The first needs no model and is the path for a reviewer on a timer; the second
+proves audio comes out. The run behind "Measured" is committed under `hermes-reports/`,
+with the WAVs it produced, and the reasoning behind the design is in
 [`hosted/DESIGN.md`](DESIGN.md).
 
 ```
-hosted/control_plane/         the plane itself
-hosted/control_plane/jobs.py  the queue: claims, leases, retries, the receipt
-hosted/control_plane/storage.py  where audio lives, and what the backends refuse
-hosted/control_plane/migrations.py  bringing an older database forward
+hosted/control_plane/*.py     the plane: accounts, keys, the job queue, storage, migrations
 hosted/worker/runner.py       the worker: one job at a time, heartbeated
 hosted/scripts/hosted_e2e.py  the end-to-end proof: starts every process itself
-hosted/scripts/run_worker.py  the worker as a process, for a deployment or --once
 hosted/scripts/hosted_demo.sh one command around all of it, with the model handling
 hosted/DESIGN.md              why it is shaped this way, and what each choice cost
 hosted/M2-ACCEPTANCE.md       the milestone's requirements against code, tests and the run
@@ -81,71 +74,46 @@ out step by step with a curl walkthrough in
 
 ## How it is built
 
-Four decisions carry this layer, each with its reason and its test written up in
-[`hosted/DESIGN.md`](DESIGN.md):
-
-- **Its own process and database.** The plane imports nothing from `backend/` and
-  talks to the engine over HTTP, so an engine upgrade cannot change how a customer
-  authenticates.
-- **Keys are digests.** `qbv_<key_id>_<secret>`, and only the id and a SHA-256 digest
-  are stored, so a leak of the plane's database does not hand over working keys.
-- **A job is a row, not a thread.** Claiming is compare-and-swap, a claim is a lease a
-  dying worker stops renewing, and attempts are bounded — including the last one,
-  which would otherwise sit `running` forever.
-- **Two counters that mean different things.** `characters` counts what was asked of
-  the engine; `audio_seconds` counts what arrived, measured from the WAV header.
-- **Audio is content-addressed.** The key *is* the SHA-256 of the bytes, so two
-  identical WAVs are one object and every read can prove it got the right one. Writes
-  are read back and verified before they are called stored, on both backends.
+Each decision below has its reason and its cost in [`hosted/DESIGN.md`](DESIGN.md).
+The plane is its own process and database and imports nothing from `backend/`, so an
+engine upgrade cannot change how a customer authenticates. Keys are stored as digests
+(`qbv_<key_id>_<secret>`; only the id and a SHA-256 digest are kept), so a leak of the
+database does not hand over working keys. A job is a row rather than a thread: claiming
+is compare-and-swap, a claim is a lease a dying worker stops renewing, and attempts are
+bounded — including the last one, which would otherwise sit `running` forever. And the
+two counters mean different things on purpose: `characters` is what was asked of the
+engine, `audio_seconds` is what arrived, measured from the WAV header of the audio that
+came back. Audio is content-addressed — the key *is* the SHA-256 of the bytes — and
+writes are read back and verified before they are called stored, on both backends.
 
 ## Testing
 
-The same fast path as at the top, and what it covers. No model download, 30 to 35
-seconds. Nine test files and two substitutions. The first substitution is the engine:
-a real ASGI app answering with a WAV of a known duration, so the meter is checked
-against audio rather than against a number the test invented. The second is the
-object store's S3 path, which runs against a local S3-compatible server on loopback
-(moto, started in process) so the client really signs requests and objects really
-cross a socket — still not S3, still not a bucket, and the storage suite says which
-of its cases are which. Everything else is real: real connection refusals against a
-closed loopback port, a real SQLite file, real threads racing for the same jobs.
+The same fast path as at the top: no model download, 30 to 35 seconds, nine test
+files and two substitutions. The engine is a real ASGI app answering with a WAV of a
+known duration, so the meter is checked against audio rather than against a number a
+test invented. The object store's S3 path runs against a local S3-compatible server on
+loopback (moto, started in process), so the client really signs requests and objects
+really cross a socket — still not S3, still not a bucket. Everything else is real:
+connection refusals against a closed port, a real SQLite file, real threads racing for
+the same job.
 
 - `test_hosted_accounts.py`, `test_hosted_metering.py` — signup, login, session
-  expiry, keys minted, listed, revoked, cross-workspace isolation, every malformed
-  credential, the engine's errors passed through, timeouts, 502s, input that never
-  reaches the engine, and the two real bugs slice A hit.
-- `test_hosted_storage.py` — content addressing, one object for identical bytes,
-  atomic writes with no `.part` left behind, a corrupt object refused rather than
-  served, traversal-shaped keys refused, the service's checksum checked against the
-  digest the key was built from, a same-size wrong-bytes upload caught by reading the
-  object back, and four cases over a real socket against a local S3-compatible server:
-  store, read back, an object that no longer matches its name, and a missing bucket.
-- `test_hosted_jobs.py`, `test_hosted_queue.py` — queue, worker, stored audio, meter,
-  isolation of job ids, every refusal boundary (400 empty, 413 at 20,001, 422 past the
-  body backstop), cancellation, a job that survives a plane restart, four threads
-  racing for twelve jobs, leases that expire and are reclaimed, a dead worker's last
-  attempt swept into `failed`, a worker that lost its lease unable to overwrite the
-  new owner's result, and characters counted once across retries.
+  expiry, key lifecycle, cross-workspace isolation, malformed credentials, the
+  engine's errors passed through, timeouts, 502s, and the two real bugs slice A hit.
+- `test_hosted_storage.py`, `test_hosted_jobs.py`, `test_hosted_queue.py` — content
+  addressing, atomic writes, corrupt objects and traversal-shaped keys refused, the
+  four socket cases against the S3 emulator; then the queue: every refusal boundary,
+  cancellation, a job that survives a plane restart, four threads racing for twelve
+  jobs, expiring leases, a dead worker's last attempt swept into `failed`, a worker
+  that lost its lease unable to overwrite the owner's result, and characters counted
+  once across retries.
 - `test_hosted_migrations.py` — fresh create, in-place upgrade with the rows intact,
-  idempotent re-run, and refusals for unknown and newer schemas.
-- `test_readme_measured_is_generated.py` — the page's Measured section is what
-  `hosted/scripts/render_measured.py` renders from the run file the page cites, the
-  cited run was taken over a clean tree, the run's manifest accounts for every tracked
-  entry with a hash that matches that path in the commit the run names, and the code it
-  measured has not changed since. The manifest check is the part that does the work:
-  `"worktree_dirty": false` is a field the harness writes about itself, while the
-  manifest is compared against git — including a test that a tampered manifest is
-  refused.
-- `test_review_bundle_is_faithful.py` — the judge bundle's own listing of the committed
-  audio is checked against the files and against the receipts in the run it quotes, and
-  a bundle that would contradict its receipts is refused rather than written. It exists
-  because a review pass found the bundle reporting those files at twice their real
-  length, which is the kind of thing that makes a judge distrust everything beside it.
-- `test_m2_acceptance_matrix.py` — reads `hosted/M2-ACCEPTANCE.md` and fails if a row
-  names a path that is not there, a test file with no tests in it, or run evidence the
-  quoted run does not contain. The table is how the milestone's requirements are
-  checkable instead of asserted; the test is what stops the table describing an older
-  version of the code.
+  idempotent re-run, unknown and newer schemas refused.
+- `test_readme_measured_is_generated.py`, `test_review_bundle_is_faithful.py`,
+  `test_m2_acceptance_matrix.py` — the evidence chain: the page's numbers are rendered
+  from the run it cites and that run's manifest is verified against git file by file;
+  the judge bundle agrees with the receipts it pastes, or refuses to be written; and
+  the acceptance table still points at code, tests and run evidence that exist.
 
 The end-to-end run is the other half — the one-command script at the top calls
 it, and this is it directly when you already have a model directory:
