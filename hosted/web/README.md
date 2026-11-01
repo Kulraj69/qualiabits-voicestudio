@@ -86,9 +86,9 @@ form, speaks, mints and revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. Thirty-six checks. `node e2e/dashboard.mjs --no-build` reuses an
-existing build; `--keep` writes `result.json` and the process logs to
-`e2e/.evidence/`.
+next request. **Forty-two checks** on this path. `node e2e/dashboard.mjs
+--no-build` reuses an existing build; `--keep` writes `result.json`, the process
+logs and a full-page screenshot of each of the five pages to `e2e/.evidence/`.
 
 **The one substitution** is the engine: `e2e/engine_stub.py`, the same shape as
 the stub the Python suite uses, so the browser run needs no model download. The
@@ -100,17 +100,29 @@ To run that same browser suite against the **real engine**, there is one command
 hosted/web/e2e/real-engine.sh --keep
 ```
 
-It resolves the Kokoro model (`QUALI_MODEL_DIR` if it is not in one of the four
-places the script looks; it downloads nothing), starts the fork's own backend on
-sherpa-onnx with that model, and drives the same suite at it. That run carries
-four things a constant-size stub cannot produce, every one of them the engine's
-own answer about itself: its identity from `/health`, the backend it reports
-active with its voice count, the sha256 of `model.int8.onnx`, `tokens.txt` and
-`voices.bin`, and a paragraph that produced more audio than the one-liner. On CPU
-it takes minutes rather than seconds, because synthesis runs at about a seventh
-of real time. Two knobs, if your box is slower than this one:
-`QB_E2E_SPEAK_TIMEOUT_MS` (default 20000; the script raises it to 300000) and
-`QB_E2E_UPSTREAM_TIMEOUT_SECONDS` (default 60; the script raises it to 300).
+It takes the model from `QUALI_MODEL_DIR`, or from one of four other places it
+looks (`hosted/web/<name>`, the repository root, the repository's parent,
+`/workspace/m1-models/<name>`), starts the fork's own backend on sherpa-onnx with
+it, and drives the same suite at it. **It downloads nothing**: if no model is
+present it says so and exits 3, because a run that quietly fell back to the stub
+would be the opposite of evidence. The model it wanted is the one the hosted
+proof's script already fetches and hash-checks — `kokoro-int8-multi-lang-v1_0`,
+132,353,410 bytes from the `k2-fsa/sherpa-onnx` `tts-models` release; see
+[`../scripts/hosted_demo.sh`](../scripts/hosted_demo.sh) for the URL, the three
+pinned sha256 values and the unpack step. **The model directory is
+operator-supplied and lives outside this checkout**, which is the one thing this
+path needs that the stub path does not.
+
+That run carries five things a constant-size stub cannot produce, every one of
+them the engine's own answer about itself: its identity from `/health`, the
+backend it reports active with its voice count, the sha256 of `model.int8.onnx`,
+`tokens.txt` and `voices.bin`, a paragraph that produced more audio than the
+one-liner, and **forty-six checks** rather than forty-two — the four extra are the
+engine's own claims above. On CPU it takes minutes rather than seconds, because
+synthesis runs at about a seventh of real time. Two knobs, if your box is slower
+than this one: `QB_E2E_SPEAK_TIMEOUT_MS` (default 20000; the script raises it to
+300000) and `QB_E2E_UPSTREAM_TIMEOUT_SECONDS` (default 60; the script raises it
+to 300).
 
 `result.json` also records the revision the run was taken over and whether that
 working tree was clean, so a run and a commit can be named together.

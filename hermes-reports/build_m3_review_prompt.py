@@ -82,20 +82,61 @@ def e2e_summary(path: Path) -> str:
     return "\n".join(lines)
 
 
+def milestone() -> str:
+    """The owner's milestone this slice is measured against.
+
+    A product milestone has no hackathon rules file, so the judge is given the
+    milestone it is graded against instead: the V0 entry from the queue the work
+    comes from, verbatim.
+    """
+    queue = Path.home() / ".hermes" / "context" / "devpost-projects.md"
+    if not queue.exists():
+        return "the queue file (with the V0 milestone) is not readable from here"
+    lines = queue.read_text(encoding="utf-8", errors="replace").splitlines()
+    start = next((i for i, line in enumerate(lines) if line.startswith("## V0")), None)
+    if start is None:
+        return "the queue has no V0 section"
+    body = lines[start:start + 28]
+    return "\n".join(body)
+
+
+def since_text() -> str:
+    """What was fixed since the previous pass, when the builder was told."""
+    path = REPORTS / "M3-slot44-since-review.txt"
+    if not path.exists():
+        return "nothing: this is the first pass on the slice"
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
+def review_files(limit: int = 2) -> str:
+    """The judge passes already run on this slice, so D8 is checkable."""
+    found = sorted(REPORTS.glob("M3-slot44-review*.txt"))
+    if not found:
+        return "no judge pass is committed yet; this is the first"
+    return "\n\n".join(f"### {p.name}\n" + p.read_text(encoding="utf-8", errors="replace")
+                       for p in found[-limit:])
+
+
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
-    evidence = WEB / "e2e" / ".evidence" / "result.json"
-    stub = REPORTS / f"M3-slot44-e2e-stub-{label}.json"
-    tests = REPORTS / f"M3-slot44-clean-tests-{label}.log"
-    unit = REPORTS / f"M3-slot44-web-unit-{label}.log"
+    evidence = REPORTS / "M3-slot44-e2e-r1" / "result.json"
+    stub = REPORTS / "M3-slot44-e2e-stub-r1.json"
+    tests = REPORTS / "M2-slot44-clean-tests-r1.log"
+    unit = REPORTS / "M3-slot44-web-unit-r1.log"
 
     parts = [
-        "# Judge pass on M3 slice A (the browser dashboard), cheap+ tier\n",
+        f"# Judge pass {label} on M3 slice A (the browser dashboard), cheap+ tier\n",
         "You are a strict hackathon judge. Score the seven criteria of the rubric "
         "below, 1 to 5 each, and pass only if every score is 4 or more with no "
         "honesty flaw. The artifacts are supplied; the builder's own round log is "
         "NOT supplied and must not be asked for — judge what is here.\n",
         "## Rubric\n", show(RUBRIC), "\n",
+        "## The milestone this is measured against (criteria fit)\n",
+        "There is no hackathon rules file for a product milestone, so criterion 5 "
+        "is measured against the owner's own milestone below, quoted from the "
+        "queue this work comes from. Score criteria fit against it, and say which "
+        "of its items have no evidence here.\n\n",
+        milestone(), "\n",
         "## What the slice claims to be (D1-D8, written before any code)\n",
         "D1 a real Next.js app in its own package at hosted/web/ that signs up and "
         "signs in against the real control plane, session token in an httpOnly "
@@ -140,6 +181,13 @@ def main() -> None:
         show(unit) if unit.exists() else "missing web unit log",
         "\n",
         "## Commits in this slice\n", git_log(), "\n",
+        "## The judge passes already run on this slice (D8)\n",
+        "These are the independent cheap+ passes on this slice, verbatim, so that "
+        "D8's 'two rounds, every fixable flaw fixed' can be checked rather than "
+        "believed.\n\n",
+        review_files(), "\n",
+        "## What changed after the pass above\n",
+        since_text(), "\n",
         "## What is NOT claimed\n",
         "Nothing is deployed and there is no public URL (deployed=false, "
         "public_url=null in the run). There is no real S3 bucket, only the local "
