@@ -242,8 +242,9 @@ class S3ObjectStore:
     no bucket, no credentials or no ``boto3``, constructing this raises, so a plane
     configured for S3 cannot start up quietly writing to local disk.
 
-    When a bucket exists, ``put`` verifies with a HEAD (length and the checksum the
-    service recorded) and ``get`` verifies the digest against the key, the same
+    When a bucket exists, ``put`` checks HEAD's length and then the object's own digest
+    — from the service's checksum when it returns one, otherwise by reading the object
+    back and hashing it — and ``get`` verifies the bytes against the key, the same
     property the local store has.
     """
 
@@ -311,11 +312,12 @@ class S3ObjectStore:
             raise StorageError("refusing to store an empty object")
         key = key_for(data, content_type)
         digest = digest_of_key(key)
-        self._client.put_object(
+        response = self._client.put_object(
             Bucket=self.bucket,
             Key=self._full_key(key),
             Body=data,
             ContentType=content_type_for_key(key),
+            ChecksumAlgorithm="SHA256",
         )
         head = self._client.head_object(Bucket=self.bucket, Key=self._full_key(key))
         if int(head.get("ContentLength", -1)) != len(data):
@@ -323,7 +325,45 @@ class S3ObjectStore:
                 f"S3 accepted {key} but reports {head.get('ContentLength')} bytes "
                 f"instead of {len(data)}"
             )
+        self._verify_stored_bytes(key, data, digest, response)
         return StoredObject(key, digest, len(data), content_type_for_key(key), self.backend)
+
+    def _verify_stored_bytes(
+        self, key: str, data: bytes, digest: str, response: dict | None
+    ) -> None:
+        """Prove the service holds the bytes we meant to store, not just a length.
+
+        The length check above is not integrity: a service can hold the right number
+        of wrong bytes. ``put_object`` is asked for a SHA-256, and when the service
+        hands one back (S3 does, and the emulator may) it is compared here against the
+        digest the key is built from. When no checksum comes back -- an endpoint that
+        ignores ``ChecksumAlgorithm``, or a stub client -- the object is read back and
+        hashed instead, which is the same property the local store gets by reading a
+        file back before it calls the write done. The read-back costs one GET per
+        write; correctness about where a customer's audio landed is worth a GET.
+        """
+        if isinstance(response, dict) and response.get("ChecksumSHA256"):
+            import base64  # noqa: PLC0415 - only needed on this path
+
+            try:
+                reported = base64.b64decode(str(response["ChecksumSHA256"])).hex()
+            except Exception as exc:  # noqa: BLE001 - a checksum we cannot read is a refusal
+                raise StorageError(
+                    f"S3 returned an unreadable checksum for {key}: {type(exc).__name__}"
+                ) from exc
+            if reported != digest:
+                raise StorageError(
+                    f"S3 reports sha256 {reported[:16]}… for {key}, which is not the "
+                    "digest its own key is built from; refusing to treat it as stored"
+                )
+            return
+        body = self._client.get_object(Bucket=self.bucket, Key=self._full_key(key))["Body"].read()
+        if len(body) != len(data) or hashlib.sha256(body).hexdigest() != digest:
+            raise StorageError(
+                f"S3 has no matching object for {key}: read back "
+                f"{len(body)} bytes hashing to {hashlib.sha256(body).hexdigest()[:16]}…, "
+                f"wanted {len(data)} bytes hashing to {digest[:16]}…"
+            )
 
     def get(self, key: str) -> bytes:
         validate_key(key)
