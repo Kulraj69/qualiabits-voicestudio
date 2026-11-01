@@ -1,0 +1,67 @@
+INFO:     Started server process [1487206]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:35637 (Press CTRL+C to quit)
+INFO:     127.0.0.1:40058 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40074 - "GET /healthz/upstream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "POST /v1/workspaces HTTP/1.1" 201 Created
+INFO:     127.0.0.1:38896 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38896 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38896 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38896 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:38896 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:41050 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:41050 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "DELETE /v1/api-keys/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41066 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41076 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41066 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38896 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41066 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "POST /v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "DELETE /v1/jobs/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41066 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "POST /v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49710 - "GET /v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41050 - "GET /v1/jobs/2/audio HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1487206]

@@ -1,0 +1,83 @@
+INFO:     Started server process [1487070]
+INFO:     Waiting for application startup.
+2026-11-01 21:52:18,807 INFO [omnivoice.api] Startup watchdog armed: thread dump if startup exceeds 300s (#632).
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:46501 (Press CTRL+C to quit)
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 21:52:19,181 INFO [omnivoice.api] Published 2 media-tool directories on PATH so dependencies can find ffmpeg/ffprobe (#1256)
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 21:52:23,445 INFO [omnivoice.hf_progress] hf_progress: installed tqdm patch on huggingface_hub.utils.tqdm
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 21:52:24,203 INFO [omnivoice.setup.models] Loaded 42 models from /workspace/qs-m3-clean/backend/config/models.yaml
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 21:52:25,043 INFO [omnivoice.model] downloads: Xet disabled → legacy LFS (hf_xet 1.6.0 installed=True), high_perf=False
+2026-11-01 21:52:26,696 INFO [omnivoice.mcp] MCP app mounted at /mcp
+2026-11-01 21:52:26,698 INFO [omnivoice.api] No web UI build at /workspace/qs-m3-clean/backend/../frontend/dist; "/" serves an explanation to other devices.
+2026-11-01 21:52:27,533 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.schemas
+2026-11-01 21:52:27,533 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.tables
+2026-11-01 21:52:27,533 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.types
+2026-11-01 21:52:27,533 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.constraints
+2026-11-01 21:52:27,534 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.defaults
+2026-11-01 21:52:27,534 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.comments
+2026-11-01 21:52:27,534 INFO [alembic.runtime.plugins] setup plugin alembic.autogenerate.checkconstraint_byname
+2026-11-01 21:52:27,616 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager started
+INFO:     127.0.0.1:38964 - "GET /health HTTP/1.1" 503 Service Unavailable
+2026-11-01 21:52:27,618 INFO [omnivoice.api] MCP server mounted at /mcp
+2026-11-01 21:52:27,644 INFO [omnivoice.api] Deferred startup complete — all routes live.
+2026-11-01 21:52:28,016 INFO [omnivoice.tts] sherpa-onnx is configured with a model declaring 54 voices (default af_alloy); published before the model is loaded
+2026-11-01 21:52:31,386 INFO [omnivoice.model] Native TTS preload skipped: another TTS engine is selected.
+INFO:     127.0.0.1:58840 - "GET /engines/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /v1/audio/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /engines/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /v1/audio/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /engines/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /v1/audio/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /engines/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /v1/audio/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /engines/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /v1/audio/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /engines/tts HTTP/1.1" 200 OK
+2026-11-01 21:52:57,617 INFO [omnivoice.api] Capture ASR preload skipped: <4GB free RAM; dictation ASR will load on first use.
+2026-11-01 21:52:58,119 INFO [omnivoice.tts] sherpa-onnx model kokoro-int8-multi-lang-v1_0 declares 54 voices (default af_alloy)
+2026-11-01 21:52:58,119 INFO [omnivoice.tts] Loading sherpa-onnx TTS from /workspace/m1-models/kokoro-int8-multi-lang-v1_0 (model_type=kokoro)
+2026-11-01 21:53:03,246 INFO [omnivoice.watermark] Watermark prefetch skipped: AudioSeal checkpoint is not cached
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: kokoro at line 1:kokoro k ˈ O k ə ɹ O. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: misaki at line 2:misaki m i s ˈ ɑ k i. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aahing at line 3:aahing ˈ ɑ ɪ ŋ. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aaron at line 4:aaron ˈ ɛ ɹ ə n. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: aaronic at line 5:aaronic ə ɹ ˈ ɑ n ɪ k. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: ab at line 6:ab ˈ ɑ b. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abactor at line 9:abactor ə b ˈ æ k t ə ɹ. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abaddon at line 10:abaddon ə b ˈ æ d ə n. Ignore it.
+/project/sherpa-onnx/csrc/kokoro-multi-lang-lexicon.cc:InitLexicon:514 Duplicated word: abalienating at line 15:abalienating ə b ˈ A l i ə n ˌ A ɾ ɪ ŋ. Ignore it.
+/workspace/qs-m3-clean/.venv/lib/python3.12/site-packages/torch/nn/utils/weight_norm.py:144: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+2026-11-01 21:53:20,183 INFO [omnivoice.watermark] AudioSeal generator loaded (16-bit message mode)
+INFO:     127.0.0.1:58676 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+2026-11-01 21:53:21,869 WARNING [omnivoice.openai_compat] OpenAI TTS failed (typed): Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.
+INFO:     127.0.0.1:58676 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:58676 - "GET /v1/audio/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58676 - "GET /engines/tts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53288 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-11-01 21:54:04,127 INFO [omnivoice.api] Shutdown: cleaning up…
+2026-11-01 21:54:04,140 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager shutting down

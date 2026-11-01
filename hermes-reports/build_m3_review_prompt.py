@@ -15,6 +15,7 @@ because a judge scoring an incomplete bundle scores the wrong thing.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -67,7 +68,8 @@ def e2e_summary(path: Path) -> str:
     data = json.loads(path.read_text())
     keep = {
         k: data.get(k)
-        for k in ("run", "engine", "engine_command", "engine_is_stub", "engine_health",
+        for k in ("run", "revision", "engine", "engine_command", "engine_is_stub", "engine_health",
+                  "pages",
                   "engine_active", "engine_voice_count", "engine_model", "browser",
                   "deployed", "public_url", "gpu", "real_s3", "audio", "usage")
     }
@@ -86,18 +88,25 @@ def milestone() -> str:
     """The owner's milestone this slice is measured against.
 
     A product milestone has no hackathon rules file, so the judge is given the
-    milestone it is graded against instead: the V0 entry from the queue the work
-    comes from, verbatim.
+    milestone it is graded against instead: the V0 goal and its step-by-step
+    plan from the queue this work comes from. Only those lines — the queue also
+    carries status history, which is not a criterion.
     """
     queue = Path.home() / ".hermes" / "context" / "devpost-projects.md"
     if not queue.exists():
         return "the queue file (with the V0 milestone) is not readable from here"
     lines = queue.read_text(encoding="utf-8", errors="replace").splitlines()
-    start = next((i for i, line in enumerate(lines) if line.startswith("## V0")), None)
-    if start is None:
-        return "the queue has no V0 section"
-    body = lines[start:start + 28]
-    return "\n".join(body)
+    goal = next((line for line in lines if line.startswith("## V0 TOP GOAL")), None)
+    start = next((i for i, line in enumerate(lines) if line.startswith("V0 STEP-BY-STEP PLAN")), None)
+    if goal is None or start is None:
+        return "the queue has no V0 goal or plan section"
+    plan: list[str] = [lines[start]]
+    for line in lines[start + 1:start + 16]:
+        if line.startswith("Rules:") or line.startswith("M6") or line.startswith("M7"):
+            plan.append(line)
+        elif re.match(r"^M[1-5] ", line):
+            plan.append(line)
+    return goal[:1200] + "\n\n" + "\n".join(plan)
 
 
 def since_text() -> str:
@@ -119,8 +128,8 @@ def review_files(limit: int = 2) -> str:
 
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
-    evidence = REPORTS / "M3-slot44-e2e-r1" / "result.json"
-    stub = REPORTS / "M3-slot44-e2e-stub-r1.json"
+    evidence = REPORTS / "M3-slot44-e2e-r2" / "result.json"
+    stub = REPORTS / "M3-slot44-e2e-stub-r2.json"
     tests = REPORTS / "M2-slot44-clean-tests-r1.log"
     unit = REPORTS / "M3-slot44-web-unit-r1.log"
 

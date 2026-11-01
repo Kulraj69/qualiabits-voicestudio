@@ -1,0 +1,61 @@
+Verdict: FAIL
+
+1. Originality — 2/5
+
+The core product is a conventional speech dashboard with authentication, keys, usage, speech, and jobs. The real-engine evidence and engine-owned voice errors are solid implementation details, but there is no surprising product moment or distinctive user-facing decision. D8 itself acknowledges originality should remain below 4.
+
+2. Taste — 4/5
+
+The stated design direction is coherent: dark UI, one accent, focused routes, explicit empty scope, keyboard focus, and no placeholder pages. The artifacts show evidence for focus visibility and functional navigation, but no screenshots or visual capture are supplied, so the visual score relies largely on claims and source-file descriptions.
+
+3. Human feel — 4/5
+
+The README has a specific, opinionated voice and clearly names boundaries such as “Not deployed. Not public. No GPU.” It avoids most generic startup language and explains technical tradeoffs plainly. The stale test-count claim and some dense README passages make it less polished than a fully human-reviewed submission.
+
+4. Technical depth — 5/5
+
+This is the strongest area. The artifacts show a real control plane, SQLite-backed accounts and keys, API-key revocation, metering from WAV headers, queued jobs with cancellation and leases, content-addressed audio storage, a real worker, and browser tests against real Chromium, Next.js, the plane, and a non-stub engine. The clean-clone Python suite reports 201 passed, and the browser run reports 40 passed and 0 failed.
+
+5. Criteria fit — 2/5
+
+The supplied artifacts do not include the hackathon’s official rules file or sponsor-prize requirements, so the required criterion-by-criterion mapping cannot be verified. The D requirements are mapped well in the README, but that is not evidence that every official judging criterion or sponsor requirement is satisfied. This criterion cannot honestly reach 4 from the supplied material.
+
+6. Reviewer path — 4/5
+
+The README gives concrete commands and do-X/see-Y steps, and the clean-clone Python run supports much of the setup path. The browser path still requires three processes, a local engine, and— for the real-engine run—an operator-supplied model outside the clone. That is workable for a technical reviewer but not as frictionless as the README’s “stranger with no hidden setup” framing suggests.
+
+7. Honesty — 3/5
+
+The submission is unusually candid about being local-only, undeployed, CPU-only, non-S3, and not human-listened. However, `hosted/web/README.md` says the browser suite has “Thirty-six checks,” while the supplied result reports 40 checks; this is an unresolved factual inconsistency. The real-engine result also depends on `/workspace/m1-models/...`, an external model directory, so the clean-clone reproducibility claim needs a sharper boundary.
+
+Five most damaging flaws
+
+1. Stale test count  
+   `hosted/web/README.md`, Tests section: claims “Thirty-six checks.”  
+   Supplied browser result: `checks: 40 passed, 0 failed, ok=True`.  
+   This directly weakens the honesty criterion and suggests the README was not updated after the test suite changed.
+
+2. Official judging criteria are unverifiable  
+   No hackathon rules file, sponsor-prize specification, or official criterion mapping is supplied. The project can demonstrate D1–D8, but not criterion 5’s required mapping to the actual event rules.
+
+3. D8 is not demonstrated  
+   No evidence of two cheap+ judge rounds, no round-one/round-two findings, and no proof that every fixable flaw was fixed. The supplied artifacts establish implementation and test runs, not the mandatory self-loop.
+
+4. Real-engine replay is not self-contained  
+   `hosted/web/e2e/real-engine.sh` requires `QUALI_MODEL_DIR` or one of external model locations, and the supplied result uses `/workspace/m1-models/kokoro-int8-multi-lang-v1_0`. The stub path is clone-friendly; the real-engine path is not independently reproducible from the stated fresh clone alone.
+
+5. Evidence coverage is narrower than the claims  
+   The browser evidence explicitly checks home navigation and focus, but does not establish every page is one click from home, that every page has visible focus, or that all internal links are live. The visual design claim is also unsupported by screenshots or a captured browser artifact.
+
+D status
+
+- D1: Demonstrated — real Next.js package, signup/sign-in flow, httpOnly session protection, and browser assertion that page JavaScript cannot read the session token.
+- D2: Demonstrated — plane-served voice catalogue, real-engine WAV response, download path, measured duration, and engine-originated unknown-voice error.
+- D3: Demonstrated — one-time key display, public-id-only listing, revocation, next-request refusal, usage total, and per-key data. The reported “page rows 3, plane keys 1” deserves clarification.
+- D4: Demonstrated — queued, cancelled, and completed jobs; cancellation leaves usage unchanged; completed audio is stored and downloaded byte-for-byte.
+- D5: Partly demonstrated — the Python suites have clean-clone evidence and the browser suite has a substantial real-engine run, but the real-engine replay depends on an external model and the README’s check count is stale.
+- D6: Partly demonstrated — navigation, dark-first intent, and keyboard focus have evidence; complete visual quality and all-page focus/dead-link coverage do not.
+- D7: Demonstrated — both README files provide concrete setup and walkthrough steps with explicit scope boundaries.
+- D8: Not demonstrated — the two judge rounds and fix/exception record are absent.
+
+What would make it win: add a genuinely distinctive user-facing differentiator, supply the official-rules mapping and two-round judge evidence, and reconcile the test-count and reproducibility claims so every artifact says exactly what was run.

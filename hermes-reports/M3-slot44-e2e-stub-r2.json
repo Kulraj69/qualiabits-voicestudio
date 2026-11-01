@@ -1,0 +1,318 @@
+{
+  "run": "qualiabits voice — browser dashboard end to end",
+  "engine": "engine_stub.py",
+  "engine_command": null,
+  "engine_is_stub": true,
+  "engine_model": null,
+  "revision": {
+    "tested_commit": "51343aa0346e4b7066531a8d00e555f2e2c9485a",
+    "worktree_dirty": true,
+    "generated_at_utc": "2026-11-01T16:17:57.355Z"
+  },
+  "browser": "156.0.8078.4",
+  "deployed": false,
+  "public_url": null,
+  "gpu": false,
+  "real_s3": false,
+  "checks": [
+    {
+      "name": "engine is up and answers /health",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+    },
+    {
+      "name": "the control plane is up on its own database",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the control plane can see the engine",
+      "ok": true,
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:45617\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+    },
+    {
+      "name": "the dashboard builds",
+      "ok": true,
+      "detail": "ing 1 worker (16/16) in 270ms\n  Finalizing page optimization ...\n\nRoute (app)\n┌ ƒ /\n├ ƒ /_not-found\n├ ƒ /api/auth/login\n├ ƒ /api/auth/logout\n├ ƒ /api/auth/signup\n├ ƒ /api/dashboard-key\n├ ƒ /api/jobs\n├ ƒ /api/jobs/[id]\n├ ƒ /api/jobs/[id]/audio\n├ ƒ /api/keys\n├ ƒ /api/keys/[id]\n├ ƒ /api/speech\n├ ƒ /jobs\n├ ƒ /keys\n├ ƒ /login\n├ ƒ /signup\n├ ƒ /speak\n└ ƒ /usage\n\n\nƒ  (Dynamic)  server-rendered on demand\n\n"
+    },
+    {
+      "name": "the dashboard is up and rooted at /",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "signup lands on the dashboard and greets the workspace",
+      "ok": true,
+      "detail": "Browser E2E"
+    },
+    {
+      "name": "the session token is not readable by page JavaScript",
+      "ok": true,
+      "detail": "{\"localStorage\":\"[]\",\"cookie\":\"qb_ws={\\\"id\\\":1,\\\"email\\\":\\\"browser-e2e@example.com\\\",\\\"display_name\\\":\\\"Browser E2E\\\"}\",\"hasSecret\":false}"
+    },
+    {
+      "name": "the workspace name cookie is the only cookie the page can see",
+      "ok": true,
+      "detail": "qb_ws={\"id\":1,\"email\":\"browser-e2e@example.com\",\"display_name\":\"Browser E2E\"}"
+    },
+    {
+      "name": "home links to /speak",
+      "ok": true,
+      "detail": "/speak, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /jobs",
+      "ok": true,
+      "detail": "/speak, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /keys",
+      "ok": true,
+      "detail": "/speak, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /usage",
+      "ok": true,
+      "detail": "/speak, /jobs, /keys, /usage"
+    },
+    {
+      "name": "no dead links on home",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "/ answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Browser E2E\""
+    },
+    {
+      "name": "/speak answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Speak\""
+    },
+    {
+      "name": "/keys answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"API keys\""
+    },
+    {
+      "name": "/usage answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Usage\""
+    },
+    {
+      "name": "/jobs answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Jobs\""
+    },
+    {
+      "name": "every page takes a keyboard Tab onto a focusable control",
+      "ok": true,
+      "detail": "[[\"/\",\"A\"],[\"/speak\",\"A\"],[\"/keys\",\"A\"],[\"/usage\",\"A\"],[\"/jobs\",\"A\"]]"
+    },
+    {
+      "name": "every page shows a visible focus outline",
+      "ok": true,
+      "detail": "[[\"/\",\"solid 2px\"],[\"/speak\",\"solid 2px\"],[\"/keys\",\"solid 2px\"],[\"/usage\",\"solid 2px\"],[\"/jobs\",\"solid 2px\"]]"
+    },
+    {
+      "name": "every page was captured as a screenshot",
+      "ok": true,
+      "detail": "[[\"/\",157860],[\"/speak\",133859],[\"/keys\",136068],[\"/usage\",168762],[\"/jobs\",151270]]"
+    },
+    {
+      "name": "the voice list is served by the plane, not hard-coded",
+      "ok": true,
+      "detail": "af_alloy,hf_alpha,hm_omega,alloy,echo,profile-1"
+    },
+    {
+      "name": "the Speak page returns real WAV bytes through the plane",
+      "ok": true,
+      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":72044,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.008s · sherpa-onnxDownload WAV\"}"
+    },
+    {
+      "name": "the audio has a download link",
+      "ok": true,
+      "detail": "speech-hf_alpha.wav"
+    },
+    {
+      "name": "the player reports the measured duration and size",
+      "ok": true,
+      "detail": "Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.008s · sherpa-onnxDownload WAV"
+    },
+    {
+      "name": "an unknown voice is refused by the plane with the engine's own sentence",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"detail\":\"Voice 'definitely-not-a-voice' is not one of the model's voices: af_alloy, hf_alpha, hm_omega.\",\"param\":\"voice\",\"code\":\"unknown_voice\"}}"
+    },
+    {
+      "name": "a minted key is shown once and looks like a key",
+      "ok": true,
+      "detail": "qbv_c90ebc4fb15fe509_GL-eAC4eKCrzOMnde1ojOmKQlFcKExjliSrvyltJ2V0"
+    },
+    {
+      "name": "the key is not shown again after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the list shows the key's public id and never its secret",
+      "ok": true,
+      "detail": "6 cells, secret length 43"
+    },
+    {
+      "name": "revoking marks the key revoked in the list",
+      "ok": true,
+      "detail": "revoked"
+    },
+    {
+      "name": "a revoked key is refused on the next request",
+      "ok": true,
+      "detail": "status 401"
+    },
+    {
+      "name": "the same credentials log in straight to the plane",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the Usage page's request count matches the plane's meter",
+      "ok": true,
+      "detail": "2 vs 2"
+    },
+    {
+      "name": "the per-key breakdown the plane records is shown, one row per key",
+      "ok": true,
+      "detail": "per-key rows 1, plane keys 1"
+    },
+    {
+      "name": "a cancelled job reads as cancelled and was never spoken",
+      "ok": true,
+      "detail": "#1Cancelledhf_alpha55Nov 01, 2026, 16:18:15never spoken—"
+    },
+    {
+      "name": "cancelling a queued job did not move the meter",
+      "ok": true,
+      "detail": "2->2, 52->52"
+    },
+    {
+      "name": "the real worker drained the queue",
+      "ok": true,
+      "detail": "1459104: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.013, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-1459104\"}\n"
+    },
+    {
+      "name": "the plane records the spoken job as succeeded",
+      "ok": true,
+      "detail": "[\"succeeded\",\"cancelled\"]"
+    },
+    {
+      "name": "the job's stored audio comes back as a WAV",
+      "ok": true,
+      "detail": "{\"status\":200,\"header\":\"RIFF\",\"bytes\":72044}"
+    },
+    {
+      "name": "the downloaded audio is the bytes the plane stored",
+      "ok": true,
+      "detail": "72044 vs 72044"
+    },
+    {
+      "name": "the jobs table shows one Done row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no uncaught JavaScript errors on any page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "engine_health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "engine-stub"
+  },
+  "plane_health": {
+    "upstream_base_url": "http://127.0.0.1:45617",
+    "reachable": true,
+    "status": "ok",
+    "device": "cpu",
+    "version": "engine-stub"
+  },
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Browser E2E",
+      "screenshot": "e2e/.evidence/screenshots/home.png",
+      "screenshot_bytes": 157860
+    },
+    {
+      "route": "/speak",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Speak",
+      "screenshot": "e2e/.evidence/screenshots/speak.png",
+      "screenshot_bytes": 133859
+    },
+    {
+      "route": "/keys",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "API keys",
+      "screenshot": "e2e/.evidence/screenshots/keys.png",
+      "screenshot_bytes": 136068
+    },
+    {
+      "route": "/usage",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Usage",
+      "screenshot": "e2e/.evidence/screenshots/usage.png",
+      "screenshot_bytes": 168762
+    },
+    {
+      "route": "/jobs",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Jobs",
+      "screenshot": "e2e/.evidence/screenshots/jobs.png",
+      "screenshot_bytes": 151270
+    }
+  ],
+  "usage": {
+    "plane_requests": 2,
+    "page_requests": 2,
+    "plane_keys": 1,
+    "page_per_key_rows": 1,
+    "page_all_table_rows": 3
+  },
+  "audio": {
+    "engine_is_stub": true,
+    "sentence_bytes": 72044,
+    "paragraph_bytes": 72044,
+    "paragraph_seconds": 1.5
+  },
+  "passed": 42,
+  "failed": 0,
+  "ok": true,
+  "diagnostics": [
+    {
+      "process": "web",
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:34873\n- Network:       http://127.0.0.1:34873\n✓ Ready in 282ms\n✓ Running next.config.mjs took 29ms\n"
+    },
+    {
+      "process": "control-plane",
+      "tail": "INFO:     127.0.0.1:59816 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:59796 - \"POST /v1/jobs HTTP/1.1\" 202 Accepted\nINFO:     127.0.0.1:59796 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:59796 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:59796 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:37084 - \"GET /v1/jobs HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:59796 - \"GET /v1/jobs/2/audio HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [1458967]\n"
+    },
+    {
+      "process": "engine",
+      "tail": ""
+    }
+  ]
+}

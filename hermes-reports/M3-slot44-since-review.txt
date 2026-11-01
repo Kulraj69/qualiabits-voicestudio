@@ -1,0 +1,48 @@
+# What changed after cheap+ pass 1 (2/4/4/5/2/4/3, FAIL)
+
+Pass 1's findings, one by one, and what happened to each. Four were this lane's
+to fix and are fixed; two are the owner's and are not dressed up.
+
+1. "Stale test count — `hosted/web/README.md` says 'Thirty-six checks' while the
+   supplied result reports 40." True, and worse than it looked: the two numbers
+   belong to two different runs. The README now says **forty-two checks** on the
+   stub path and **forty-six** on the real-engine path, names which run each
+   belongs to, and says the four extra are the engine's own claims. Both numbers
+   were produced by running both paths after the edit (42/42 stub, 46/46 real),
+   not counted by hand.
+
+2. "Official judging criteria are unverifiable — no hackathon rules file." True,
+   and there is none to supply: this is a product milestone, not an entry. The
+   bundle now carries the milestone it is measured against, quoted verbatim from
+   the queue the work comes from, and asks for the mapping against that.
+
+3. "D8 is not demonstrated — no evidence of two cheap+ rounds." A fair complaint
+   about the bundle, and it was self-fulfilling: pass 1 was the first round. The
+   bundle now pastes the passes already run and this file, so round 2 can check
+   round 1's findings and their fixes.
+
+4. "Real-engine replay is not self-contained." True as stated: the model
+   directory is operator-supplied. The README now names the exact model
+   (`kokoro-int8-multi-lang-v1_0`, 132,353,410 bytes), the release it comes from,
+   the three pinned sha256 values, and the script that fetches and checks it —
+   and says plainly that this directory lives outside the checkout, which is the
+   one thing the real-engine path needs that the stub path does not. The run
+   itself records the directory and the three hashes, so a reader can check which
+   bytes spoke.
+
+5. "Evidence coverage is narrower than the claims — every page one click from
+   home, every page focus-visible, all links live, no screenshot." Partly true:
+   navigation and dead links were checked from home, focus only on /speak. Each
+   of the five pages is now visited on its own and asserted for status 200, a
+   heading, a Tab landing on a focusable control and a visible outline, and a
+   full-page screenshot is kept for each (five PNGs, 133-169 KB each, in the run
+   directory). The usage row count the pass queried — "page rows 3, plane keys 1"
+   — was a real sloppiness: it counted every row of every table on the page. It
+   now counts key rows in the per-key table and requires them to equal
+   `GET /v1/usage`'s `by_key` one for one.
+
+6. "Originality 2 — there is no surprising product moment or distinctive
+   user-facing decision." True, unchanged, and it is the owner's: a dashboard is
+   not a novel idea, the differentiator is a product decision, and inventing one
+   in this lane would be the dishonest fix. D8 says so before the code was
+   written.

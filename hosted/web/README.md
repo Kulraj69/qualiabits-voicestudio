@@ -102,16 +102,13 @@ hosted/web/e2e/real-engine.sh --keep
 
 It takes the model from `QUALI_MODEL_DIR`, or from one of four other places it
 looks (`hosted/web/<name>`, the repository root, the repository's parent,
-`/workspace/m1-models/<name>`), starts the fork's own backend on sherpa-onnx with
-it, and drives the same suite at it. **It downloads nothing**: if no model is
-present it says so and exits 3, because a run that quietly fell back to the stub
-would be the opposite of evidence. The model it wanted is the one the hosted
-proof's script already fetches and hash-checks — `kokoro-int8-multi-lang-v1_0`,
-132,353,410 bytes from the `k2-fsa/sherpa-onnx` `tts-models` release; see
-[`../scripts/hosted_demo.sh`](../scripts/hosted_demo.sh) for the URL, the three
-pinned sha256 values and the unpack step. **The model directory is
-operator-supplied and lives outside this checkout**, which is the one thing this
-path needs that the stub path does not.
+`/workspace/m1-models/<name>`); if none of those has it, it **downloads** the
+release asset (about 132 MB) into `${TMPDIR:-/tmp}/qb-real-engine-model`, checks
+the three pinned sha256 values and starts nothing until they match — the same
+URL, the same pins and the same three files the hosted proof's script checks
+(`../scripts/hosted_demo.sh`). It never falls back to the stub, because a run
+that quietly did would be the opposite of evidence. So from a fresh clone this
+path needs one thing: the venv the sync above builds.
 
 That run carries five things a constant-size stub cannot produce, every one of
 them the engine's own answer about itself: its identity from `/health`, the
