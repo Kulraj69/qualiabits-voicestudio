@@ -1,0 +1,32 @@
+==> verifying the model bytes against the pinned hashes
+    ok model.int8.onnx
+    ok tokens.txt
+    ok voices.bin
+==> running the end-to-end proof (several minutes on a small CPU box; the
+    queued job is the slow part — this engine spends seconds of CPU per
+    second of speech)
+    evidence goes to /tmp/slot44-m2-rerun/evidence-20261101-212015
+  PASS  control_plane_and_engine_both_up
+  PASS  two_workspaces_signed_up_with_keys
+  PASS  hindi_and_english_audio_through_the_control_plane
+  PASS  engine_refusal_passed_through_as_400
+  PASS  refusal_bytes_identical_to_the_real_engine
+  PASS  key_refusals_are_401
+  PASS  meter_matches_the_audio_and_is_per_workspace
+  PASS  a_queued_job_is_spoken_by_a_real_worker_and_metered_once
+  PASS  a_refused_job_fails_once_with_the_engine_s_own_message
+  PASS  a_cancelled_job_is_never_spoken_or_metered
+  PASS  revoked_key_refused_and_other_workspace_untouched
+  hindi_hf_alpha   hf_alpha  hi  1.822 s at 24000 Hz, peak 0.794861, engine took 20.124 s
+  hindi_hm_omega   hm_omega  hi  1.826 s at 24000 Hz, peak 0.7659, engine took 10.719 s
+  english          hf_alpha  en  3.511 s at 24000 Hz, peak 0.794403, engine took 18.841 s
+  queued job 1      208 characters, 16.458 s at 24 kHz, sha256 dc86389cc522…, engine took 115.43 s, worker claimed/succeeded 1/1
+  refused job 2    failed 400 after 1 attempt: Unknown voice 'no_such_voice_here' for the loaded sherpa-onn
+  cancelled job 3    never claimed (worker claimed 0)
+  meter for workspace A: 4 requests, 158 characters, 7.159 s of audio
+  meter for workspace B: 0 requests
+
+audio in /tmp/slot44-m2-rerun/evidence-20261101-212015/audio
+full result in /tmp/slot44-m2-rerun/evidence-20261101-212015/result.json
+not a listening check, not GPU evidence, not deployed, and not M1 acceptance.
+rc=0
