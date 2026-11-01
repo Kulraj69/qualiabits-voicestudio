@@ -35,6 +35,7 @@ with the WAVs it produced, and the reasoning behind the design is in
 ```
 hosted/control_plane/*.py     the plane: accounts, keys, the job queue, storage, migrations
 hosted/worker/runner.py       the worker: one job at a time, heartbeated
+hosted/web/                   the browser dashboard (its own Next.js package)
 hosted/scripts/hosted_e2e.py  the end-to-end proof: starts every process itself
 hosted/scripts/hosted_demo.sh one command around all of it, with the model handling
 hosted/DESIGN.md              why it is shaped this way, and what each choice cost
@@ -56,6 +57,7 @@ tests/hosted/                 its tests
 | `GET /v1/api-keys` | session | list keys — never key material |
 | `DELETE /v1/api-keys/{id}` | session | revoke one of your own keys |
 | `GET /v1/usage` | session or key | this workspace's meter, and its key-by-key breakdown |
+| `GET /v1/voices` | session or key | what the engine can speak, for a picker |
 | `POST /v1/audio/speech` | API key | metered passthrough to the engine, for one short request |
 | `POST /v1/jobs` | session or key | queue a longer piece of speech (up to 20,000 characters) |
 | `GET /v1/jobs` | session or key | your jobs, newest first, with a status filter |
@@ -64,6 +66,14 @@ tests/hosted/                 its tests
 | `GET /v1/jobs/{id}/audio` | session or key | the stored audio of a finished job |
 
 Not in yet, and named as the next slices: email verification, billing, deployment.
+
+## The dashboard
+
+The browser front end that speaks through this plane lives in
+[`hosted/web/`](web/README.md) — its own Next.js package, importing nothing from
+`backend/`, this plane's own routes being its only contact with it. Run it, and
+the tests around it, from [`hosted/web/README.md`](web/README.md). It is local
+only, like everything here: no deployment, no public URL, no real bucket, no GPU.
 
 ## Run it by hand
 

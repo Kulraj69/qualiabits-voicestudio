@@ -1,0 +1,8 @@
+# Build and dependency output, never committed.
+node_modules/
+.next/
+out/
+
+# What the browser end-to-end leaves behind when you ask it to keep evidence.
+e2e/.evidence/
+e2e/.runtime/
