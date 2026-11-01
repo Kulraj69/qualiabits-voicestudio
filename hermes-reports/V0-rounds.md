@@ -1049,3 +1049,82 @@ Findings and what happened to each (`M3-slot44-review1.txt`, response in
    three-terminal flow is for poking at the app in a browser.
 4. most of the V0 goal absent — true, unchanged, and scoped in the bundle.
 5. originality 2 — the owner's.
+
+### Round 5 — JUDGE (cheap+ pass 4) — 2/4/4/5/2/4/4, FAIL on originality and criteria fit only
+
+`M3-slot44-review4.txt`, response `M3-slot44-since-review4.txt`. Honesty reached
+4: "No current honesty flaw is established by the supplied material", and the
+pass names the evidence as internally aligned — 42 stub checks and 46 real-engine
+checks at one revision, `2377cfa4b`. Taste 4, human feel 4, technical depth 5,
+reviewer path 4 (workable for a technical reviewer, not frictionless: a venv and
+a 132 MB download on the real path). Originality 2 and criteria fit 2 are the
+only criteria under 4, and both are structural rather than defects:
+
+- a dashboard is not a novel idea and the differentiator is a product decision;
+- the judge maps the slice against the whole V0 goal, which is M1-M7, while this
+  is the first slice of M3 and says so.
+
+No number was dressed up to move either one.
+
+### DONE GATE (self-loop item 8), item by item
+
+- (a) every definition-of-done item true and shown:
+  **D1, D2, D3, D4, D6, D7 — met**, each with evidence above and re-taken at one
+  revision. **D5 — met**: the browser suite runs against the real sherpa-onnx
+  engine on the pinned Kokoro bytes (46/46), it is committed, and it replays from
+  a clean clone, which is where all four pieces of evidence were taken.
+  **D8 — met as stated**: two or more cheap+ rounds (four), every fixable finding
+  fixed, the unfixable one written down with its reason.
+- (b) all tests pass in the last round: **yes** — 201 Python, 29 node, 42/42 stub
+  browser, 46/46 real-engine browser, all at `2377cfa4b` with a clean tree.
+- (c) the last judge round passes with no criterion below 4 and no honesty flaw:
+  **not met** — originality 2 and criteria fit 2. Honesty is 4 with no flaw.
+- (d) a stranger-read of the README works: **yes** — the first command needs no
+  model, and the strongest path resolves, downloads and hash-checks its own.
+
+So: **in-progress / needs-Kulraj**, not done, and the remaining items are not in
+this lane. M1 is unchanged: the approved scoped GPU run and a listening check are
+still the owner's.
+
+Nothing in this slot was deployed, published, messaged, submitted or spent; no
+model terms were accepted; no provider key was used; no pricing appears anywhere.
+Commits added on `Kulraj69/qualiabits-voicestudio` `work/m1-headless` by this slot,
+each remote SHA read back after the push:
+
+```
+3cd2f62fe  a model's voices are named before it is loaded
+d04fa6d7c  GET /v1/voices: one list from the engine's two half-answers
+b5f6f3d58  the dashboard: sign up, speak, keys, usage, jobs in a browser
+71c333962  the active engine's voices in the catalogue too
+e8ded6962  re-run hosted proof at this revision; name one run only
+618584f38  the run's transcript and the four WAVs it produced
+03ff487d7  evidence for the dashboard slice, from a clean clone
+51343aa03  force-add the two logs the page names
+888d8026c  every page, on its own: status, heading, focus, screenshot
+fe879d7ce  the real-engine path downloads and checks its own model
+2377cfa4b  engine/bytes provenance + all evidence at one revision
+```
+
+Evidence paths in this repo: `hermes-reports/M3-slot44-e2e-r4/` (the quoted
+real-engine run, 46/46, five screenshots, transcript), `M3-slot44-e2e-r3/` (the
+download demonstration), `M3-slot44-e2e-r2/` (the first 46/46),
+`M3-slot44-e2e-stub-r3.json` (42/42 smoke), `M2-slot44-e2e-r1/` (the re-taken
+hosted proof, with its four WAVs), `M2-slot44-clean-tests-r1.log` (201 passed),
+`M3-slot44-web-unit-r1.log` (29 passed), `M3-slot44-review1..4.txt` with
+`M3-slot44-since-review1..4.txt`.
+
+Needs-Kulraj (unchanged where it was, smaller where it can be):
+
+1. **The M1 GPU leg** — an approved g5/g6 spot target with scoped access,
+   automatic idle shutdown and a hard spending limit. The only remaining M1 item.
+2. **A listening check** on `M2-slot44-e2e-r1/audio/{hindi_hf_alpha,hindi_hm_omega,english}.wav`
+   — whether the voice is good enough to sell. Machine checkable numbers are in
+   the run; a human ear has still never heard it.
+3. **One differentiator** for the product, which is what a judge scores for
+   originality, and which this lane cannot invent for him.
+4. **A deployment decision** (host/domain) and a real object-store bucket if the
+   product is to be judged beyond a local run.
+5. **The production engine/model choice** (Kokoro today, apache-2.0 per
+   publisher, CPU, Hindi thinner than its English), plus the further M3 slices
+   (voice library, cloning with consent, design, dubbing, transcription,
+   audiobooks) when he wants them.

@@ -1,0 +1,21 @@
+# What changed after cheap+ pass 4 — and why this slice stops here
+
+Pass 4 scored **2/4/4/5/2/4/4 — FAIL**, and its own honesty line says "No current
+honesty flaw is established by the supplied material". Every finding this lane
+could act on has been acted on. Two criteria remain below the pass bar, and
+neither is a defect in the work:
+
+- **Originality 2.** A speech dashboard is not a novel idea, and the
+  differentiator is a product decision, not an engineering one. D8 said so before
+  any code was written. The judge's own remedy — "one genuinely distinctive
+  user-facing decision" — is the owner's to make, and inventing one here would be
+  the dishonest fix.
+- **Criteria fit 2.** The judge maps this slice against the whole V0 goal
+  (M1-M7: cloning, voice design, dubbing, transcription, audiobooks, agents,
+  phone calls, deployment, real S3, GPU, growth). This slice is the first of
+  M3's slices, and its scope is the four things a customer does first. That is a
+  fair reading of the goal; it is simply not the slice's claim, and the README
+  names every deferred piece as not built rather than stubbing it.
+
+Nothing here is dressed up to move either number. The slice is left
+**in-progress / needs-Kulraj**, with the exact owner actions in the round log.

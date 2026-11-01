@@ -70,7 +70,7 @@ def e2e_summary(path: Path) -> str:
         k: data.get(k)
         for k in ("run", "revision", "engine", "engine_command", "engine_is_stub", "engine_health",
                   "pages",
-                  "engine_active", "engine_voice_count", "engine_model", "browser",
+                  "engine_active", "engine_voice_count", "engine_model", "engine_model_source", "browser",
                   "deployed", "public_url", "gpu", "real_s3", "audio", "usage")
     }
     lines = ["result.json (engine and run facts):", json.dumps(keep, indent=2)]
