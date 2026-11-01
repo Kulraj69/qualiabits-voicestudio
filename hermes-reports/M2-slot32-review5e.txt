@@ -1,0 +1,35 @@
+Scores
+
+| Criterion | Score | Judge’s basis |
+|---|---:|---|
+| Originality | 3/5 | A hosted speech API with auth, metering, object storage, and a worker queue is competent but familiar. The strongest distinctive element is the evidence-integrity chain: run manifest, commit verification, stored-audio hashes, and deliberate refusal to overclaim S3/GPU/deployment. |
+| Taste | 4/5 | Naming and architecture are clear, the design rationale is unusually explicit, and the README separates the reviewer path from DESIGN.md. However, the README is still 343 lines and tries to be setup guide, API reference, architecture essay, evidence report, and release disclaimer at once. |
+| Human feel | 4/5 | The writing has a consistent, specific engineering voice: “a job is a row, not a thread,” “loud refusal,” and the explicit Hermes authorship disclosure are credible. There is some boilerplate-style repetition around “honest,” “real,” “refuses,” and “what this proves,” but no major generic marketing language or em-dash spam. |
+| Technical depth | 5/5 | The artifacts show substantial implementation depth: leases, compare-and-swap claims, bounded retries, lost-worker protection, content-addressed storage, verified read-backs, migrations, per-key metering, real subprocess E2E, and 178 passing tests. `tests/hosted/test_hosted_queue.py`, `test_hosted_storage.py`, `test_hosted_migrations.py`, and the E2E result materially support the claims. |
+| Criteria fit | 4/5 | Against the supplied M2 plan, slice B is directly addressed: queue, worker, storage, migration path, and preservation of slice-A auth/metering. The supplied artifacts do not contain the hackathon’s official rules or sponsor-prize requirements, so those cannot be independently mapped or credited. |
+| Reviewer path | 4/5 | The README gives a fresh-clone command, a fast test path, a full demo path, manual commands, expected outputs, and committed WAV evidence. The weakness is that the compelling demo requires model download, several minutes, network availability, and local environment assumptions; the artifact does not show a fresh-clone execution of `hosted_demo.sh` itself. |
+| Honesty | 4/5 | This is unusually careful about boundaries: no deployment, no public URL, no GPU, no real S3 bucket, no customers, and no listening-quality claim. The manifest and citation tests are strong evidence of honest provenance. There is nevertheless one minor unsupported/inaccurate claim: README.md describes the test path as “about twenty-five seconds,” while Artifact 3 reports 30.08 seconds and Artifact 6 reports 33.47 and 34.07 seconds. |
+
+Overall: 28/35
+
+Decision: Fail under the stated gate because there is an honesty flaw, despite every numerical score being at least 3 and most evidence being strong. It also fails the literal all-scores-4-or-more rule because Originality is 3/5.
+
+Five most damaging flaws
+
+1. Familiar core product  
+   README.md, “What it does today” and `hosted/control_plane/app.py`: this is a solid speech SaaS control plane, but not a memorable hackathon concept. The evidence harness is more distinctive than the product idea.
+
+2. No production-hosted proof  
+   Artifact 4, `result.json`: `"deployed": false`, `"public_url": null`, `"gpu_verified": false`. This is valid for the stated slice boundary, but it prevents proof of the hosted product’s most consequential operational properties.
+
+3. No real S3 bucket validation  
+   `hosted/control_plane/storage.py` module documentation and Artifact 4: S3 is tested with stubs and moto, while the actual E2E uses local filesystem storage. IAM, lifecycle, multipart behavior, region behavior, and real credentials remain unproven.
+
+4. Reviewer path is not actually demonstrated end-to-end from a fresh clone  
+   README.md, “See it work, one command”: the supplied fresh-clone logs prove the test suite, but not the documented `hosted/scripts/hosted_demo.sh` path. That path depends on model acquisition and takes several minutes.
+
+5. Unsupported timing claim  
+   `hosted/README.md`, testing sections: “about twenty-five seconds” conflicts with Artifact 3’s 30.08 seconds and Artifact 6’s 33.47/34.07 seconds. Small discrepancy, but the rubric explicitly treats unsupported claims as honesty problems.
+
+What would make it win: make the core product idea more surprising, then prove it from a clean clone through a public or owner-approved hosted deployment using real S3 and GPU-backed execution, with the README reduced to a short verified “run this, see this” path.
+judge exit=0

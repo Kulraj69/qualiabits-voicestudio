@@ -1,0 +1,74 @@
+Overall: 3.9/5. Fails the stated pass bar because Honesty is 3/5 and several claims are not independently checkable from the supplied artifacts.
+
+1. Originality: 3/5
+   A hosted speech API with authentication, metering, object storage, and a worker queue is a familiar SaaS pattern. The strongest distinctive element is the unusually rigorous evidence-chain test tying measurements to a commit manifest. That is memorable engineering discipline, not a novel product idea.
+
+2. Taste: 4/5
+   The separation between `hosted/README.md` and `hosted/DESIGN.md` is a good editorial decision. Naming is clear, the scope boundaries are explicit, and the README leads with a runnable path. It is still too dense: 343 lines, a large measured dump, long bullet sections, and extensive implementation explanation make the first-review experience heavier than necessary.
+
+3. Human feel: 4/5
+   The writing is specific and technically opinionated. Phrases such as “a job is a row, not a thread” and “a half-truth” sound authored rather than generic. The explicit Hermes authorship disclosure is strong. Some prose is repetitive and defensive, with recurring “honest,” “refuses,” and “nothing here” constructions, but I found no major generic-AI phrase or obvious em-dash spam.
+
+4. Technical depth: 5/5
+   This is the strongest area. The artifacts show real implementation and meaningful regression coverage:
+   - compare-and-swap queue claims
+   - leases and heartbeats
+   - bounded retries and final-attempt sweeping
+   - lost-worker protection
+   - content-addressed storage with read-back verification
+   - local filesystem storage and S3-compatible HTTP tests
+   - schema migration from `m2a1` to `m2b1`
+   - per-workspace metering
+   - a separate worker process
+   - 178 passing tests in Artifact 3
+   - a successful real-engine end-to-end run in Artifact 4
+
+   The limitation is that production S3, GPU execution, deployment, and HTTPS are explicitly unproven, but those are outside this slice.
+
+5. Criteria fit: 4/5
+   Against the supplied M2 Slice B plan, the evidence maps well:
+   - object storage: `hosted/control_plane/storage.py`, `tests/hosted/test_hosted_storage.py`
+   - per-workspace queue: `jobs.py`, `runner.py`, `test_hosted_queue.py`, `test_hosted_jobs.py`
+   - migration path: `migrations.py`, `test_hosted_migrations.py`
+   - metering integration: Artifact 4 and `test_hosted_metering.py`
+
+   No official hackathon rules file or sponsor-prize requirements were supplied. Therefore sponsor fit cannot be verified, and no sponsor technology is identified as meaningfully used.
+
+6. Reviewer path: 4/5
+   The fast path is concrete and likely usable: documented `uv sync`, one pytest command, and a one-command demo. The README clearly explains what should happen and what is not required. The score is not 5 because:
+   - the full demo depends on a model download and several minutes of CPU time;
+   - the clean-clone artifact proves tests, not the complete documented demo;
+   - the reader must inspect committed evidence rather than simply observe the demo result;
+   - there is no public deployment or browser-level product path.
+
+7. Honesty: 3/5
+   Most boundary claims are unusually well disclosed, and the manifest-validation design is materially good. However, the supplied evidence does not fully support every claim:
+   - `hosted/README.md`, “See it work” / “What a pass looks like”: it says four WAVs from the quoted run are committed under `hermes-reports/M2-slot32-e2e-r5/audio/`, but Artifact 7 contains no actual file listing, sizes, or hashes to verify that claim.
+   - `hosted/README.md`, “What a pass looks like”: it says the suite log beside the run is from the same revision, while Artifact 6 combines logs from multiple revisions (`e875b116b`, `63b172fe`, and `d594cce`). The relationship is explainable, but the supplied artifact is not cleanly presented enough to verify the exact claim without reconstructing the timeline.
+   - Artifact 4 reports `tested_commit` as `e875b116b`, while Artifact 6 identifies the pushed revision as `d594cce`. The tests claim only subject directories were unchanged, but the quoted measurement is not literally from the final pushed commit.
+   - The test output proves the hosted tests pass, not that `hosted/scripts/hosted_demo.sh` itself was run successfully against the documented fresh-clone setup.
+
+Five most damaging flaws
+
+1. Unverified committed WAV claim  
+   Location: `hosted/README.md`, “What a pass looks like”; Artifact 7.  
+   The artifact supplied to prove the four committed WAVs has no entries, so the claim cannot be checked.
+
+2. Measurement is from a prior commit, not the final pushed revision  
+   Location: Artifact 4 `revision.tested_commit`; Artifact 6 timestamps and revision notes.  
+   The quoted run tested `e875b116b`, while the later clean-clone test log names `d594cce`. The manifest proves the old run was internally coherent, not that the final revision itself produced the measured audio.
+
+3. The documented full demo is not independently shown as executed  
+   Location: `hosted/README.md`, commands around `hosted/scripts/hosted_demo.sh`; Artifact 3 and Artifact 6.  
+   The supplied live output is for pytest. The complete model-backed wrapper, including model acquisition, process startup, cleanup, and artifact generation, is represented by a prior result file rather than a current execution log.
+
+4. Real S3 remains unproven  
+   Location: `hosted/control_plane/storage.py`, `S3ObjectStore` docstring; `hosted/DESIGN.md`, “Where the audio lives.”  
+   Moto and stub tests establish useful behavior, but IAM, real credentials, real bucket behavior, lifecycle, multipart handling, and regional failures are explicitly not tested. Calling this “object storage” is fair for the slice, but calling the S3 path production-ready would not be.
+
+5. README remains overloaded despite the stated editorial correction  
+   Location: `hosted/README.md` lines 1–343; `hosted/DESIGN.md` opening.  
+   The design document helps, but the README still combines product positioning, API reference, manual deployment instructions, evidence methodology, detailed measurements, caveats, and licensing. This weakens the claimed “short path” for a judge.
+
+What would make it win: ship a short, independently reproducible demo whose final-commit run, committed audio artifacts, and real S3-compatible deployment are all directly verifiable from one clean evidence bundle.
+judge exit=0

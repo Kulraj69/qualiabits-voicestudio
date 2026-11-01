@@ -62,6 +62,60 @@ def shell(command: str) -> str:
     ).stdout
 
 
+def committed_audio(evidence: Path) -> str:
+    """The WAVs committed beside a run, with what is in them and their hashes.
+
+    The page claims the run's audio is committed; a judge said the bundle did not
+    show that, and a claim the bundle cannot show is a claim the judge is right to
+    refuse. So the files, their lengths, their sample rates and their hashes are
+    pasted here, and `git ls-files` says whether git really tracks them.
+    """
+    import hashlib
+    import struct
+
+    folder = evidence.parent / "audio"
+    if not folder.is_dir():
+        return f"# no audio directory beside {evidence.relative_to(ROOT)}"
+    rows = []
+    for wav in sorted(folder.glob("*.wav")):
+        data = wav.read_bytes()
+        channels, rate = struct.unpack_from("<HI", data, 22)
+        frames = struct.unpack_from("<I", data, 40)[0]
+        rows.append(
+            f"{wav.relative_to(ROOT)}  {len(data):,} bytes  "
+            f"sha256:{hashlib.sha256(data).hexdigest()[:16]}…  "
+            f"{channels}ch {rate} Hz {frames / rate:.3f} s"
+        )
+    tracked = shell(f"git ls-files {folder.relative_to(ROOT)}").strip().splitlines()
+    return (
+        "\n".join(rows)
+        + f"\n\n# git ls-files reports {len(tracked)} tracked file(s) under that directory:"
+        + "\n" + "\n".join(tracked)
+    )
+
+
+def audio_receipt_links(evidence: Path) -> str:
+    """Which committed WAV is the same bytes as the receipts in result.json."""
+    import hashlib
+    import json as _json
+
+    result = _json.loads(evidence.read_text())
+    receipts = {}
+    job = result.get("job") or {}
+    if job.get("sha256"):
+        receipts[hashlib.sha256(
+            (evidence.parent / "audio" / "job_hindi_long.wav").read_bytes()
+        ).hexdigest()] = f"the queued job's receipt (sha256 {job['sha256'][:16]}…) and its object_path"
+    lines = []
+    for wav in sorted((evidence.parent / "audio").glob("*.wav")):
+        digest = hashlib.sha256(wav.read_bytes()).hexdigest()
+        for entry in result.get("speech", []):
+            if entry.get("sha256") == digest:
+                receipts[digest] = f"a direct request: voice {entry['voice']}, {entry['language']}"
+        lines.append(f"{wav.name}: receipt match -> {receipts.get(digest, 'no receipt names these bytes')}")
+    return "\n".join(lines)
+
+
 def main() -> int:
     readme = README.read_text()
     files = shell(
@@ -94,6 +148,8 @@ def main() -> int:
         f"# --- {name}, last 80 lines ---\n" + shell(f'tail -80 "{name}" 2>/dev/null')
         for name in logs
     )
+    audio = committed_audio(evidence_path)
+    receipts = audio_receipt_links(evidence_path)
     code = {
         path: (ROOT / path).read_text()
         for path in (
@@ -116,7 +172,7 @@ Boundary conditions that are true and must be judged as stated: nothing is deplo
 Storage: the local filesystem backend is what the end-to-end run exercised. The S3 backend's own logic is tested against a stub client and, over real HTTP with a real signed request, against a local S3-compatible emulator (moto, started in-process, and now in the dev dependency group so those four tests run in a fresh clone rather than skipping); a real bucket needs credentials and a spending decision from the owner, so it is listed as an owner action rather than claimed.
 Authorship, because it affects how you read the voice: this fork was written by Hermes for QualiaBits, and `hosted/control_plane/storage.py`'s module header says so on the record. That is a deliberate disclosure, not a claim of human authorship, and whether it stays in the product source is the owner's call.
 Evidence honesty: the page's "Measured" section is rendered from the run file the page names, and a test hashes that run's own manifest against the commit the run names, file by file, through git. An earlier judge round failed this slice on exactly this, with the page quoting one run while the bundle beside it was another. Every time a file under hosted/control_plane, hosted/worker or hosted/scripts changes, that test refuses the old citation and a new end-to-end run is owed; the quoted run is therefore always the same code as the pushed revision, and the clean-clone log in Artifact 6 is from that same revision.
-The implementation arguments for the queue, storage and migrations live in hosted/DESIGN.md (Artifact 7), because a judge said the front page was doing too many jobs at once.
+The implementation arguments for the queue, storage and migrations live in hosted/DESIGN.md (in the source artifact), because a judge said the front page was doing too many jobs at once.
 Runs kept on purpose and labelled in their own files: M2-slot27-e2e-r1 failed because the author's own comparison was wrong (it compared a refusal naming one voice against a refusal naming another); M2-slot27-e2e-r2 and -r3 came from a working tree, not a clean clone; M2-slot32-clean-tests-r1.log and -r3.log are clean-clone runs that failed the citation check while a code change was mid-flight, kept rather than deleted.
 
 === ARTIFACT 1: hosted/README.md (the page a reviewer reads first) ===
@@ -138,7 +194,13 @@ $ {TEST_COMMAND}
 === ARTIFACT 6: the clean-clone suite runs the page names, pasted from those files ===
 {clean_log}
 
-=== ARTIFACT 7: the source, verbatim ===
+=== ARTIFACT 7: every committed file under hermes-reports/M2-slot32-e2e-r5/audio/, with the size, the sample format and the hash of the bytes on disk, plus what git tracks and which receipt in result.json names those same bytes (so the page's claim that the audio is committed, and is the audio that run produced, is checkable here rather than asserted) ===
+{audio}
+
+Which committed WAV is the same bytes as a receipt in result.json:
+{receipts}
+
+=== ARTIFACT 8: the source, verbatim ===
 """ + "\n\n".join(f"--- {path} ---\n{text}" for path, text in code.items())
 
     out = ROOT / "hermes-reports" / f"M2-{TAG}-review{ROUND}-prompt.txt"

@@ -1,0 +1,70 @@
+Overall: FAIL — two criteria score below 4, and there is one evidence-backed honesty concern.
+
+Scores
+
+1. Originality: 3/5
+   A hosted speech control plane with auth, API keys, metering, object storage, and a queue is competent but familiar. The strongest distinctive details are the lease-loss handling, content-addressed audio, and evidence-manifest verification. There is no memorable user-facing moment or novel product angle.
+
+2. Taste: 4/5
+   The scope is disciplined, naming is generally clear, and the README separates the quick test path from the full proof. However, the 343-line README still tries to be product page, architecture document, operations manual, test report, and evidence ledger. The design is thoughtful more than elegant.
+
+3. Human feel: 3/5
+   The writing has specific technical opinions and candid limitations, but it also reads heavily process-generated: repeated defensive explanations, reviewer-directed language, long bullet sections, and phrases such as “the honest answer,” “what this proves,” and “what this does not prove.” The source explicitly says it was written by Hermes, so this is authentic disclosure but not strong evidence of a distinctive human product voice.
+
+4. Technical depth: 5/5
+   This is the strongest category. The artifacts show real implementations and regression coverage for:
+   - compare-and-swap queue claims
+   - leases, heartbeats, retries, and lost workers
+   - terminal-state accounting
+   - atomic local storage and digest verification
+   - S3 behavior through stubs and an HTTP emulator
+   - schema migration from slice A
+   - workspace isolation and key revocation
+   - a real multi-process CPU end-to-end run
+
+   The reported test run is 178 passed with one warning, and the end-to-end artifact records successful queued speech, storage retrieval, metering, refusal, cancellation, and shutdown.
+
+5. Criteria fit: 5/5
+   The stated M2 slice B requirements are directly evidenced:
+   - object storage: `hosted/control_plane/storage.py`, storage tests, E2E local backend
+   - per-workspace queue: `hosted/control_plane/jobs.py`, `hosted/worker/runner.py`, queue/job tests
+   - migration path: `hosted/control_plane/migrations.py`, migration tests
+   - metering integration: E2E result and metering tests
+   - no Electron dependency in hosted path: documented architecture and separate process boundary
+
+   Billing, email verification, and deployment are explicitly out of scope, so their absence is not a criterion failure.
+
+6. Reviewer path: 4/5
+   The fast path is concrete and the clean-clone logs show the documented test command succeeding. The full path is still expensive and environment-sensitive: it needs `uv`, Python 3.12, model acquisition, roughly four minutes on CPU, and network access for setup/model retrieval. The manual curl path also assumes copied tokens, a running worker, and a predictable job ID, so it is not as “from nothing” as the README suggests.
+
+7. Honesty: 3/5
+   Most limitations are unusually well disclosed: no deployment, no GPU, no real S3 bucket, no customer, no sale, and no listening verification. The citation-manifest mechanism is strong.
+
+   The supplied artifacts do not independently verify the README claim that the four E2E WAVs are committed under `hermes-reports/`. The file inventory does not show those files, while the result artifact records an ephemeral scratch-directory object path. That is an unsupported claim in the evidence packet and therefore an honesty flaw until the committed audio files or a repository listing is provided.
+
+Five most damaging flaws
+
+1. No deployed or publicly reachable service
+   - `hermes-reports/M2-slot32-e2e-r5/result.json`: `"deployed": false`, `"public_url": null`
+   - This is scope-valid for M2 slice B, but it prevents a stranger from validating the product without reproducing the environment.
+
+2. Production S3 remains unproven
+   - `hosted/README.md`, “What it does today” / “Measured”
+   - `hosted/DESIGN.md`, “Where the audio lives”
+   - The S3 path is tested against moto, not AWS or another real configured bucket. IAM, lifecycle, multipart, region, and cross-account behavior remain unverified.
+
+3. The full proof has no GPU or listening validation
+   - `result.json`: `"gpu_verified": false`, `"listening_verified": false`
+   - The run proves bytes, headers, hashes, and timings, not that the speech is intelligible or commercially acceptable.
+
+4. The reviewer path overpromises “from nothing”
+   - `hosted/README.md`, opening setup and “See it work, one command”
+   - The full demo requires model download, network access, a specific Python/uv environment, and several minutes of CPU time. That is acceptable for engineering validation but weak for a judge-facing demonstration.
+
+5. Committed audio evidence is not shown in the artifact packet
+   - `hosted/README.md`, “the four WAVs it produces are committed”
+   - `result.json`, `job.object_path`: `/home/ubuntu/.hermes/cache/scratch/...`
+   - The supplied inventory and result do not establish that the claimed WAV files exist in the repository.
+
+What would make it win: turn the rigorous backend proof into a short, unmistakable customer demonstration with verified committed audio, a real S3 run, and a distinctive reason someone would choose this hosted speech product over another queue-plus-API wrapper.
+judge exit=0
