@@ -16,6 +16,7 @@ Routes and who may call them:
     GET    /v1/api-keys             session — list keys, no key material
     DELETE /v1/api-keys/{id}        session — revoke one of your own keys
     GET    /v1/usage                session or key — this workspace's meter
+    GET    /v1/voices               session or key — what the engine can speak
     POST   /v1/audio/speech         API key — metered passthrough to the engine
     POST   /v1/jobs                 session or key — queue a longer piece of audio
     GET    /v1/jobs                 session or key — your jobs, newest first
@@ -43,7 +44,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from . import jobs, metering, security, storage
+from . import jobs, metering, security, storage, voices as voice_catalogue
 from .auth import Principal, principal
 from .config import Settings
 from .db import ApiKey, Database, Job, SessionToken, Workspace, utcnow
@@ -357,6 +358,22 @@ def create_app(
         who: Principal = principal(session, request, allow="any")
         return {"usage": metering.summary(session, who.workspace_id).as_dict(),
                 "read_via": who.via}
+
+    # ── voices ────────────────────────────────────────────────────────────────
+    @app.get("/v1/voices")
+    async def voices(request: Request, session: DbSession) -> dict:
+        """What the engine can speak, for a picker.
+
+        Authenticated like every other customer route: a voice list is small,
+        but it is still the engine's internals and it is not public. The engine
+        is read twice because neither answer is complete — its voice catalogue
+        misses the ids a model declares in its own file, and its engine
+        inventory knows those ids but not the aliases and profiles.
+        """
+        principal(session, request, allow="any")
+        _, catalogue = await state.upstream.json_get("/v1/audio/voices")
+        _, engines = await state.upstream.json_get("/engines/tts")
+        return voice_catalogue.compose(catalogue, engines)
 
     # ── jobs ──────────────────────────────────────────────────────────────────
     @app.post("/v1/jobs", status_code=status.HTTP_202_ACCEPTED)

@@ -70,6 +70,34 @@ class StubEngine:
         async def health() -> dict:
             return {"status": "ok", "device": "cpu", "version": "stub"}
 
+        @stub.get("/v1/audio/voices")
+        async def voices() -> dict:
+            # The shape the real engine answers with: OpenAI aliases and saved
+            # profiles, and none of the ids a model declares in its own file.
+            return {
+                "voices": [
+                    {"voice_id": "alloy", "name": "Alloy", "type": "openai_alias"},
+                    {"voice_id": "echo", "name": "Echo", "type": "openai_alias"},
+                    {"voice_id": "profile-1", "name": "Studio read", "type": "profile",
+                     "language": "hi"},
+                ],
+                "engines": [{"id": "sherpa-onnx", "available": True}],
+            }
+
+        @stub.get("/engines/tts")
+        async def engines_tts() -> dict:
+            return {
+                "active": "sherpa-onnx",
+                "backends": [
+                    {"id": "sherpa-onnx", "display_name": "sherpa-onnx",
+                     "available": True,
+                     "preset_voices": ["af_alloy", "hf_alpha", "hf_beta", "hm_omega"],
+                     "default_voice": "af_alloy"},
+                    {"id": "kittentts", "display_name": "KittenTTS", "available": True,
+                     "preset_voices": ["expr-voice-2-f"], "default_voice": "expr-voice-2-f"},
+                ],
+            }
+
         @stub.post("/v1/audio/speech")
         async def speech(payload: dict) -> Response:
             state.payloads.append(payload)

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from typing import Any
 
 import httpx
 
@@ -75,6 +76,26 @@ class UpstreamClient:
         else:
             detail["status_code"] = response.status_code
         return detail
+
+    async def json_get(
+        self, path: str, timeout: float = 30.0
+    ) -> tuple[int, dict[str, Any] | None]:
+        """A read-only engine call whose body is JSON (a catalogue, a status).
+
+        Returns the status and the parsed object, or ``(0, None)`` when the
+        engine could not be reached at all, and ``(status, None)`` when it
+        answered with something that is not a JSON object. Callers decide what a
+        missing answer means; nothing here raises on the customer's behalf.
+        """
+        try:
+            response = await self._client.get(path, timeout=timeout)
+        except httpx.HTTPError:
+            return 0, None
+        try:
+            payload = response.json()
+        except ValueError:
+            return response.status_code, None
+        return response.status_code, payload if isinstance(payload, dict) else None
 
     async def speech(self, payload: dict) -> UpstreamResult:
         started = time.monotonic()
