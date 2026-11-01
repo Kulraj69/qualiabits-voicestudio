@@ -1339,6 +1339,28 @@ def list_voices():
     except Exception:
         logger.warning("Voice profiles could not be loaded; returning built-in aliases only")
 
+    # The loaded model's own voice ids, after the aliases and profiles. Until
+    # these were published here, this endpoint listed the OpenAI aliases and no
+    # Hindi voice at all, while POST /v1/audio/speech accepted `hf_alpha` — so a
+    # voice picker built from the catalogue could not offer a voice the engine
+    # can actually speak.
+    try:
+        from services import tts_backend as tts
+
+        active = tts.active_backend_id()
+        presets = tts.preset_voices_of(tts.get_backend_class(active))
+        default = tts.default_voice_of(tts.get_backend_class(active))
+        for name in presets:
+            voices.append({
+                "voice_id": name,
+                "name": name,
+                "type": "engine",
+                "engine": active,
+                "default": name == default,
+            })
+    except Exception:
+        logger.warning("Engine voices could not be listed; returning aliases and profiles only")
+
     # OpenAI-compatible clients such as Open WebUI read each voice's `id`
     # (#2679); `voice_id` stays for existing callers.
     for voice in voices:
