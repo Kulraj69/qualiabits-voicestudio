@@ -1,0 +1,6 @@
+# a fresh clone at 30963fd8a893a677db41ce58da7eb44d0f07ecb9, venv built by the README's own command, after the documented demo path had run in the same clone
+2026-11-01T14:30:16+05:30
+# $ .venv/bin/python -m pytest tests/hosted tests/test_qualibits_voice_docs.py tests/test_sherpa_kokoro_and_speaker.py tests/test_headless_baseline.py -q
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+187 passed, 1 warning in 35.18s

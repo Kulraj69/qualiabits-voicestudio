@@ -1,0 +1,43 @@
+INFO:     Started server process [774664]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on socket ('127.0.0.1', 48057) (Press CTRL+C to quit)
+INFO:     127.0.0.1:51986 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50252 - "GET /healthz/upstream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50254 - "POST /v1/workspaces HTTP/1.1" 201 Created
+INFO:     127.0.0.1:50264 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50268 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:50274 - "POST /v1/workspaces HTTP/1.1" 201 Created
+INFO:     127.0.0.1:50282 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50290 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:50292 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45590 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49254 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55262 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:55272 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55278 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:55286 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55296 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55298 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55304 - "POST /v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:55310 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60058 - "GET /v1/jobs/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60060 - "GET /v1/jobs/1/audio HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60076 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60092 - "POST /v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:46294 - "GET /v1/jobs/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46298 - "GET /v1/jobs/2/audio HTTP/1.1" 409 Conflict
+INFO:     127.0.0.1:46302 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "POST /v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:46318 - "DELETE /v1/jobs/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46332 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46340 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46352 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46358 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46368 - "DELETE /v1/api-keys/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46376 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46392 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [774664]
