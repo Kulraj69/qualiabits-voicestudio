@@ -1,0 +1,45 @@
+==> engine: sherpa-onnx on /workspace/m1-models/kokoro-int8-multi-lang-v1_0
+==> CPU synthesis is slower than real time; this run takes minutes, not seconds.
+PASS  engine is up and answers /health
+PASS  the engine is a real backend, not the suite's stub
+PASS  the engine reports a model directory that exists
+PASS  the engine declares the voices the picker can offer
+PASS  the control plane is up on its own database
+PASS  the control plane can see the engine
+PASS  the dashboard builds
+PASS  the dashboard is up and rooted at /
+PASS  signup lands on the dashboard and greets the workspace
+PASS  the session token is not readable by page JavaScript
+PASS  the workspace name cookie is the only cookie the page can see
+PASS  home links to /speak
+PASS  home links to /jobs
+PASS  home links to /keys
+PASS  home links to /usage
+PASS  no dead links on home
+PASS  the voice list is served by the plane, not hard-coded
+PASS  the Speak page returns real WAV bytes through the plane
+PASS  the audio has a download link
+PASS  the player reports the measured duration and size
+PASS  an unknown voice is refused by the plane with the engine's own sentence
+PASS  a minted key is shown once and looks like a key
+PASS  the key is not shown again after a reload
+PASS  the list shows the key's public id and never its secret
+PASS  revoking marks the key revoked in the list
+PASS  a revoked key is refused on the next request
+PASS  the same credentials log in straight to the plane
+PASS  the Usage page's request count matches the plane's meter
+PASS  the per-key breakdown the plane records is shown
+PASS  a cancelled job reads as cancelled and was never spoken
+PASS  cancelling a queued job did not move the meter
+PASS  the real worker drained the queue
+PASS  the plane records the spoken job as succeeded
+PASS  the job's stored audio comes back as a WAV
+PASS  the downloaded audio is the bytes the plane stored
+PASS  the jobs table shows one Done row
+PASS  the real engine made more audio for the paragraph than for the one-liner
+PASS  a keyboard Tab lands on a focusable control
+PASS  the focused control has a visible outline
+PASS  no uncaught JavaScript errors on any page
+
+40/40 checks passed
+evidence kept in /workspace/qs-m3-clean/hosted/web/e2e/.evidence
