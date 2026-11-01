@@ -821,3 +821,231 @@ and a publicly reachable workflow, which needs a deployment, a real bucket and
 credentials — the owner's call. M1's remaining item is also unchanged (the approved
 scoped GPU runtime and a listening check on the committed WAVs in
 `hermes-reports/M2-slot32-e2e-r8/audio/`).
+
+## Rotation slot 39 — V0-build — 2026-11-01 — M3 slice A: the browser dashboard
+
+PLAN written before any code, as the self-loop requires.
+
+Where this slot sits. `lane-rotation.txt`'s last line is `38|38|hackathon`, so the next
+slot in [V0-build, hackathon, V0-build, V0-growth] is V0-build (slot 39). Work continues
+in the fork `/workspace/qualiabits-voicestudio` on `work/m1-headless`, HEAD
+`d72241386d64e67b7254dd2ee41158c53defd1a1`, remote SHA read back and equal. Host time at
+planning: `2026-11-01T16:18:14+05:30`.
+
+What is already closed and what is not. M2 slices A and B are built, tested and pushed:
+auth, workspaces, API keys, metering, the metered speech passthrough, object storage, the
+job queue with leases, migrations. Their only open items are the owner's — a deployment, a
+real bucket, and a differentiator for originality — so M2 stays in-progress/needs-Kulraj
+and this slot does not re-open it. M1 is unchanged: the approved scoped GPU run and a
+human listening check on the committed WAVs both still need Kulraj.
+
+Why M3 now, and not another pass at M2. The V0 plan's next milestone is M3, the web UI.
+It needs no GPU, no deployment, no credentials, no model terms and no spend: the control
+plane it talks to already exists and already runs on this CPU box. Six earlier V0-build
+slots produced nothing because they waited at M1's gate; hosting and the UI never had that
+excuse, and the same is true here. Nothing in this slot claims to clear M1 or M2.
+
+SCOPE. M3 slice A: the four things a customer does first, in a browser, against the real
+plane — sign up and sign in; speak text and hear it; mint and revoke API keys; see what
+was used and download what was made. Explicitly NOT in this slice, and named as later
+slices rather than stubbed: voice cloning, voice design, dubbing, transcription,
+audiobooks, the agents tab, and the marketing landing page.
+
+Definition of done, each item needing evidence in this log:
+
+D1. A real Next.js app lives in the fork at `hosted/web/`, in its own package, importing
+    nothing from `backend/`. It signs up and signs in against the real control plane, and
+    the session token is held in an httpOnly cookie by the app's own server, never in
+    browser JavaScript or localStorage.
+D2. The text-to-speech page really speaks: text, a voice chosen from the engine's own
+    catalogue, and a language; the WAV comes back through the control plane, plays in the
+    page and downloads. The voice list is served by the plane (`GET /v1/voices`), not
+    hard-coded in the page, and an unknown voice is refused with the engine's own sentence.
+D3. Keys and usage are real: a key is shown once and never again, listing shows only
+    prefixes, revoking takes effect on the next request, and the usage page shows the
+    workspace totals and the per-key breakdown that the meter already records.
+D4. Jobs are real: queue a paragraph, watch it move to done, play and download the stored
+    audio. A cancelled job never speaks and never moves the meter.
+D5. It is tested at two levels: the new plane route has Python tests in `tests/hosted/`,
+    and a committed browser end-to-end (`hosted/web/e2e/`) drives a real headless Chromium
+    against the real engine, the real plane and the real web server, asserting what the
+    page shows against the plane's own records. The suite passes from a clean clone of the
+    pushed revision.
+D6. It looks designed: the QualiaBits dreamcore palette, one accent, generous spacing,
+    dark first. Every page reachable in one click from home, no dead links, keyboard
+    focus visible.
+D7. `hosted/web/README.md` and the `hosted/README.md` pointer are do-X-see-Y for a
+    stranger, with the honest boundary kept: local only, not deployed, no public URL, no
+    real S3 bucket, no GPU, M1 and M2 unchanged.
+D8. Two cheap+ judge rounds on the real artifacts, every fixable flaw fixed, unfixable
+    ones written down with the reason. Originality is expected to remain below 4 for the
+    same reason it did on M2 — a dashboard is not a novel idea and the differentiator is
+    the owner's decision — so no pass claim is made if it does.
+
+Judging criteria targeted (JUDGE-RUBRIC.md): taste and human feel (D6, and the copy on
+every page), technical depth (D2-D5, since the page's numbers must come from the plane's
+records rather than its own state), reviewer path (D7), honesty (the boundary sentences
+and the refusal to stub the unbuilt pages). Criteria fit is measured against the M3 line
+in the V0 plan, since a product milestone has no hackathon rules file.
+
+Cost intent: mid tier for the build and tests, cheap+ for two judge passes, no hard tier.
+The repo is AGPL and stays public with attribution.
+## Rotation slot 44 — V0-build — 2026-11-01 — M3 slice A finished and tested on the real engine
+
+PLAN written before any code, as the self-loop requires.
+
+Where this slot sits. `lane-rotation.txt`'s last line is `43|…hackathon`, so the
+next slot in [V0-build, hackathon, V0-build, V0-growth] is V0-build. Work continues
+in the fork `/workspace/qualiabits-voicestudio` on `work/m1-headless`, which was at
+`d72241386` (remote SHA equal) with M3 slice A built in the working tree but
+uncommitted, and with that slice's two cheap+ passes both FAILing (1/4/4/3/3/2/3
+then 1/4/4/3/3/3/3).
+
+What this slot had to finish, from slot 39's plan and its two judge passes:
+
+D1  already true (Next.js app, httpOnly session cookie, real plane).
+D2  already true, but only ever exercised against the stub.
+D3  already true.
+D4  already true, but only ever exercised against the stub.
+D5  NOT satisfied: the browser run used `engine_stub.py`, nothing was committed,
+    and no clean clone had ever replayed it.
+D6  true in source, asserted for one page only.
+D7  true, but the real-engine setup path was underspecified.
+D8  one round done and failing; the second round could not be meaningful until the
+    above were fixed.
+
+So this slot's job was: run the browser suite against the real engine, commit the
+slice, replay it from a clean clone of the pushed revision, and put it through the
+loop again — with everything a judge is shown taken at one revision.
+
+### Round 1 — BUILD + TEST
+
+Three things were built, and one of them was not planned: the real engine did not
+work, and the reason was a defect in the fork, not in the harness.
+
+1. **A model's voices are named before it is loaded** (`3cd2f62fe`). The first
+   real-engine browser run failed twice before it got anywhere:
+   `FAIL the engine declares the voices the picker can offer (sherpa-onnx: 0
+   voices)` and then `FAIL the voice list is served by the plane, not
+   hard-coded (alloy,ash,ballad,…,demo0001)` — the Speak page could not select
+   `hf_alpha` because nothing in the product admitted the model had it. Root
+   cause: a Kokoro bundle's voice table lives in the `.onnx` graph, and the fork
+   published it only when the model was *loaded* (`record_model_voices` in
+   `SherpaOnnxBackend._ensure_loaded`). A fresh process has loaded nothing, so
+   `preset_voices_of` answered `[]` for sherpa-onnx and every consumer —
+   `/engines/tts`, `/v1/audio/voices`, any picker — had the OpenAI aliases and
+   not one of the 54 ids that `/v1/audio/speech` accepts. Fixed by reading the
+   configured model's metadata (about 15 ms on the 132 MB bundle) once per
+   process from `list_backends()`, caching the answer, keeping an absent
+   directory retryable and remembering an unreadable one as attempted so a voice
+   listing can never fail over it. Five tests, one of which asserts that nothing
+   was loaded.
+2. **The dashboard slice itself** (`b5f6f3d58`, `d04fa6d7c`, `71c333962`): the
+   Next.js app at `hosted/web/`, `GET /v1/voices` on the plane, the
+   `/v1/audio/voices` engine-voice list, and the browser end-to-end. 29 node unit
+   checks.
+3. **The real-engine path in the harness** (`hosted/web/e2e/real-engine.sh`).
+   `QB_E2E_ENGINE_CMD` existed but could not work as written: the suite reserves a
+   free port at run time and never told the operator's command what it was. The
+   hook now takes `{port}` (and refuses a command without it), the run records
+   what the engine says about itself — identity from `/health`, active backend,
+   voice count, the sha256 of `model.int8.onnx`, `tokens.txt`, `voices.bin` — and
+   asserts that the paragraph produced more audio than the one-liner, which a
+   constant-size stub cannot pass. Four checks exist only on this path, and
+   `result.json` names the revision it was taken over.
+
+Two real run failures found by running the thing, both kept in the log:
+
+- `FAIL the list shows only the key's public id, never the secret` — a defect in
+  the *assertion*, not the page: url-safe base64 secrets contain underscores, so
+  "the secret" was being read as `revealed.split("_")[2]`, a two-character
+  fragment (`d7`) that happened to occur inside an unrelated public id. The check
+  now compares the whole secret and requires the minted key's public id to be in
+  the list.
+- `FAIL the per-key breakdown … page rows 3, plane keys 1` (raised by a judge in
+  round 2) — the check counted every row of every table on the Usage page. It now
+  counts key rows in the per-key table and requires them to equal
+  `GET /v1/usage`'s `by_key` one for one.
+
+The M2 page came due as well: the citation guard refused `hosted/README.md`'s
+quoted run the moment the voices route changed `hosted/control_plane`, which is
+its job. Re-run rather than re-worded — `hermes-reports/M2-slot44-e2e-r1/`
+(217.0 s, all 11 checks, clean tree, tested `71c333962`) rendered into the page by
+`render_measured.py`, with its four WAVs and transcript committed, and the page
+above the section now points at "the run file that section names" instead of
+repeating a path. A new test refuses a page that names more than one run, because
+naming two is how this page misled its first judge (`tests/hosted/…`, 8 tests
+pass).
+
+Evidence, all taken in a fresh clone (built by the README's own `uv sync`
+command, `npm ci` for the web app):
+
+```
+Python suites, four files as the README names them: 201 passed, 2 warnings
+npm test                                        : 29 passed, 0 failed
+npm run e2e --keep  (stub engine)               : 42/42 checks
+hosted/web/e2e/real-engine.sh --keep            : 46/46 checks
+   engine sherpa-onnx, 54 voices, model hashes = the three pinned values
+   Hindi 1.83 s and 1.83 s through two voices, English 3.49 s, the queued job
+   208 characters into 16.5 s of audio, meter per workspace, key revoked refused
+```
+
+### Round 2 — JUDGE (cheap+ pass 1) — 2/4/4/5/2/4/3, FAIL
+
+Findings and what happened to each (`M3-slot44-review1.txt`, response in
+`M3-slot44-since-review1.txt`):
+
+1. stale check count in `hosted/web/README.md` ("Thirty-six" against a 40-check
+   run) — true, and worse than it looked: two different runs. The README now
+   states 42 (stub) and 46 (real engine), which run each belongs to, and why the
+   four extra exist. Both numbers came from running both paths.
+2. official judging criteria unverifiable — there are none; this is a product
+   milestone. The bundle now carries the milestone it is measured against
+   (`## V0 TOP GOAL` plus the step-by-step plan, quoted from the queue) and asks
+   for the mapping against that.
+3. D8 not demonstrated (no second round) — self-fulfilling: pass 1 *was* the
+   first round. The bundle now pastes the passes already run and the response to
+   each.
+4. real-engine replay not self-contained — fixed in the harness in round 3.
+5. evidence coverage narrower than the claims — each of the five pages is now
+   visited on its own, asserted for status 200, a heading, a Tab landing on a
+   focusable control and a visible outline, and captured as a full-page
+   screenshot (5 PNGs, 133-169 KB); focus was previously asserted on /speak only.
+6. originality 2 — the owner's, unchanged, stated in D8 before any code.
+
+### Round 3 — FIX + TEST + JUDGE (cheap+ pass 2) — 2/4/4/5/2/4/3, FAIL
+
+1. `M3-slot44-review2.txt` empty / "the second round is not supplied" — a hole in
+   the bundle (it was built to run that pass). Both passes and both responses are
+   now committed artifacts and both are pasted.
+2. stub-path evidence missing — the bundle pointed at a stub result that did not
+   exist. `M3-slot44-e2e-stub-r3.json` (42/42, engine `engine_stub.py`) is
+   committed beside the real one.
+3. external model dependency — fixed by making the script resolve the model the
+   way the hosted proof does: five places it may already be, otherwise download
+   the pinned release asset, check the three sha256 values, and start nothing
+   until they match. Never falls back to the stub. Demonstrated with the model
+   moved off the machine: one command in a fresh clone at `fe879d7ce` downloaded
+   126 MiB, verified all three files and ran 46/46 at the downloaded bytes
+   (`M3-slot44-e2e-r3/`).
+4. criteria fit 2 against M1-M7 — true of a first slice by construction; the
+   later slices are named as not built rather than stubbed. The bundle now states
+   the slice's scope and supplies the milestone.
+5. originality 2 — the owner's.
+
+### Round 4 — FIX + TEST + JUDGE (cheap+ pass 3) — 2/4/4/5/2/4/3, FAIL
+
+1. provenance mismatch: the run said "operator-supplied" while the account
+   claimed a downloaded model. This lane's labelling. `result.json` now carries
+   `engine_model_source` ("downloaded and hash-checked by this script into …") and
+   an engine label naming the backend and the model.
+2. evidence split across three revisions — all four pieces retaken in one clone
+   at one revision (`2377cfa4b`): suites 201 passed, unit 29 passed, stub 42/42,
+   real engine (downloaded) 46/46, each log recording its own revision and
+   command.
+3. reviewer path "operationally heavy — a reviewer must start three processes" —
+   misleading README: neither test path asks anyone to start anything. Both start
+   the engine, the plane and the web server themselves and stop them; the
+   three-terminal flow is for poking at the app in a browser.
+4. most of the V0 goal absent — true, unchanged, and scoped in the bundle.
+5. originality 2 — the owner's.
