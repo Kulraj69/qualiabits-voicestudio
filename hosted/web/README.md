@@ -112,6 +112,9 @@ of real time. Two knobs, if your box is slower than this one:
 `QB_E2E_SPEAK_TIMEOUT_MS` (default 20000; the script raises it to 300000) and
 `QB_E2E_UPSTREAM_TIMEOUT_SECONDS` (default 60; the script raises it to 300).
 
+`result.json` also records the revision the run was taken over and whether that
+working tree was clean, so a run and a commit can be named together.
+
 ## How it is built
 
 The app **proxies**: the browser talks to the Next server, and the Next server

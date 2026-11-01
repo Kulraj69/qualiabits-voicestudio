@@ -116,6 +116,18 @@ def test_the_quoted_run_tested_code_that_is_still_here():
     )
 
 
+def test_the_page_names_exactly_one_run():
+    """Two runs on one page is how a reader gets misled, so it is structural.
+
+    The first version of this page quoted one run in its prose and another in its
+    "Measured" section; a judge scored honesty 2/5 for it, correctly. Naming a
+    single run is now a property of the page rather than of somebody's care: the
+    prose points at "the run file that section names" instead of repeating a path.
+    """
+    found = EVIDENCE_RE.findall(readme_text())
+    assert len(found) == 1, f"the page names {len(found)} runs: {found}"
+
+
 def test_the_splice_replaces_only_the_measured_section():
     text = readme_text()
     result = json.loads(cited_evidence_path(text).read_text())

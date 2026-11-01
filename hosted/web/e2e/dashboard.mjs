@@ -40,7 +40,7 @@
  *   node e2e/dashboard.mjs --no-build # reuse an existing build
  *   node e2e/dashboard.mjs --keep     # keep e2e/.evidence and leave processes' logs
  */
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { existsSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -183,6 +183,23 @@ function sha256(file) {
   return createHash("sha256").update(readFileSync(file)).digest("hex");
 }
 
+/** The revision this run was taken over, and whether that tree was clean. */
+function repoRevision() {
+  const git = (args) => {
+    try {
+      return execFileSync("git", ["-C", REPO, ...args], { encoding: "utf8" }).trim();
+    } catch {
+      return null;
+    }
+  };
+  const status = git(["status", "--porcelain"]);
+  return {
+    tested_commit: git(["rev-parse", "HEAD"]),
+    worktree_dirty: status === null ? null : status.length > 0,
+    generated_at_utc: new Date().toISOString(),
+  };
+}
+
 /** The model the engine was pointed at, by its own bytes. */
 function modelFingerprint() {
   const directory = process.env.OMNIVOICE_SHERPA_MODEL;
@@ -261,6 +278,7 @@ async function main() {
     engine_command: ENGINE_CMD || null,
     engine_is_stub: !ENGINE_CMD,
     engine_model: modelFingerprint(),
+    revision: repoRevision(),
     browser: "",
     deployed: false,
     public_url: null,
