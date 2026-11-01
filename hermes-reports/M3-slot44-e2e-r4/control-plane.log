@@ -1,0 +1,65 @@
+INFO:     Started server process [1593022]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:34351 (Press CTRL+C to quit)
+INFO:     127.0.0.1:35284 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35296 - "GET /healthz/upstream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "POST /v1/workspaces HTTP/1.1" 201 Created
+INFO:     127.0.0.1:57524 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57524 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34936 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34936 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57512 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:34936 - "POST /v1/audio/speech HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "POST /v1/audio/speech HTTP/1.1" 400 Bad Request
+INFO:     127.0.0.1:41030 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "POST /v1/api-keys HTTP/1.1" 201 Created
+INFO:     127.0.0.1:41030 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "DELETE /v1/api-keys/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/api-keys HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41044 - "POST /v1/audio/speech HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41058 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41044 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34936 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/voices HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41044 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "POST /v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "DELETE /v1/jobs/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41044 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "POST /v1/jobs HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs?limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48794 - "GET /v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41030 - "GET /v1/jobs/2/audio HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1593022]

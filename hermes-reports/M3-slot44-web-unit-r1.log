@@ -1,37 +1,39 @@
 # node --test, the dashboard's own unit checks
-# revision: 618584f389afc607f80bc419822fd00e6bcc0161
+# clone:    /workspace/qs-m3-clean
+# revision: 2377cfa4bbdc9c05cdbe5e1af1fc55a8ceba7d1a
+# command:  npm test
 
 npm notice run qualiabits-voice-web@0.1.0 test
 npm notice run node --test test/
-✔ the base URL defaults to the local control plane on loopback (2.017602ms)
-✔ the base URL is trimmed of trailing slashes so joins never double up (0.321885ms)
-✔ paths join onto the base, with or without a leading slash (1.763868ms)
-✔ an error detail is read from the plane's own body, verbatim (0.426657ms)
-✔ a nested detail object yields its inner sentence (0.266214ms)
-✔ an empty body yields the fallback rather than an empty string (0.284865ms)
-✔ a credential cookie is httpOnly unless told otherwise (2.369927ms)
-✔ the workspace cookie can be made readable, and carries no secret (0.414377ms)
-✔ Secure is opt-in, because the local dashboard is plain http (4.086755ms)
-✔ clearing a cookie sets Max-Age=0 (0.478927ms)
-✔ workspace fields round-trip through the cookie value (1.442833ms)
-✔ a malformed or id-less workspace cookie decodes to null, never a fake id (0.984155ms)
-✔ an unmeasured duration is a dash, never a zero standing in for unknown (2.172684ms)
-✔ a measured duration keeps three decimals, trimmed (1.993081ms)
-✔ sub-second audio is not rounded away to zero (0.304035ms)
-✔ byte and count formatting is thousands-separated, dashes when unknown (66.39905ms)
-✔ a key is only ever shown as its public id (0.486167ms)
-✔ job statuses read as the five the plane defines (0.395767ms)
-✔ only the three terminal statuses stop the page polling (0.394196ms)
-✔ a missing timestamp is a dash; a real one is rendered (10.179011ms)
-✔ groups voices by the kind the plane reported (3.14658ms)
-✔ filtering by a language the plane named keeps only those voices (0.483738ms)
-✔ a voice with no language is never guessed into a language bucket (0.286045ms)
-✔ language options are the distinct named languages, deduplicated (0.407507ms)
-✔ the first-selected voice is the engine's own default, never the first row (0.363526ms)
-✔ with no default marked, the first engine voice leads; then the first row (0.338566ms)
-✔ the catalogue heading names the kinds the plane reported (0.563968ms)
-✔ an unreachable engine is described as unreachable, not as zero voices (0.255234ms)
-✔ a missing catalogue is described without inventing one (0.704541ms)
+✔ the base URL defaults to the local control plane on loopback (1.970311ms)
+✔ the base URL is trimmed of trailing slashes so joins never double up (0.376596ms)
+✔ paths join onto the base, with or without a leading slash (1.990261ms)
+✔ an error detail is read from the plane's own body, verbatim (0.534549ms)
+✔ a nested detail object yields its inner sentence (0.298645ms)
+✔ an empty body yields the fallback rather than an empty string (0.305215ms)
+✔ a credential cookie is httpOnly unless told otherwise (2.033622ms)
+✔ the workspace cookie can be made readable, and carries no secret (0.417996ms)
+✔ Secure is opt-in, because the local dashboard is plain http (4.694114ms)
+✔ clearing a cookie sets Max-Age=0 (0.544148ms)
+✔ workspace fields round-trip through the cookie value (1.618456ms)
+✔ a malformed or id-less workspace cookie decodes to null, never a fake id (0.511248ms)
+✔ an unmeasured duration is a dash, never a zero standing in for unknown (2.060972ms)
+✔ a measured duration keeps three decimals, trimmed (4.303618ms)
+✔ sub-second audio is not rounded away to zero (0.370356ms)
+✔ byte and count formatting is thousands-separated, dashes when unknown (30.097966ms)
+✔ a key is only ever shown as its public id (0.447047ms)
+✔ job statuses read as the five the plane defines (0.366986ms)
+✔ only the three terminal statuses stop the page polling (0.337766ms)
+✔ a missing timestamp is a dash; a real one is rendered (9.109004ms)
+✔ groups voices by the kind the plane reported (3.048598ms)
+✔ filtering by a language the plane named keeps only those voices (0.565699ms)
+✔ a voice with no language is never guessed into a language bucket (0.260824ms)
+✔ language options are the distinct named languages, deduplicated (0.431037ms)
+✔ the first-selected voice is the engine's own default, never the first row (0.318485ms)
+✔ with no default marked, the first engine voice leads; then the first row (0.361156ms)
+✔ the catalogue heading names the kinds the plane reported (0.533029ms)
+✔ an unreachable engine is described as unreachable, not as zero voices (0.310705ms)
+✔ a missing catalogue is described without inventing one (0.731312ms)
 ℹ tests 29
 ℹ suites 0
 ℹ pass 29
@@ -39,4 +41,4 @@ npm notice run node --test test/
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 601.997953
+ℹ duration_ms 582.658699

@@ -157,8 +157,8 @@ def stub_summary(path: Path) -> str:
 
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
-    evidence = REPORTS / "M3-slot44-e2e-r3" / "result.json"
-    stub = REPORTS / "M3-slot44-e2e-stub-r2.json"
+    evidence = REPORTS / "M3-slot44-e2e-r4" / "result.json"
+    stub = REPORTS / "M3-slot44-e2e-stub-r3.json"
     tests = REPORTS / "M2-slot44-clean-tests-r1.log"
     unit = REPORTS / "M3-slot44-web-unit-r1.log"
 

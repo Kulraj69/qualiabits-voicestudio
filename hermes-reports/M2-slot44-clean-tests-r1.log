@@ -1,37 +1,12 @@
 # clean-clone replay of the hosted proof's suites
 # clone:    /workspace/qs-m3-clean (fresh clone of Kulraj69/qualiabits-voicestudio work/m1-headless)
-# revision: 618584f389afc607f80bc419822fd00e6bcc0161
+# revision: 2377cfa4bbdc9c05cdbe5e1af1fc55a8ceba7d1a
 # command:  .venv/bin/python -m pytest tests/hosted tests/test_qualibits_voice_docs.py tests/test_sherpa_kokoro_and_speaker.py tests/test_headless_baseline.py -q
 # venv:     built by the README's own command (uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12)
 
 ........................................................................ [ 35%]
-..................................................F..................... [ 71%]
+........................................................................ [ 71%]
 .........................................................                [100%]
-=================================== FAILURES ===================================
-_______________ test_the_bundle_pastes_every_log_the_page_names ________________
-
-    def test_the_bundle_pastes_every_log_the_page_names():
-        """Artifact 6 must carry all of them, not just the suite logs.
-    
-        A judge pass scored the reviewer path down for exactly this: the page sent a
-        reader to the demo transcript, and the bundle the judge was given did not
-        contain it, so the one thing the page promised could not be checked.
-        """
-        module = builder_module()
-        named = set(re.findall(r"hermes-reports/[A-Za-z0-9._/-]+\.log", README.read_text()))
-        assert named, "the page names no log at all"
-        cited = set(module.cited_logs())
-        missing = sorted(name for name in named if name not in cited)
->       assert missing == [], (
-            f"the page names {missing} and the bundle would not include them"
-        )
-E       AssertionError: the page names ['hermes-reports/M2-slot44-clean-tests-r1.log'] and the bundle would not include them
-E       assert ['hermes-repo...tests-r1.log'] == []
-E         
-E         Left contains one more item: 'hermes-reports/M2-slot44-clean-tests-r1.log'
-E         Use -v to get more diff
-
-tests/hosted/test_review_bundle_is_faithful.py:189: AssertionError
 =============================== warnings summary ===============================
 tests/hosted/conftest.py:28
   /workspace/qs-m3-clean/tests/hosted/conftest.py:28: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
@@ -42,6 +17,4 @@ tests/test_sherpa_kokoro_and_speaker.py::test_a_configured_kokoro_model_publishe
     import audioop
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-FAILED tests/hosted/test_review_bundle_is_faithful.py::test_the_bundle_pastes_every_log_the_page_names
-1 failed, 200 passed, 2 warnings in 52.11s
+201 passed, 2 warnings in 51.61s
