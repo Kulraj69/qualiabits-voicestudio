@@ -150,11 +150,14 @@ file job1.wav        # RIFF 24 kHz mono; sha256 matches the job's own receipt
 curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
 ```
 
-What a pass looks like: the "Measured" section below, which quotes
-`hermes-reports/M2-slot27-e2e-r4/result.json` — a clone of the pushed revision, so
-the run and the page describe the same code. The two earlier runs (`-r1/`, which
-failed on a comparison this page's author wrote wrong, and `-r2`/`-r3`, from the
-working tree) are kept beside it.
+What a pass looks like: the "Measured" section below, rendered from
+`hermes-reports/M2-slot30-e2e-r1/result.json` — a run taken over a clean tree at
+the pushed revision, whose manifest hashes every tracked file so the page and the
+run cannot describe different code. The earlier runs are kept beside it and are
+labelled in their own files: `-r1` failed on a comparison the page's author wrote
+wrong, `-r2`/`-r3` came from a working tree, and one run of this slot was thrown
+away because writing the evidence into the repository made the run report itself
+dirty — which is why the evidence directory now lives outside the checkout.
 
 ## How it is put together
 
@@ -311,10 +314,15 @@ port, a real SQLite file, real threads racing for the same jobs.
   bucket that does not exist.
 - `test_readme_measured_is_generated.py` — the page's Measured section is what
   `hosted/scripts/render_measured.py` renders from the run file the page cites, the
-  cited run was taken over a clean tree, and the code it measured has not changed
-  since. This suite exists because that page once quoted one run while the bundle
-  beside it was another; a stranger should not have to notice that, and a test
-  should not let it happen again.
+  cited run was taken over a clean tree, the run's own manifest accounts for every
+  tracked entry and every hash in it matches the bytes of that path in the commit the
+  run names, and the code it measured has not changed since. The last two are why
+  this suite's header says a judge was right to refuse `"worktree_dirty": false` on
+  its own: that field is the harness describing itself, while the manifest is checked
+  against git and fails if the run hashed anything the commit does not contain. This
+  suite exists because that page once quoted one run while the bundle beside it was
+  another; a stranger should not have to notice that, and a test should not let it
+  happen again.
 - `test_hosted_jobs.py` — queue, worker, stored audio, meter, isolation of job ids,
   every refusal boundary (400 empty, 413 at 20,001, 422 past the body backstop),
   cancellation, and a job that survives a plane restart.
@@ -345,30 +353,41 @@ counters, the model file hashes and the commit the run tested.
 
 ## Measured
 
-From `hermes-reports/M2-slot27-e2e-r4/result.json` — engine, plane and worker processes all started fresh by the
+From `hermes-reports/M2-slot30-e2e-r1/result.json` — engine, plane and worker processes all started fresh by the
 harness on one CPU box (x86_64, 2 CPUs, Python 3.12.3, no
 GPU). The section is rendered from that file by
 `hosted/scripts/render_measured.py`, and a test fails if the page and the file
 disagree. The run records the commit it tested
-(fe71b3bef, worktree clean) and the model hashes below.
+(9ee0308f5, worktree clean), the model hashes below, and the
+sha256 of every tracked file as it was at run time -- so a run over edited code
+cannot pass itself off as a run of the pushed revision.
+
+To reproduce it, point the harness at a directory outside this checkout: an
+evidence directory inside the repository is untracked, so the run would report
+itself dirty and its numbers would be worth less than these.
+
+```sh
+.venv/bin/python hosted/scripts/hosted_e2e.py \
+  --output /tmp/hosted-evidence-run --model /path/to/kokoro-int8-multi-lang-v1_0
+```
 
 ```
-engine ready 10.3 s   control plane ready 12.1 s   whole run 256.6 s
+engine ready 10.5 s   control plane ready 12.4 s   whole run 210.2 s
 every process it started: clean shutdown
 
 three direct requests through the control plane, workspace A:
-  hf_alpha  hi   1.832 s audio, 24 kHz mono, peak 0.80   engine took 19.6 s
-  hm_omega  hi   1.826 s audio, 24 kHz mono, peak 0.76   engine took 10.4 s
-  hf_alpha  en   3.491 s audio, 24 kHz mono, peak 0.79   engine took 18.9 s
+  hf_alpha  hi   1.829 s audio, 24 kHz mono, peak 0.80   engine took 19.2 s
+  hm_omega  hi   1.829 s audio, 24 kHz mono, peak 0.79   engine took 10.8 s
+  hf_alpha  en   3.508 s audio, 24 kHz mono, peak 0.79   engine took 17.4 s
   plus one request for a voice the model does not have, refused 400 by the
   engine and passed through with the engine's own message naming its 54 voices.
 
 one queued job, spoken by a separate worker process (run_worker.py --once):
-  job 1  hm_omega  hi   208 characters -> 16.460 s of 24 kHz mono audio,
-                         790,136 bytes, engine took 125.7 s
+  job 1  hm_omega  hi   208 characters -> 16.459 s of 24 kHz mono audio,
+                         790,096 bytes, engine took 105.1 s
   worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
   the object on disk, the job's receipt and the download all hash to
-  0d11a77e418e2d95ce7f7c192ddbab7012215e4272d418bd0ec613fbb434d872
+  b62703902d8e78d82d27fcd0b178bb29606edcd2a9835615a4d6c0e3adcf5cfd
 
 one refused job (a voice the model does not have):
   failed 400 after 1 attempt, no retry, no audio served (409), error is the
@@ -376,28 +395,28 @@ one refused job (a voice the model does not have):
 one cancelled job:
   never claimed by the next worker pass, and it moved the meter by nothing
 
-meter for A, at the end of the run: 6 requests, 388 characters, 23.609 s audio,
-              1,133,416 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+meter for A, at the end of the run: 6 requests, 388 characters, 23.625 s audio,
+              1,134,180 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
               requests_without_audio_seconds 2
-              by_key: one key, label "a", same 6 requests and 23.609 s
+              by_key: one key, label "a", same 6 requests and 23.625 s
 meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
 
 same English request straight at the engine, for comparison:
-  direct 3.487 s / 167,426 bytes   through the plane 3.491 s / 167,618 bytes
+  direct 3.511 s / 168,562 bytes   through the plane 3.508 s / 168,406 bytes
 
 the engine's refusal for an unknown voice, taken both ways:
   sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
 
 engine seconds spent per second of speech, the number that decides whether this
 is sellable on a box like this one:
-  hindi_hf_alpha     10.7 s
-  hindi_hm_omega     5.7 s
-  english            5.4 s
+  hindi_hf_alpha     10.5 s
+  hindi_hm_omega     5.9 s
+  english            5.0 s
 ```
 
 The English lines differ because the engine samples: the two numbers above are the
 same request taken both ways, and they differ by
-192 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
+156 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
 computes deterministically: its refusal, checked against the real engine on every
 run; the 200 path is compared against a deterministic stub in the unit suite.
 
@@ -406,7 +425,7 @@ downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); 
 recorded the same hashes plus the commit it tested, in the same file.
 
 The CPU is not production, and the rates above are the clearest evidence of it: the
-queued job spent 125.7 s of engine time on 16.460 s of audio, about 7.6 s
+queued job spent 105.1 s of engine time on 16.459 s of audio, about 6.4 s
 per second. That is why the GPU run is the owner's to approve, and exactly what
 this layer cannot work around — the plane can hold a request open for a paragraph,
 but nothing here makes the engine faster.

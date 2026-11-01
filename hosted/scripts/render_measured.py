@@ -77,7 +77,18 @@ harness on one CPU box ({result['host']['machine']}, {result['host']['cpu_count'
 GPU). The section is rendered from that file by
 `hosted/scripts/render_measured.py`, and a test fails if the page and the file
 disagree. The run records the commit it tested
-({revision['tested_commit'][:9]}, worktree {"dirty" if revision["worktree_dirty"] else "clean"}) and the model hashes below.
+({revision['tested_commit'][:9]}, worktree {"dirty" if revision["worktree_dirty"] else "clean"}), the model hashes below, and the
+sha256 of every tracked file as it was at run time -- so a run over edited code
+cannot pass itself off as a run of the pushed revision.
+
+To reproduce it, point the harness at a directory outside this checkout: an
+evidence directory inside the repository is untracked, so the run would report
+itself dirty and its numbers would be worth less than these.
+
+```sh
+.venv/bin/python hosted/scripts/hosted_e2e.py \\
+  --output /tmp/hosted-evidence-run --model /path/to/kokoro-int8-multi-lang-v1_0
+```
 
 ```
 engine ready {result['engine_ready_seconds']:.1f} s   control plane ready {result['plane_ready_seconds']:.1f} s   whole run {result['elapsed_seconds']:.1f} s
