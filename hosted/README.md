@@ -13,8 +13,9 @@ git clone https://github.com/Kulraj69/qualiabits-voicestudio.git
 cd qualiabits-voicestudio
 uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
 
-# about 25 seconds, no model, no download: the tests. Everything is real except the
-# engine, which is a stub answering with a WAV of a known duration.
+# about half a minute (30-35 s on the box the numbers below came from), no model and
+# no download: the tests. Everything is real except the engine, which is a stub
+# answering with a WAV of a known duration.
 .venv/bin/python -m pytest tests/hosted -q
 
 # about 4 minutes on a small CPU box: the whole product, on the real engine. One
@@ -57,7 +58,7 @@ small CPU box — the queued job is the slow part, because this engine spends se
 of CPU per second of speech. Evidence lands in whatever work directory you pass
 (`.hosted-demo` by default).
 
-The tests are the faster path and need no model at all, about twenty-five seconds:
+The tests are the faster path and need no model at all — 30 to 35 seconds, measured:
 
 ```sh
 .venv/bin/python -m pytest tests/hosted -q
@@ -193,7 +194,7 @@ Four decisions carry this layer, each with its reason and its test written up in
 ## Testing
 
 
-Fast path, no model download, about twenty-five seconds:
+Fast path, no model download, 30 to 35 seconds on this box:
 
 ```sh
 .venv/bin/python -m pytest tests/hosted -q
