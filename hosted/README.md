@@ -19,13 +19,18 @@ uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
 .venv/bin/python -m pytest tests/hosted -q
 
 # about 4 minutes on a small CPU box: the whole product, on the real engine. One
-# command — it finds or downloads the 132 MB model, hash-checks its bytes, starts the
+# command — it finds or downloads the Kokoro bundle (132,353,410 bytes to download,
+# which is the release asset's own Content-Length; 189,881,734 bytes unpacked, both
+# recorded with the commands that measured them in
+# hermes-reports/M2-slot32-model-bytes.txt), hash-checks its files, starts the
 # engine, the plane and a worker, runs the proof, stops them, and prints what passed.
 hosted/scripts/hosted_demo.sh
 ```
 
 The first is the honest short path for a reviewer on a timer; the second is the one
-that proves audio comes out, and the four WAVs it produces are committed under
+that proves audio comes out. It starts everything on reserved loopback sockets,
+leaves nothing running, and drops its evidence in the directory you pass
+(`.hosted-demo` by default); the four WAVs it produces are committed under
 `hermes-reports/` if you would rather just listen. The run that produced the numbers
 under "Measured" is committed there too, and the reasoning behind the design is in
 [`hosted/DESIGN.md`](DESIGN.md).
@@ -41,27 +46,6 @@ hosted/scripts/run_worker.py  the worker as a process, for a deployment or --onc
 hosted/scripts/hosted_demo.sh one command around all of it, with the model handling
 hosted/DESIGN.md              why it is shaped this way, and what each choice cost
 tests/hosted/                 its tests
-```
-
-## See it work, one command
-
-
-```sh
-hosted/scripts/hosted_demo.sh
-```
-
-It finds the Kokoro bundle (or downloads it and checks three sha256 values against
-pinned ones), verifies the model bytes, then starts the engine, the plane and the
-worker on reserved loopback sockets, runs the whole proof, stops them, and prints
-what passed. Nothing to start by hand, nothing left running. Several minutes on a
-small CPU box — the queued job is the slow part, because this engine spends seconds
-of CPU per second of speech. Evidence lands in whatever work directory you pass
-(`.hosted-demo` by default).
-
-The tests are the faster path and need no model at all — 30 to 35 seconds, measured:
-
-```sh
-.venv/bin/python -m pytest tests/hosted -q
 ```
 
 ## What it does today
@@ -193,51 +177,47 @@ Four decisions carry this layer, each with its reason and its test written up in
 
 ## Testing
 
+The same fast path as at the top, and what it covers. No model download, 30 to 35
+seconds. Seven test files and two substitutions. The first substitution is the engine:
+a real ASGI app answering with a WAV of a known duration, so the meter is checked
+against audio rather than against a number the test invented. The second is the
+object store's S3 path, which runs against a local S3-compatible server on loopback
+(moto, started in process) so the client really signs requests and objects really
+cross a socket — still not S3, still not a bucket, and the storage suite says which
+of its cases are which. Everything else is real: real connection refusals against a
+closed loopback port, a real SQLite file, real threads racing for the same jobs.
 
-Fast path, no model download, 30 to 35 seconds on this box:
-
-```sh
-.venv/bin/python -m pytest tests/hosted -q
-```
-
-Seven test files and two substitutions. The first is the engine: a real ASGI app
-answering with a WAV of a known duration, so the meter is checked against audio
-rather than against a number the test invented. The second is the object store's S3
-path, which runs against a local S3-compatible server on loopback (moto, started in
-process) so the client really signs requests and objects really cross a socket —
-still not S3, still not a bucket, and the storage suite says which of its cases are
-which. Everything else is real: real connection refusals against a closed loopback
-port, a real SQLite file, real threads racing for the same jobs.
-
-- `test_hosted_accounts.py` / `test_hosted_metering.py` — signup, login, session
-  expiry, key lifecycle, revocation, cross-workspace isolation, every malformed
+- `test_hosted_accounts.py`, `test_hosted_metering.py` — signup, login, session
+  expiry, keys minted, listed, revoked, cross-workspace isolation, every malformed
   credential, the engine's errors passed through, timeouts, 502s, input that never
   reaches the engine, and the two real bugs slice A hit.
 - `test_hosted_storage.py` — content addressing, one object for identical bytes,
   atomic writes with no `.part` left behind, a corrupt object refused rather than
-  served, traversal-shaped keys refused, the S3 backend refusing when misconfigured,
-  the service's checksum checked against the digest the key was built from, a
-  same-size wrong-bytes upload caught by reading the object back, and four cases on a
-  real socket against a local S3-compatible server: store, read back, an object that
-  no longer matches its name, and a bucket that does not exist.
-- `test_readme_measured_is_generated.py` — the page's Measured section is what
-  `hosted/scripts/render_measured.py` renders from the run file the page cites; the
-  cited run was taken over a clean tree; the run's manifest accounts for every tracked
-  entry and every hash in it matches that path in the commit the run names; and the
-  code it measured has not changed since. The manifest check is the part that does the
-  work: `"worktree_dirty": false` is a field the harness writes about itself, while
-  the manifest is checked against git and fails if the run hashed anything the commit
-  does not contain — including if it hashed a file the commit never tracked. There is
-  also a test that a tampered manifest is refused.
-- `test_hosted_jobs.py` — queue, worker, stored audio, meter, isolation of job ids,
-  every refusal boundary (400 empty, 413 at 20,001, 422 past the body backstop),
-  cancellation, and a job that survives a plane restart.
-- `test_hosted_queue.py` — four threads racing for twelve jobs, leases that expire
-  and are reclaimed, a dead worker's last attempt swept into `failed` instead of
-  hanging, a worker that lost its lease being unable to overwrite the new owner's
-  result, retries that stay bounded, and characters counted once across them.
+  served, traversal-shaped keys refused, the service's checksum checked against the
+  digest the key was built from, a same-size wrong-bytes upload caught by reading the
+  object back, and four cases over a real socket against a local S3-compatible server:
+  store, read back, an object that no longer matches its name, and a missing bucket.
+- `test_hosted_jobs.py`, `test_hosted_queue.py` — queue, worker, stored audio, meter,
+  isolation of job ids, every refusal boundary (400 empty, 413 at 20,001, 422 past the
+  body backstop), cancellation, a job that survives a plane restart, four threads
+  racing for twelve jobs, leases that expire and are reclaimed, a dead worker's last
+  attempt swept into `failed`, a worker that lost its lease unable to overwrite the
+  new owner's result, and characters counted once across retries.
 - `test_hosted_migrations.py` — fresh create, in-place upgrade with the rows intact,
   idempotent re-run, and refusals for unknown and newer schemas.
+- `test_readme_measured_is_generated.py` — the page's Measured section is what
+  `hosted/scripts/render_measured.py` renders from the run file the page cites, the
+  cited run was taken over a clean tree, the run's manifest accounts for every tracked
+  entry with a hash that matches that path in the commit the run names, and the code it
+  measured has not changed since. The manifest check is the part that does the work:
+  `"worktree_dirty": false` is a field the harness writes about itself, while the
+  manifest is compared against git — including a test that a tampered manifest is
+  refused.
+- `test_review_bundle_is_faithful.py` — the judge bundle's own listing of the committed
+  audio is checked against the files and against the receipts in the run it quotes, and
+  a bundle that would contradict its receipts is refused rather than written. It exists
+  because a review pass found the bundle reporting those files at twice their real
+  length, which is the kind of thing that makes a judge distrust everything beside it.
 
 The end-to-end run is the other half — the one-command script at the top calls
 it, and this is it directly when you already have a model directory:

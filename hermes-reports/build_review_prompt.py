@@ -24,11 +24,23 @@ ROOT = Path(__file__).resolve().parents[1]
 ROUND = sys.argv[1] if len(sys.argv) > 1 else "2"
 TAG = sys.argv[2] if len(sys.argv) > 2 else "slot32"
 README = ROOT / "hosted/README.md"
-RUBRIC = Path("/workspace/devpost/JUDGE-RUBRIC.md").read_text()
+RUBRIC_PATH = Path("/workspace/devpost/JUDGE-RUBRIC.md")
 TEST_COMMAND = (
     ".venv/bin/python -m pytest tests/hosted tests/test_qualibits_voice_docs.py "
     "tests/test_sherpa_kokoro_and_speaker.py tests/test_headless_baseline.py -q"
 )
+
+
+def rubric_text() -> str:
+    """The judge's rubric, or a refusal.
+
+    Read when a bundle is built rather than at import: the file lives outside this
+    repository, and a bundle that quietly left the rubric out would be a worse
+    artifact than one that did not get written.
+    """
+    if not RUBRIC_PATH.is_file():
+        raise SystemExit(f"the judge rubric is not on this machine ({RUBRIC_PATH})")
+    return RUBRIC_PATH.read_text()
 
 
 def quoted_run() -> Path:
@@ -56,10 +68,60 @@ def cited_logs() -> list[str]:
     return names or ["hermes-reports/M2-slot32-clean-tests.log"]
 
 
+def shown(path: Path) -> str:
+    """A path as it should be printed: relative to the repository when it is inside.
+
+    Real evidence lives in the repository (the harness writes its run outside a
+    checkout and it is copied in), so most of the time this is just the relative
+    path. It is written as a helper because a bundle built against a directory
+    outside the repository used to die with a ValueError instead of printing it,
+    which is a listing refusing to report rather than reporting something odd.
+    """
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def audio_dir_for(evidence: Path) -> str:
+    """The audio directory of the run the page quotes, as the bundle must name it.
+
+    Built from that run, not typed in: an earlier bundle's heading named one run's
+    audio directory while the page quoted a different run's file, which is the same
+    contradiction as quoting the wrong result.json, only harder to notice.
+    """
+    return shown(evidence.parent / "audio")
+
+
 def shell(command: str) -> str:
     return subprocess.run(
         ["bash", "-lc", f"cd {ROOT} && {command}"], capture_output=True, text=True
     ).stdout
+
+
+def audio_receipts(evidence: Path) -> dict[str, tuple[str, float]]:
+    """sha256 of a WAV -> (what that receipt is, the seconds it reports).
+
+    Both places a duration is written down: each direct speech request and the
+    queued job. A duration on disk that disagrees with the receipt for the same
+    bytes is a contradiction, and this bundle exists to be checked against itself.
+    """
+    import hashlib
+    import json as _json
+
+    result = _json.loads(evidence.read_text())
+    receipts: dict[str, tuple[str, float]] = {}
+    for entry in result.get("speech", []):
+        digest, seconds = entry.get("sha256"), entry.get("seconds")
+        if digest and seconds is not None:
+            receipts[digest] = (
+                f"a direct request, voice {entry.get('voice')}, {entry.get('language')}",
+                float(seconds),
+            )
+    job = result.get("job") or {}
+    if job.get("sha256") and job.get("seconds") is not None:
+        receipts[job["sha256"]] = ("the queued job's own receipt", float(job["seconds"]))
+    return receipts
 
 
 def committed_audio(evidence: Path) -> str:
@@ -69,24 +131,54 @@ def committed_audio(evidence: Path) -> str:
     show that, and a claim the bundle cannot show is a claim the judge is right to
     refuse. So the files, their lengths, their sample rates and their hashes are
     pasted here, and `git ls-files` says whether git really tracks them.
+
+    Two ways this listing lied once, both fixed where they can be tested rather
+    than described:
+
+      * the duration came from the frame count read at the wrong header offset,
+        so every file was reported as twice its real length while the receipts
+        beside it said otherwise (judge pass 5f, honesty 2/5);
+      * the heading above the listing named one run's audio directory while the
+        page quoted another's, so the section title is built from the run the
+        page cites instead of being typed in.
+
+    A file whose bytes match a receipt in `result.json` is checked against the
+    duration that receipt reports. If they disagree the builder stops instead of
+    handing a judge a bundle that contradicts itself.
     """
     import hashlib
-    import struct
+    import wave
 
     folder = evidence.parent / "audio"
     if not folder.is_dir():
-        return f"# no audio directory beside {evidence.relative_to(ROOT)}"
-    rows = []
+        return f"# no audio directory beside {shown(evidence)}"
+    receipts = audio_receipts(evidence)
+    rows, disagreements = [], []
     for wav in sorted(folder.glob("*.wav")):
         data = wav.read_bytes()
-        channels, rate = struct.unpack_from("<HI", data, 22)
-        frames = struct.unpack_from("<I", data, 40)[0]
+        with wave.open(str(wav)) as handle:
+            channels, rate, frames = (
+                handle.getnchannels(), handle.getframerate(), handle.getnframes(),
+            )
+        seconds = frames / rate
+        digest = hashlib.sha256(data).hexdigest()
+        named = receipts.get(digest)
+        if named and abs(seconds - named[1]) > 0.002:
+            disagreements.append(
+                f"{wav.name} holds {seconds:.3f} s of audio, but {named[0]} in "
+                f"result.json says {named[1]:.3f} s for those same bytes"
+            )
         rows.append(
-            f"{wav.relative_to(ROOT)}  {len(data):,} bytes  "
-            f"sha256:{hashlib.sha256(data).hexdigest()[:16]}…  "
-            f"{channels}ch {rate} Hz {frames / rate:.3f} s"
+            f"{shown(wav)}  {len(data):,} bytes  "
+            f"sha256:{digest[:16]}…  "
+            f"{channels}ch {rate} Hz {seconds:.3f} s"
         )
-    tracked = shell(f"git ls-files {folder.relative_to(ROOT)}").strip().splitlines()
+    if disagreements:
+        raise SystemExit(
+            "this bundle would contradict the run it quotes; fix the run or the "
+            "listing before showing it to a judge:\n  " + "\n  ".join(disagreements)
+        )
+    tracked = shell(f"git ls-files {shown(folder)}").strip().splitlines()
     return (
         "\n".join(rows)
         + f"\n\n# git ls-files reports {len(tracked)} tracked file(s) under that directory:"
@@ -150,6 +242,9 @@ def main() -> int:
     )
     audio = committed_audio(evidence_path)
     receipts = audio_receipt_links(evidence_path)
+    audio_dir = audio_dir_for(evidence_path)
+    sizes = (ROOT / "hermes-reports/M2-slot32-model-bytes.txt")
+    model_bytes = sizes.read_text() if sizes.is_file() else f"# {sizes.name} is missing"
     code = {
         path: (ROOT / path).read_text()
         for path in (
@@ -163,7 +258,7 @@ def main() -> int:
     }
     prompt = f"""You are a strict hackathon judge. Score the work below 1 to 5 on each of the seven criteria in the rubric, and be hard to please. Do not trust any summary: score what the artifacts show. If a claim is not backed by the artifacts, say so and treat it as an honesty flaw.
 
-{RUBRIC}
+{rubric_text()}
 
 === SETTING ===
 This is not a hackathon entry: it is a product milestone (M2 slice B) for QualiaBits Voice, a hosted speech product built on a fork of VoiceStudio. Criteria fit is therefore measured against the product plan: M2 is "wrap the local engine's API as a hosted service: auth (email login), workspaces, API keys, per-workspace job queue + storage (S3), usage metering. No desktop/Electron in the hosted path." Slice A (auth, workspaces, API keys, metering, a metered passthrough of the speech route) is already built and pushed. This milestone is slice B: object storage and the per-workspace job queue, plus the migration path slice A admitted it lacked. Billing, email verification and deployment are explicitly NOT in this slice.
@@ -194,13 +289,16 @@ $ {TEST_COMMAND}
 === ARTIFACT 6: the clean-clone suite runs the page names, pasted from those files ===
 {clean_log}
 
-=== ARTIFACT 7: every committed file under hermes-reports/M2-slot32-e2e-r5/audio/, with the size, the sample format and the hash of the bytes on disk, plus what git tracks and which receipt in result.json names those same bytes (so the page's claim that the audio is committed, and is the audio that run produced, is checkable here rather than asserted) ===
+=== ARTIFACT 7: every committed file under {audio_dir}/, with the size, the sample format and the hash of the bytes on disk, plus what git tracks and which receipt in result.json names those same bytes (so the page's claim that the audio is committed, and is the audio that run produced, is checkable here rather than asserted) ===
 {audio}
 
 Which committed WAV is the same bytes as a receipt in result.json:
 {receipts}
 
-=== ARTIFACT 8: the source, verbatim ===
+=== ARTIFACT 8: the sizes the page's setup paragraph quotes, as recorded on a real box (the download by the release asset's own Content-Length and the local tarball's byte count and hash, the unpacked directory by du) ===
+{model_bytes}
+
+=== ARTIFACT 9: the source, verbatim ===
 """ + "\n\n".join(f"--- {path} ---\n{text}" for path, text in code.items())
 
     out = ROOT / "hermes-reports" / f"M2-{TAG}-review{ROUND}-prompt.txt"
