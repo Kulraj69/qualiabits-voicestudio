@@ -1,0 +1,47 @@
+1. Originality: 3/5  
+   A speech SaaS control plane with auth, metering, object storage, queues, and workers is competent but familiar. The strongest memorable element is the evidence-integrity chain tying the README to a clean-clone run and commit manifest, not the product itself.
+
+2. Taste: 4/5  
+   The architecture and naming are deliberate: “claim,” “lease,” “settle,” “stored object,” and the two meter counters are clear. The README is unusually careful, but it is still dense and tries to serve as product page, operational guide, benchmark report, architecture note, and limitations register at once.
+
+3. Human feel: 4/5  
+   The writing has a specific engineering voice, especially in phrases such as “a job is a row rather than a thread” and “not diligence.” The explicit Hermes authorship disclosure is authentic. It loses a point for repeated explanatory asides, long parentheticals, em-dash-heavy prose, and documentation density that reads partly optimized for judging.
+
+4. Technical depth: 4/5  
+   The hard parts are real: compare-and-swap claiming, leases, retries, terminal-attempt sweeping, per-job metering, verified content-addressed storage, migrations, cross-workspace isolation, and a separate worker process. The supplied run reports 187 passing tests and a 248.9-second end-to-end proof. I withhold a 5 because the supplied output does not show the individual S3 emulator tests or their cases passing; that evidence is asserted by the documentation and aggregate count rather than demonstrated directly.
+
+5. Criteria fit: 4/5  
+   Against the stated M2 slice-B plan, there is evidence for:
+   - object storage: local end-to-end storage plus S3 implementation and emulator tests;
+   - per-workspace queue: real worker process, leases, retries, cancellation, isolation;
+   - migration path: m2a1 → m2b1 tests preserving existing data;
+   - slice-A compatibility: auth, keys, metering, and passthrough remain exercised.
+
+   Billing, email verification, deployment, GPU operation, real S3, and customer use are explicitly absent and correctly treated as out of scope or owner actions. No separate official judging-criteria or sponsor-prize rules artifact is supplied, so those requirements cannot be independently mapped.
+
+6. Reviewer path: 4/5  
+   The README gives a concrete fresh-clone command, a fast test path, a full demo path, expected duration, model download behavior, and named receipts. The clean-clone logs support the path. The deduction is practical: the “few minutes” path requires `uv`, Python 3.12, network access, a 132 MB model download, and roughly four minutes of CPU execution; there is no lightweight pre-recorded interactive demonstration beyond committed WAVs.
+
+7. Honesty: 4/5  
+   This is the strongest area. The work clearly says it is not deployed, has no public URL, no GPU run, no real S3 bucket, no customer, no sale, no listening check, and no accepted model terms. The run manifest, hashes, committed WAVs, and failure history are unusually good evidence practice. I withhold a 5 because the supplied artifacts do not independently show the claimed four S3 emulator cases or the complete acceptance-matrix contents; those claims rely on documentation and an aggregate `187 passed` result.
+
+Overall: 27/35 — fail under the stated pass rule because Originality is 3/5.
+
+Five most damaging flaws
+
+1. The core product is conventional infrastructure rather than a distinctive hackathon idea.  
+   Evidence: `hosted/README.md`, “What it does today,” routes table; `hosted/DESIGN.md`, “How it is put together.” The memorable work is verification discipline, not a novel user-facing capability.
+
+2. The full reviewer path is expensive and environment-sensitive.  
+   Evidence: `hosted/README.md`, setup section; `hermes-reports/M2-slot32-demo-r8.log`, timestamp `2026-11-01T14:25:37+05:30`. It requires a model download and about 249 seconds of CPU execution, so many judges will stop at the unit-test path.
+
+3. S3 production behavior is not actually proven.  
+   Evidence: `hermes-reports/M2-slot32-e2e-r8/result.json`, `what_this_does_not_prove`; `hosted/control_plane/storage.py`, `S3ObjectStore` docstring. The emulator and stub tests are claimed, but the supplied test output only says `187 passed`; no individual S3 test result or transcript is shown.
+
+4. The milestone demonstrates infrastructure, not a customer-visible product experience.  
+   Evidence: `hermes-reports/M2-slot32-e2e-r8/result.json`, `deployed: false`, `public_url: null`, `gpu_verified: false`, `listening_verified: false`; `hosted/README.md`, limitations in the “Measured” section. There is no hosted URL, dashboard, deployment, or human listening proof.
+
+5. The documentation is overbuilt relative to the single reviewer decision.  
+   Evidence: `hosted/README.md` lines 1–237 and `hosted/DESIGN.md` lines 1–141. The project correctly separates design rationale from the front page, but the README still contains setup, API reference, architecture, testing methodology, benchmark data, evidence-chain mechanics, licensing, and product limitations. That weakens first-impression clarity.
+
+What would make it win: turn the verified queue and storage machinery into one unmistakably useful hosted speech workflow with a live or trivially runnable customer-facing demo, while preserving the same unusually rigorous evidence chain.

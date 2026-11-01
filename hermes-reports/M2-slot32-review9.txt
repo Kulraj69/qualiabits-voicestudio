@@ -1,0 +1,37 @@
+Scores
+
+| Criterion | Score | Judgment |
+|---|---:|---|
+| Originality | 3/5 | A speech API with API keys, metering, object storage, and a worker queue is competent but familiar. The lease/CAS queue details are the most memorable part; there is no standout user-facing moment. |
+| Taste | 4/5 | Strong naming, explicit boundaries, measured evidence, and a focused hosted path. The README is still 237 lines and mixes onboarding, architecture, testing, limitations, and benchmark reporting. |
+| Human feel | 4/5 | The writing has a specific engineering voice: “a half-truth,” “not a debugging experience anybody should have,” and clear tradeoffs. However, the supplied artifacts contain no UI, commit history, demo narration, or write-up, so the full criterion cannot be verified. The explicit “Written by Hermes” disclosure is honest but reduces the impression of personal authorship. |
+| Technical depth | 4/5 | The queue, leases, CAS claiming, retries, migration, content-addressed storage, corruption checks, and 187 passing tests are substantial. The S3 path is tested over moto, not against a real provider; production behavior, IAM, lifecycle, multipart, and failure modes remain unproven. |
+| Criteria fit | 4/5 | Slice B requirements are mapped to concrete code, tests, migrations, storage, workers, and an end-to-end receipt. Billing, deployment, email verification, GPU, and real S3 are explicitly outside this slice or owner actions. The evidence is strong, but the absence of a real hosted environment limits confidence in “hosted service” readiness. |
+| Reviewer path | 4/5 | The fast test path is clear and the fresh-clone logs show 187 tests passing. The full proof requires a 132 MB model download and roughly four minutes on CPU, so the most important path is not quick. It also depends on external GitHub access and Python/model compatibility. |
+| Honesty | 5/5 | This is the strongest category. The artifacts repeatedly distinguish tested behavior from untested behavior, label stubbed engine tests, disclose moto versus real S3, state that nothing is deployed or sold, preserve failed runs, and bind the measured README section to a commit manifest. No unsupported commercial, deployment, GPU, customer, or quality claim is apparent. |
+
+Overall: 28/35. Passes the stated threshold: every score is at least 4. It is a credible milestone submission, not yet a convincing finished hosted product.
+
+Five most damaging flaws
+
+1. The core idea is infrastructure rather than a memorable product.
+   Evidence: `hosted/README.md`, route table and “What it does today” section; `hosted/DESIGN.md`, entire architecture rationale.
+   The implementation is careful, but most judges have seen speech APIs, queues, API keys, metering, and S3 abstractions repeatedly.
+
+2. Real S3 operation is not demonstrated.
+   Evidence: `hosted/control_plane/storage.py`, `S3ObjectStore` module docstring; `hermes-reports/M2-slot32-e2e-r8/result.json`, `what_this_does_not_prove`.
+   Moto and stub tests prove useful logic, not credentials, IAM, provider-specific behavior, lifecycle configuration, or an actual customer bucket.
+
+3. There is no deployed reviewer experience.
+   Evidence: `result.json` fields `deployed: false`, `public_url: null`; `hosted/README.md`, opening disclaimer.
+   A stranger cannot evaluate the service without cloning, installing, downloading a model, and running local processes. This is acceptable for the stated milestone boundary but weak for a product demonstration.
+
+4. The full reviewer path is slow and network-dependent.
+   Evidence: `hosted/README.md`, setup and “Measured” sections; `hermes-reports/M2-slot32-demo-r8.log`, timestamp `2026-11-01T14:25:37+05:30`.
+   The model download is 132,353,410 bytes and the end-to-end run takes 248.937 seconds. A judge on an unreliable network or incompatible machine may never reach the proof.
+
+5. Several important claims are only supported by local emulation or narrow tests.
+   Evidence: `hosted/DESIGN.md`, storage and migration sections; `tests/hosted/test_hosted_storage.py`, 31 tests; `hermes-reports/M2-slot32-e2e-r8/result.json`.
+   The artifacts prove local filesystem storage, moto S3 behavior, SQLite concurrency, and one CPU run. They do not prove production database scaling, real object-store semantics, HTTPS, authentication deployment, crash recovery across real hosts, or customer-facing operational behavior.
+
+What would make it win: show one polished, publicly reachable workflow where a stranger submits a long multilingual job, watches it complete, downloads verified audio, and sees honest per-workspace usage—backed by a real deployed queue and bucket rather than only local processes and emulators.

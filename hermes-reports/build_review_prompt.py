@@ -219,6 +219,9 @@ def main() -> int:
         '| sort | while read f; do printf "%6s  %s\\n" "$(wc -l < "$f")" "$f"; done'
     )
     tests = shell(f"{TEST_COMMAND} 2>&1 | tail -4")
+    storage_tests = shell(
+        ".venv/bin/python -m pytest tests/hosted/test_hosted_storage.py -v 2>&1 | tail -42"
+    )
     evidence_path = quoted_run()
     evidence_rel = evidence_path.relative_to(ROOT)
     result = json.loads(evidence_path.read_text())
@@ -302,7 +305,11 @@ Which committed WAV is the same bytes as a receipt in result.json:
 === ARTIFACT 8: the sizes the page's setup paragraph quotes, as recorded on a real box (the download by the release asset's own Content-Length and the local tarball's byte count and hash, the unpacked directory by du) ===
 {model_bytes}
 
-=== ARTIFACT 9: the source, verbatim ===
+=== ARTIFACT 9: the storage suite by name, so the cases the acceptance table claims are visible rather than counted (the last 42 lines of the verbose run: content addressing, the corrupt object, the traversal-shaped key, and the four socket cases against the local S3-compatible server) ===
+$ .venv/bin/python -m pytest tests/hosted/test_hosted_storage.py -v
+{storage_tests}
+
+=== ARTIFACT 10: the source, verbatim ===
 """ + "\n\n".join(f"--- {path} ---\n{text}" for path, text in code.items())
 
     out = ROOT / "hermes-reports" / f"M2-{TAG}-review{ROUND}-prompt.txt"
