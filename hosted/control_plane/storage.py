@@ -218,13 +218,29 @@ class LocalObjectStore:
 
 
 class S3ObjectStore:
-    """The S3 backend. Written, and deliberately NOT exercised here.
+    """The S3 backend. Written, and never run against a bucket.
 
-    There is no bucket and no credentials on this machine, and inventing a fake
-    endpoint to "test" it would produce evidence for a decision nobody made. What
-    the tests do cover is the behaviour that matters when it is misconfigured:
-    with no bucket, no credentials or no ``boto3``, constructing this raises, so a
-    plane configured for S3 cannot start up quietly writing to local disk.
+    There is no bucket, no credentials and no spending approval on this machine, so
+    nothing here has ever uploaded a customer's audio to S3, and this docstring used
+    to say "deliberately NOT exercised" at a time when that was true of every line of
+    it. It is now exercised, by two kinds of test and neither of them a bucket:
+
+    * against a stub client, for the logic that needs no wire at all;
+    * against a local S3-compatible emulator (moto, in process) over real HTTP, with
+      real signed requests: store, read back, verify, the prefix inside the stored
+      key, an object that no longer matches the name it is stored under refused
+      rather than served, and a bucket that does not exist reported as an error
+      instead of a quiet local write. (Content addressing — identical bytes as one
+      object — is covered on the local backend, where the keys are the same shape.)
+
+    What is still only reasoned about, not proven: IAM policy, lifecycle rules,
+    multipart upload, region failures and cross-account access. Those are the parts
+    an owner with a bucket would find out in an afternoon, and until then the README
+    says a real bucket has never been used rather than implying otherwise.
+
+    The behaviour that matters when it is misconfigured is covered either way: with
+    no bucket, no credentials or no ``boto3``, constructing this raises, so a plane
+    configured for S3 cannot start up quietly writing to local disk.
 
     When a bucket exists, ``put`` verifies with a HEAD (length and the checksum the
     service recorded) and ``get`` verifies the digest against the key, the same

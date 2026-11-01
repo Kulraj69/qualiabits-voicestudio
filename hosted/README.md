@@ -150,16 +150,12 @@ file job1.wav        # RIFF 24 kHz mono; sha256 matches the job's own receipt
 curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
 ```
 
-What a pass looks like: the "Measured" section below, rendered from
-`hermes-reports/M2-slot32-e2e-r1/result.json` — a run taken over a clean tree at
-the pushed revision, whose manifest hashes every tracked file, so the page and the
-run cannot describe different code; a test checks that manifest against git, file by
-file. The earlier runs are kept beside it and are labelled in their own files: `-r1`
-failed on a comparison the page's author wrote wrong, `-r2`/`-r3` of the slot-27
-batch came from a working tree, and two runs were thrown away rather than kept,
-because writing the evidence into the repository made the run report itself dirty —
-which is why the evidence directory now lives outside the checkout and is copied in
-afterwards.
+What a pass looks like: the "Measured" section below. It is rendered from
+`hermes-reports/M2-slot32-e2e-r1/result.json` by `hosted/scripts/render_measured.py`,
+so the page and that file cannot drift; a test also checks the run's own manifest of
+tracked-file hashes against git, so a run over edited code cannot be quoted as a run
+of the pushed revision. The earlier runs are kept beside it and labelled in their own
+files, including the one that failed and why.
 
 ## How it is put together
 
@@ -257,14 +253,12 @@ verified before the write is reported as done.
 bucket missing or `boto3` absent it **refuses at startup** rather than quietly
 falling back to local disk — finding out where customer audio went by watching a
 disk fill is not a debugging experience anybody should have. The S3 backend's logic
-is tested against a stub client and then end to end over real HTTP against a local
-S3-compatible server (moto, in-process): real signed requests, an upload, a
-read-back through the client, the digest and length checks surviving the round trip,
-an object in the bucket that no longer matches the name it is stored under, and a
-bucket that does not exist. Neither of those is a bucket. No real bucket has ever
-been used, because that needs credentials and a spending decision from the owner,
-and this page says so rather than implying otherwise — which is the one gap a
-reviewer should read as a gap.
+is covered against a stub client and over real HTTP against a local S3-compatible
+server (moto, in process): real signed requests, a store, a read-back, the digest and
+length checks surviving the round trip, an object misconfigured so it no longer
+matches the name it is stored under, and a bucket that does not exist. Neither is a
+bucket: no real bucket has ever been used, because that needs credentials and a
+spending decision from the owner.
 
 ## Migrations
 
@@ -315,16 +309,14 @@ port, a real SQLite file, real threads racing for the same jobs.
   the same bytes as one object, an object that no longer matches its name, and a
   bucket that does not exist.
 - `test_readme_measured_is_generated.py` — the page's Measured section is what
-  `hosted/scripts/render_measured.py` renders from the run file the page cites, the
-  cited run was taken over a clean tree, the run's own manifest accounts for every
-  tracked entry and every hash in it matches the bytes of that path in the commit the
-  run names, and the code it measured has not changed since. The last two are why
-  this suite's header says a judge was right to refuse `"worktree_dirty": false` on
-  its own: that field is the harness describing itself, while the manifest is checked
-  against git and fails if the run hashed anything the commit does not contain. This
-  suite exists because that page once quoted one run while the bundle beside it was
-  another; a stranger should not have to notice that, and a test should not let it
-  happen again.
+  `hosted/scripts/render_measured.py` renders from the run file the page cites; the
+  cited run was taken over a clean tree; the run's manifest accounts for every tracked
+  entry and every hash in it matches that path in the commit the run names; and the
+  code it measured has not changed since. The manifest check is the part that does the
+  work: `"worktree_dirty": false` is a field the harness writes about itself, while
+  the manifest is checked against git and fails if the run hashed anything the commit
+  does not contain — including if it hashed a file the commit never tracked. There is
+  also a test that a tampered manifest is refused.
 - `test_hosted_jobs.py` — queue, worker, stored audio, meter, isolation of job ids,
   every refusal boundary (400 empty, 413 at 20,001, 422 past the body backstop),
   cancellation, and a job that survives a plane restart.
