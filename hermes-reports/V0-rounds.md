@@ -774,3 +774,50 @@ worktree, superseded), `M2-slot25-e2e-r2/` (the round that failed: "a revoked ke
 still works"), `M2-slot25-e2e-r3-freshclone/` (clean clone of `d3bf048fb`, the
 numbers the page quotes), `M2-slot25-clean-tests.log`,
 `M2-slot25-demo-runs.log`, `M2-slot25-review1.txt` through `-review4.txt`.
+
+## Rotation slot 32, continued — 2026-11-01 — slice B: the evidence chain
+
+Resumed after the run that produced judge pass 5f was cut off; the full round-by-round
+log is `/workspace/devpost/hermes-reports/V0-rounds.md`, rounds 5 to 9. Eight commits,
+`d4ca68cc1` to `25034fd09`, all pushed and every remote SHA read back.
+
+What the rounds found and fixed, in the order they came:
+
+1. The judge bundle's Artifact 7 read the WAV frame count out of the wrong header
+   offset and reported all four committed WAVs at exactly twice the duration
+   `result.json` reports for the same bytes (pass 5f, honesty 2/5). Fixed with `wave`,
+   and the builder now cross-checks every file against the receipt that names those
+   bytes and refuses to write a bundle that would contradict itself. Guarded by
+   `tests/hosted/test_review_bundle_is_faithful.py`, including a hand-built WAV whose
+   extra chunk makes a fixed-offset reader wrong.
+2. `hosted/README.md` quoted sizes nobody could check ("about 132 MB"). Now
+   `hermes-reports/M2-slot32-model-bytes.txt` records the release asset's
+   Content-Length and the downloaded tarball (both 132,353,410 bytes, with sha256) and
+   the unpacked directory, with the commands that measured them.
+3. The strongest run was not on the pushed revision. It is now, and from pass 7
+   onwards both runs the page points at — the demo transcript and the suite log — come
+   from one fresh clone at one revision.
+4. `hosted/M2-ACCEPTANCE.md` maps each M2 requirement to code, tests and run evidence,
+   and `tests/hosted/test_m2_acceptance_matrix.py` reads it back, so the table cannot
+   describe an older version of the code. Its S3 row now says plainly that the run
+   proves nothing for it (emulator only, no bucket) instead of pointing at a
+   `"backend": "local"` field.
+5. The page went from 346 lines to 238: the manual walkthrough moved to
+   `hosted/RUN-IT-BY-HAND.md`, the test inventory is four bullets, the design section
+   points at `DESIGN.md`.
+6. `cited_logs()` collected only clean-clone suite logs, so the demo transcript the
+   page sends a reviewer to was missing from the bundle. It now collects every log the
+   page names, and a test fails if one is left out.
+7. The bundle showed an aggregate test count; it now also pastes the storage suite by
+   name, so the S3 emulator cases are visible one at a time.
+
+Where it stands: judge pass 9 scored 3/4/4/4/4/4/5 — honesty 5, every criterion 4 or
+above except originality (3). Tests: 187 passed, 0 skipped, from a fresh clone at
+`30963fd8a` and again in the working copy at `25034fd09`. The demo path was run
+end to end twice at a named revision with a real model download.
+
+Not done, and the reason is not in this repository: originality needs a differentiator
+and a publicly reachable workflow, which needs a deployment, a real bucket and
+credentials — the owner's call. M1's remaining item is also unchanged (the approved
+scoped GPU runtime and a listening check on the committed WAVs in
+`hermes-reports/M2-slot32-e2e-r8/audio/`).
