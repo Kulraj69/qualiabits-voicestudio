@@ -1,0 +1,38 @@
+Scores
+
+| Criterion | Score | Judge’s basis |
+|---|---:|---|
+| Originality | 3/5 | The core product is a conventional hosted speech API with auth, metering, storage, and queues. The strongest memorable element is the evidence-integrity mechanism tying the README’s measured section to a clean-run manifest and commit. |
+| Taste | 3/5 | The architecture is coherent, naming is mostly clear, and the README has a strong “tests first” path. However, the 431-line README is dense and implementation-heavy. It reads more like an internal design review than a sharply presented product milestone. |
+| Human feel | 3/5 | The writing has specific opinions and concrete tradeoffs, but it is over-explanatory, uses repeated em-dash constructions, and includes the artificial attribution “Written by Hermes for QualiaBits” in `hosted/control_plane/storage.py`. That weakens the claim that this is one person’s authentic project voice. |
+| Technical depth | 4/5 | Strong queue implementation: compare-and-swap claiming, leases, heartbeats, bounded retries, stale-worker protection, terminal metering, content-addressed storage, migration testing, and a real end-to-end worker run. The 176 passing tests and 201.5-second E2E run support the claims. I withhold 5 because S3 is not tested against a real bucket and there is no production/deployment validation. |
+| Criteria fit | 4/5 | The supplied product plan is covered: object storage, per-workspace queue, worker process, migration from slice A, and metering. Billing, email verification, deployment, GPU, and public hosting are correctly excluded. The actual hackathon rules and sponsor-prize requirements are not included, so those cannot be independently mapped or awarded full credit. |
+| Reviewer path | 3/5 | The README gives a useful fast test path and one-command demo. A fresh clone still depends on a prebuilt environment, Python 3.12, `uv`, model acquisition, engine assets, and likely repository/submodule setup. The README does not demonstrate the complete fresh-clone bootstrap itself. |
+| Honesty | 3/5 | The project is unusually explicit about what is not proven, and the run/manifest linkage is a meaningful correction to the earlier evidence failure. But some claims exceed the shown artifacts: the README says S3 `put` verifies “the checksum the service recorded,” while the supplied `S3ObjectStore.put()` code checks only `ContentLength`; no S3 bucket run is shown; and the claimed 132 MB model download is not evidenced in the supplied files or logs. |
+
+Result: FAIL. Scores below 4 and an honesty flaw.
+
+Five most damaging flaws
+
+1. S3 verification claim is stronger than the code  
+   `hosted/control_plane/storage.py`, `S3ObjectStore.put()`  
+   The README claims S3 writes are verified using length and the service-recorded checksum. The shown implementation performs `put_object()` and checks only `ContentLength`; it does not validate an S3 checksum or re-read and hash the object. This is a direct claim/code mismatch.
+
+2. No real S3 bucket evidence  
+   `hermes-reports/M2-slot32-e2e-r2/result.json`, `what_this_does_not_prove`  
+   The actual E2E uses the local filesystem backend. Moto and stub tests are useful, but they do not prove credentials, IAM, region behavior, permissions, lifecycle configuration, or real bucket operation. This is acceptable as a stated boundary for the milestone, but it prevents a top technical-depth or honesty score when storage is presented as a completed product capability.
+
+3. Fresh-clone reviewer path is incomplete  
+   `hosted/README.md`, “Start here” and “Run it by hand”  
+   The commands assume `.venv` already exists and the model bundle is available or downloadable. The artifact does not show a complete fresh-clone setup, submodule initialization, dependency installation execution, or a successful clean-clone demo. The clean-clone evidence only covers tests, not the real model-backed path.
+
+4. The primary evidence is not from the latest tested revision  
+   `README.md` / `result.json` vs `hermes-reports/M2-slot32-clean-tests.log`  
+   The measured run names commit `85647e058`, while the clean test log is for `0ca293cd5`. The tests claim the measured subjects did not change, so this may be valid, but it forces the judge to trust an indirect comparison rather than seeing the quoted E2E run on the final pushed revision. That is precisely the kind of evidence friction this milestone was supposed to eliminate.
+
+5. The presentation is too large for the claimed reviewer path  
+   `hosted/README.md`, 431 lines  
+   The README contains valuable detail, but the central proof is buried under API tables, architecture explanation, queue semantics, storage internals, migration rationale, test inventory, and measured output. A judge can understand the work, but not in the promised “few minutes” without substantial reading. The project demonstrates engineering discipline more clearly than product taste.
+
+What would make it win: ship a genuinely fresh-clone, one-command demonstration with a real approved S3-compatible deployment test, fix the S3 checksum claim, and reduce the README to a short proof path that makes the queue-to-audio-to-meter experience immediately obvious.
+exit=0

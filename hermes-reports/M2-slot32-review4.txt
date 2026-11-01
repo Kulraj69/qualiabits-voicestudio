@@ -1,0 +1,33 @@
+Product milestone judgment
+
+| Criterion | Score | Reason |
+|---|---:|---|
+| Originality | 3/5 | A hosted speech API with authentication, metering, object storage, and a durable queue is useful but familiar. The strongest memorable detail is the lease-safe queue with bounded retries and abandoned-final-attempt sweeping. |
+| Taste | 4/5 | The architecture, naming, and evidence flow are deliberate. The README has a clear reviewer path and distinguishes what is shipped from what is not. It is still 335 lines and carries implementation, operations, testing, and evidence details in one front page. |
+| Human feel | 4/5 | The writing is unusually specific: “a job is a row, not a thread” and “a half-truth” are memorable. It avoids most generic startup language. “Written by Hermes for QualiaBits” makes the authorship feel less human, and some explanatory comments are overlong. |
+| Technical depth | 5/5 | The artifacts show real queue concurrency tests, leases, retries, stale-worker protection, migrations, content-addressed storage, corruption detection, S3 signing against moto, metering from WAV headers, and a real-engine end-to-end run. The 178-test result and 228-second E2E support the claims. |
+| Criteria fit | 4/5 | The supplied M2 Slice B requirements are directly covered: queue, worker, local storage, S3 implementation/testing, migrations, and the existing metered passthrough. Billing, verification, deployment, GPU, and production S3 are explicitly excluded. There is no artifact containing the product plan or an explicit criterion-by-criterion acceptance matrix, so fit depends partly on the setting’s description rather than repository evidence. |
+| Reviewer path | 4/5 | README gives fresh-clone commands and a fast test path, followed by a real-engine demo. The real demo requires a 132 MB model, several minutes, CPU resources, and external model setup. Artifact 6 also says the venv was reused rather than proving the documented bootstrap from nothing. |
+| Honesty | 2/5 | Most limitations are unusually well disclosed, but there is a material evidence contradiction: the quoted E2E run says it tested commit `e064bd6a9`, while the claimed clean-clone verification log is for `05ba314ddecc4d`, not that revision. The README says the clean-clone log is from the same revision. That claim is not backed by the artifacts. |
+
+Overall: 26/35. Fail. Honesty below 4 is itself disqualifying.
+
+Five most damaging flaws
+
+1. Evidence revision mismatch — `hosted/README.md`, Measured section; Artifact 4 versus Artifact 6  
+   The quoted run tested `e064bd6a9`; the clean-clone test log reports commit `05ba314ddecc4d`. The README claims the clean-clone evidence is from the same revision. This directly undermines the evidence chain, even though the manifest check appears technically serious.
+
+2. Fresh-clone claim is not actually demonstrated — Artifact 6, timestamp `2026-11-01T08:25:07+05:30`  
+   The log says “venv reused from the working copy.” That verifies tests in a clean source checkout, not the README’s documented “from nothing” bootstrap. No clean `uv sync --frozen` result is shown.
+
+3. Production S3 is unproven — `hosted/control_plane/storage.py` S3ObjectStore docstring; Artifact 4 `what_this_does_not_prove`  
+   The S3 backend is tested against stubs and moto, but no real bucket, credentials, IAM policy, lifecycle behavior, multipart behavior, or provider-specific behavior has been exercised. This is correctly disclosed, but it limits the milestone’s hosted-production credibility.
+
+4. No deployment or public service evidence — Artifact 4 fields `deployed: false`, `public_url: null`, `listening_verified: false`  
+   The work proves a local multi-process system, not a hosted product. That is within the stated slice boundary, but it means the actual “hosted speech product” claim remains architectural rather than operational.
+
+5. The primary E2E is expensive and hardware-dependent — `hosted/README.md`, “See it work, one command” and Measured section  
+   A reviewer needs the model, roughly four minutes, and a CPU machine. There is no compact recorded demo artifact, audio sample, or precomputed replay path. The fast path uses a stub engine, so a stranger must choose between a quick simulated proof and a costly real proof.
+
+What would make it win: rerun the real E2E and clean-clone verification on the exact same commit, publish a reproducible short proof artifact, and add an explicit M2 acceptance matrix showing each queue, storage, migration, and metering requirement against its code, test, and run evidence.
+exit=0

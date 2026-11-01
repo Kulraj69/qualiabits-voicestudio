@@ -1,0 +1,26 @@
+Score: FAIL
+
+| Criterion | Score | Judge’s basis |
+|---|---:|---|
+| Originality | 3/5 | A hosted speech control plane with queues, storage, metering, and migrations is competent but familiar. The memorable element is the unusually serious evidence-provenance work, not the product idea itself. |
+| Taste | 3/5 | The architecture and terminology are considered, but the README is 439 lines and mixes onboarding, implementation essay, test inventory, evidence defense, and release caveats. It reads more like an argument with a previous judge than a focused product presentation. |
+| Human feel | 4/5 | The writing is specific and technically opinionated, with concrete tradeoffs and failure cases. It loses the fifth point to long bullet-heavy sections, repeated defensive explanations, and the explicit “Written by Hermes for QualiaBits” line, which undermines the claim of one human voice. |
+| Technical depth | 4/5 | Queue claiming, leases, retries, stale-worker protection, content-addressed storage, metering semantics, migration tests, and a real CPU E2E run are substantial. The clean-clone failure and contradictory S3 evidence prevent a 5. |
+| Criteria fit | 4/5 | The supplied product plan is addressed directly: local object storage, S3 backend, per-workspace jobs, worker process, metering, and slice-A migration. Billing, verification, and deployment are correctly excluded. No actual hackathon rules file or official sponsor-prize mapping is provided, so those criteria cannot be independently verified. |
+| Reviewer path | 3/5 | The README gives commands and a clear fast path, but the clean-clone evidence does not pass. The full demo requires a venv, model acquisition, roughly four minutes, and CPU inference. A stranger can probably run it, but cannot currently trust the stated clean-clone path. |
+| Honesty | 2/5 | There is a material contradiction: README says the S3 path was tested over HTTP against moto, while `hosted/control_plane/storage.py` describes the S3 backend as “deliberately NOT exercised here.” More importantly, the clean-clone test log fails because the quoted run predates a changed `hosted/scripts/render_measured.py`. The current-tree green result does not erase that stale-evidence failure. |
+
+Most damaging flaws
+
+1. Evidence bundle is stale against the clean clone: `hermes-reports/M2-slot32-clean-tests.log`, failing `tests/hosted/test_readme_measured_is_generated.py::test_the_quoted_run_tested_code_that_is_still_here`. It reports that the README cites run `9ee0308f5` while `hosted/scripts/render_measured.py` changed afterward. This directly breaks the reviewer’s evidence chain.
+
+2. S3 claims conflict with source documentation: `hosted/README.md`, “The S3 backend's own logic is tested … against … moto,” versus `hosted/control_plane/storage.py`, the `S3ObjectStore` class docstring: “Written, and deliberately NOT exercised here.” This must be resolved before accepting the storage claim.
+
+3. The supplied current-tree test result is not enough to establish a clean-clone pass: Artifact 3 reports `176 passed`, but Artifact 6 reports `175 passed, 1 failed` from the clean clone of the pushed revision. The failure is acceptance-relevant, not incidental.
+
+4. The full E2E run is strong but narrow: Artifact 4 explicitly proves local filesystem storage, not a real S3 bucket, deployment, HTTPS, GPU operation, listening quality, or production behavior. Those boundaries are honestly listed, but they leave the “hosted product” claim substantially unvalidated.
+
+5. Reviewer experience is overburdened by defensive evidence prose: `hosted/README.md` repeatedly explains prior judging failures, manifests, dirty worktrees, discarded runs, and what a judge should believe. That increases cognitive load and makes the product harder to evaluate quickly.
+
+One sentence that would make it win: regenerate the measured run and README from the final clean revision, make the S3 implementation/test claim internally consistent, and present the same technically strong system through a shorter reviewer path with independently passing clean-clone tests.
+exit=0
