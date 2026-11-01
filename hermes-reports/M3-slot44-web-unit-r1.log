@@ -1,0 +1,42 @@
+# node --test, the dashboard's own unit checks
+# revision: 618584f389afc607f80bc419822fd00e6bcc0161
+
+npm notice run qualiabits-voice-web@0.1.0 test
+npm notice run node --test test/
+✔ the base URL defaults to the local control plane on loopback (2.017602ms)
+✔ the base URL is trimmed of trailing slashes so joins never double up (0.321885ms)
+✔ paths join onto the base, with or without a leading slash (1.763868ms)
+✔ an error detail is read from the plane's own body, verbatim (0.426657ms)
+✔ a nested detail object yields its inner sentence (0.266214ms)
+✔ an empty body yields the fallback rather than an empty string (0.284865ms)
+✔ a credential cookie is httpOnly unless told otherwise (2.369927ms)
+✔ the workspace cookie can be made readable, and carries no secret (0.414377ms)
+✔ Secure is opt-in, because the local dashboard is plain http (4.086755ms)
+✔ clearing a cookie sets Max-Age=0 (0.478927ms)
+✔ workspace fields round-trip through the cookie value (1.442833ms)
+✔ a malformed or id-less workspace cookie decodes to null, never a fake id (0.984155ms)
+✔ an unmeasured duration is a dash, never a zero standing in for unknown (2.172684ms)
+✔ a measured duration keeps three decimals, trimmed (1.993081ms)
+✔ sub-second audio is not rounded away to zero (0.304035ms)
+✔ byte and count formatting is thousands-separated, dashes when unknown (66.39905ms)
+✔ a key is only ever shown as its public id (0.486167ms)
+✔ job statuses read as the five the plane defines (0.395767ms)
+✔ only the three terminal statuses stop the page polling (0.394196ms)
+✔ a missing timestamp is a dash; a real one is rendered (10.179011ms)
+✔ groups voices by the kind the plane reported (3.14658ms)
+✔ filtering by a language the plane named keeps only those voices (0.483738ms)
+✔ a voice with no language is never guessed into a language bucket (0.286045ms)
+✔ language options are the distinct named languages, deduplicated (0.407507ms)
+✔ the first-selected voice is the engine's own default, never the first row (0.363526ms)
+✔ with no default marked, the first engine voice leads; then the first row (0.338566ms)
+✔ the catalogue heading names the kinds the plane reported (0.563968ms)
+✔ an unreachable engine is described as unreachable, not as zero voices (0.255234ms)
+✔ a missing catalogue is described without inventing one (0.704541ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 601.997953
