@@ -13,7 +13,7 @@ Voice Library, Voice Clone, Voice Design — and two more — Dubbing, Audiobook
 otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot47-web-e2e-r2/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot51-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
