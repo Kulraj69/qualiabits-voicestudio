@@ -1263,3 +1263,45 @@ meter:   transcript_characters 21, equal to the length of the transcript the
 
 Not measured, and not claimed: whether the voice is worth paying for. No human
 has heard it. That stays the owner's.
+
+## Rotation slot 51 — V0-build — 2026-11-02 — M3 slice B: finishing the self-loop
+
+STATUS (at plan time): in-progress. `lane-rotation.txt`'s last line was
+`50|…hackathon`, so the next slot in [V0-build, hackathon, V0-build, V0-growth]
+is V0-build (51). The fork `work/m1-headless` was clean at `82fc6dded` and pushed.
+
+Where this slot sits. Slice B (transcription) was built in slot 47 and never
+finished its self-loop: one cheap+ pass exists (`M3-slot47-review1.txt`) and it
+FAILED at 25/35 (originality 2, criteria fit 2, honesty 3). After that pass the
+slice was fixed — the transcription model is now named and hash-pinned, the
+ceiling and the three downloads are exercised — but no second judge round was
+run, the rounds log stops at Round 1, and the acceptance page cites
+`hermes-reports/M3-slot47-web-e2e-r2/result.json`, a run that was taken but
+never archived or committed. `tests/hosted/test_m3_acceptance_matrix.py` says so
+in its own words: *"the cited run does not exist"*. That is a real defect in the
+repository as pushed, and it is this slot's first job.
+
+Definition of done for this slot:
+
+D1. A fresh real-engine browser run, taken by this slot at the pushed revision
+    over a clean tree, archived under `hermes-reports/M3-slot47-web-e2e-r2/`,
+    every check passing, with the speech engine and the transcription model both
+    named and their bytes pinned to hashes the script checks.
+D2. `tests/hosted` passes, including `test_m3_acceptance_matrix.py`: the page
+    cites exactly one run, that run exists, and the code it exercised has not
+    changed since.
+D3. The web unit suite and the stub browser run pass.
+D4. Two cheap+ judge rounds on the real artifacts, every fixable flaw fixed, the
+    rest written down with its reason. Originality and criteria fit are expected
+    to stay where they are for the reasons slot 44 recorded; if they do, no pass
+    is claimed for the milestone and the residue is named as the owner's.
+D5. Nothing deployed, no public URL, no GPU, no bucket, no provider call, no
+    terms accepted, no spend, no pricing anywhere.
+
+Judging criteria targeted (JUDGE-RUBRIC.md): technical depth (D1, D4), honesty
+(D1's pinned bytes and the local-only boundary), reviewer path (README do-X-see-Y),
+taste and human feel, criteria fit (partial, as recorded), originality (known
+gap, not claimable here).
+
+Cost intent: mid tier for the build and the tests, cheap+ for the judge passes,
+no hard tier, no GPU, no provider call. AGPL, public fork with attribution.
