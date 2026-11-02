@@ -288,6 +288,10 @@ def create_app(
             "schema_version": state.settings.schema_version,
             "schema_state": state.schema_state,
             "upstream_base_url": state.settings.upstream_base_url,
+            # The upload ceiling, published so a client can refuse an oversized
+            # upload itself instead of streaming it here and losing the polite
+            # refusal to a closed connection. Same number the route enforces.
+            "transcribe_max_bytes": state.settings.transcribe_max_bytes,
             "storage": state.store.describe(),
             "jobs": counts,
         }

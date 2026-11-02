@@ -104,7 +104,8 @@ grouping and language filtering, the number and status formatting, and the plane
 client's URL joining and error-message handling, and the transcript helpers that
 turn an answer into a `.srt` (including the case where the engine returned no
 segments), the voice search and kind filter the library uses, and the five
-library claims the browser run is supposed to make. Fifty-six checks, no browser —
+library claims the browser run is supposed to make, and the plane's own upload
+ceiling and the sentence it is refused with. Fifty-nine checks, no browser —
 nine of them read
 `e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
 browser run is supposed to record cannot be deleted without a test failing.
@@ -117,7 +118,7 @@ revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. **Sixty-seven checks** on this path — sixty-eight with `--keep`, which
+next request. **Sixty-eight checks** on this path — sixty-nine with `--keep`, which
 adds the screenshot check because only then is there somewhere to keep them —
 including the transcript's three
 downloads (each one a real click and a real file read back off disk) and one byte

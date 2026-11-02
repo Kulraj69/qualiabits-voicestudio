@@ -405,3 +405,34 @@ def test_the_ledger_row_keeps_no_copy_of_a_customer_recording(client, engine):
     assert repr(audio[:64]) not in stored
     assert counted == len(engine.transcript)
     assert bytes_stored == len(audio)
+
+def test_the_ceiling_the_route_enforces_is_the_one_healthz_publishes(tmp_path, engine):
+    """A client must be able to refuse an oversized upload without asking us.
+
+    The dashboard does exactly that: it reads this number from ``/healthz`` and
+    refuses the upload itself, because streaming 25 MiB at a plane that answers
+    413 by closing the connection turns the plane's sentence into an EPIPE in the
+    proxy and a bare 500 for the customer. The real-engine browser run found
+    that; this test holds the two numbers together so the published ceiling
+    cannot drift away from the enforced one and leave a client refusing what the
+    plane would have accepted, or the reverse.
+    """
+    import dataclasses
+
+    with app_client(tmp_path, engine) as client:
+        state = client.app.state.hosted
+        assert client.get("/healthz").json()["transcribe_max_bytes"] == state.settings.transcribe_max_bytes
+
+        state.settings = dataclasses.replace(state.settings, transcribe_max_bytes=1024)
+        published = client.get("/healthz").json()["transcribe_max_bytes"]
+        assert published == 1024
+
+        # And the sentence a refusal carries is the one a client can build from it.
+        signup(client)
+        key = mint_key(client, login(client))
+        over = transcribe(client, key, b"x" * 4096)
+        assert over.status_code == 413
+        assert over.json()["detail"] == (
+            f"That upload is larger than {published} bytes. "
+            f"An upload is at most {published} bytes."
+        )

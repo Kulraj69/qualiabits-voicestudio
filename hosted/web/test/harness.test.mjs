@@ -37,12 +37,20 @@ test("the transcription weights are checked against the hash the script pins", (
   assert.match(REAL_ENGINE, /QB_E2E_ASR_MODEL="\$ASR"/);
 });
 
-test("the ceiling case sends one byte past the plane's own limit", () => {
-  // 25 MiB is the plane's default (hosted/control_plane/config.py). The harness
-  // must not lower it for the run: a smaller limit would be a test's number.
-  assert.match(HARNESS, /25 \* 1024 \* 1024 \+ 1/);
+test("the ceiling case sends one byte past the limit the plane publishes", () => {
+  // 25 MiB is the plane's default (hosted/control_plane/config.py), but the run
+  // no longer carries that number: it reads `transcribe_max_bytes` from the
+  // plane's own /healthz and sends one byte past it, so a plane configured with
+  // a different ceiling is still tested against *its* ceiling, not a test's.
+  assert.match(HARNESS, /const ceiling = Number\(planeHealth\?\.transcribe_max_bytes\)/);
+  assert.match(HARNESS, /\}, ceiling \+ 1\)/);
   assert.match(HARNESS, /fetch\("\/api\/transcribe", \{ method: "POST", body \}\)/);
   assert.match(HARNESS, /overCeiling\.status === 413/);
+  // The sentence the dashboard returns has to be the plane's own, for the
+  // plane's own number -- the bug this replaced was a bare 500 with no sentence.
+  assert.match(HARNESS, /expectedSentence = `That upload is larger than \$\{ceiling \/ \(1024 \* 1024\)\} MiB\.`/);
+  assert.match(HARNESS, /the dashboard refused the oversized upload itself, so the plane never saw a request/);
+  assert.match(HARNESS, /usageAfterCeiling\.requests === usageBeforeCeiling\.requests/);
 });
 
 test("the three transcript downloads are read back, not merely clicked", () => {

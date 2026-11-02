@@ -732,12 +732,19 @@ async function main() {
       JSON.stringify(emptyUpload));
 
     // ── an upload past the plane's ceiling, refused before it is read ───────
-    // The ceiling is the plane's (25 MiB), not a test's: one byte past it, sent
-    // through the page's own route the way a customer's browser would. The plane
-    // refuses from the declared length, so no byte reaches the engine.
-    const overCeiling = await page.evaluate(async () => {
+    // The ceiling is the plane's, read from the plane's own `/healthz`, not a
+    // number in this file: one byte past it, sent through the page's own route
+    // the way a customer's browser would. The first real-engine run of this
+    // slice failed here — the route streamed the whole body at the plane, the
+    // plane closed the connection to say 413, the write died with EPIPE and the
+    // customer got a bare 500. So the run now checks three things: the status,
+    // that the sentence is the plane's own for the plane's own limit, and that
+    // the plane's meter did not move — i.e. nothing was sent for it to refuse.
+    const planeHealth = (await plane(planeBase, "/healthz")).data;
+    const ceiling = Number(planeHealth?.transcribe_max_bytes);
+    const usageBeforeCeiling = (await plane(planeBase, "/v1/usage", { token: transcriptSession })).data?.usage;
+    const overCeiling = await page.evaluate(async (size) => {
       const body = new FormData();
-      const size = 25 * 1024 * 1024 + 1;
       body.append(
         "file",
         new File([new Uint8Array(size)], "too-large.wav", { type: "audio/wav" }),
@@ -745,10 +752,17 @@ async function main() {
       body.append("response_format", "json");
       const response = await fetch("/api/transcribe", { method: "POST", body });
       return { status: response.status, body: await response.json().catch(() => ({})) };
-    });
+    }, ceiling + 1);
+    const usageAfterCeiling = (await plane(planeBase, "/v1/usage", { token: transcriptSession })).data?.usage;
+    const expectedSentence = `That upload is larger than ${ceiling / (1024 * 1024)} MiB.`
+      + ` An upload is at most ${ceiling / (1024 * 1024)} MiB.`;
     check("an upload past the plane's ceiling is refused with a sentence naming the limit",
-      overCeiling.status === 413 && /larger than|limit is/i.test(String(overCeiling.body?.detail || "")),
-      JSON.stringify(overCeiling));
+      overCeiling.status === 413
+        && String(overCeiling.body?.detail || "") === expectedSentence,
+      `${overCeiling.status} ${JSON.stringify(overCeiling.body?.detail)}`);
+    check("the dashboard refused the oversized upload itself, so the plane never saw a request",
+      usageAfterCeiling.requests === usageBeforeCeiling.requests,
+      `${usageBeforeCeiling.requests} -> ${usageAfterCeiling.requests}`);
 
 
     // ── keys: shown once, listed as a prefix, revoked on the next request ───
