@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { toJson, toPlainText, toSrt, transcriptFilename } from "../lib/transcript.js";
+import SearchableSelect from "./SearchableSelect.jsx";
 
 /**
  * The Transcribe page.
@@ -142,35 +143,35 @@ export default function TranscribeView() {
             </span>
           </label>
 
-          <label className="field">
+          <div className="field">
             <span className="field__label">Language</span>
-            <select
-              data-testid="transcribe-language"
-              value={language}
-              onChange={(event) => setLanguage(event.target.value)}
-            >
-              {LANGUAGES.map((item) => (
-                <option key={item.value || "auto"} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+            {/* Searchable selects, not native ones: the repository rule
+                (AGENTS.md, "Shared select controls") forbids introducing a
+                select element, and both of these lists are long enough that typing is
+                faster than scanning. */}
+            <SearchableSelect
+              options={LANGUAGES.map((item) => ({ ...item, value: item.value || "auto" }))}
+              value={language || "auto"}
+              onChange={(next) => setLanguage(next === "auto" ? "" : next)}
+              ariaLabel="Language of the recording"
+              testId="transcribe-language"
+              placeholder="Let the engine decide"
+              searchPlaceholder="language"
+            />
+          </div>
 
-          <label className="field">
+          <div className="field">
             <span className="field__label">Answer format</span>
-            <select
-              data-testid="transcribe-format"
+            <SearchableSelect
+              options={FORMATS}
               value={responseFormat}
-              onChange={(event) => setResponseFormat(event.target.value)}
-            >
-              {FORMATS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={setResponseFormat}
+              ariaLabel="Answer format"
+              testId="transcribe-format"
+              placeholder="json"
+              searchPlaceholder="format"
+            />
+          </div>
         </div>
 
         <div className="row">

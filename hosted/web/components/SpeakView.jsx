@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { defaultVoiceId, groupVoices, KIND_LABELS, languageOptions } from "../lib/voices.js";
+import SearchableSelect from "./SearchableSelect.jsx";
 
 /** ISO 639-1 codes offered as completions. The engine may still ignore one. */
 const LANGUAGE_CODES = ["en", "hi", "es", "fr", "de", "it", "pt", "ru", "ja", "zh", "ko", "ar"];
@@ -23,6 +24,28 @@ export default function SpeakView({ catalogue, initialVoice = "" }) {
   const groups = useMemo(
     () => groupVoices(voices, { language: languageFilter }),
     [voices, languageFilter],
+  );
+  // The picker's rows, built from the groups the plane's catalogue produced: the
+  // group name is display only, and every row's value is a voice id the plane
+  // reported. The repository rule (AGENTS.md, "Shared select controls") is why this
+  // is a searchable select and not a native one.
+  const voiceChoices = useMemo(
+    () => Object.entries(groups).flatMap(([kind, list]) =>
+      list.map((item) => ({
+        value: item.id,
+        group: KIND_LABELS[kind] || kind,
+        label: `${item.name}${item.language ? ` — ${item.language}` : ""}${
+          item.default ? " (engine default)" : ""
+        }`,
+      }))),
+    [groups],
+  );
+  const languageChoices = useMemo(
+    () => [
+      { value: "all", label: "All languages" },
+      ...languages.map((code) => ({ value: code, label: code })),
+    ],
+    [languages],
   );
 
   const [text, setText] = useState("The dashboard speaks through the control plane.");
@@ -92,44 +115,34 @@ export default function SpeakView({ catalogue, initialVoice = "" }) {
     <div className="stack">
       <form className="card stack" onSubmit={speak}>
         <div className="row">
-          <label className="field field--grow">
-            <span className="field__label">Voice (from the engine's catalogue)</span>
-            <select
-              data-testid="voice-select"
+          <div className="field field--grow">
+            <span className="field__label" id="voice-select-label">
+              Voice (from the engine&rsquo;s catalogue)
+            </span>
+            <SearchableSelect
+              options={voiceChoices}
               value={voice}
-              onChange={(event) => setVoice(event.target.value)}
-            >
-              {Object.entries(groups).map(([kind, list]) =>
-                list.length === 0 ? null : (
-                  <optgroup key={kind} label={KIND_LABELS[kind] || kind}>
-                    {list.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                        {item.language ? ` — ${item.language}` : ""}
-                        {item.default ? " (engine default)" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                ),
-              )}
-            </select>
-          </label>
+              onChange={setVoice}
+              ariaLabel="Voice"
+              testId="voice-select"
+              placeholder="Pick a voice"
+              searchPlaceholder="voice id, name or language"
+            />
+          </div>
 
           {languages.length > 0 ? (
-            <label className="field">
+            <div className="field">
               <span className="field__label">Filter by language</span>
-              <select
+              <SearchableSelect
+                options={languageChoices}
                 value={languageFilter}
-                onChange={(event) => setLanguageFilter(event.target.value)}
-              >
-                <option value="all">All languages</option>
-                {languages.map((code) => (
-                  <option key={code} value={code}>
-                    {code}
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={setLanguageFilter}
+                ariaLabel="Filter the voices by language"
+                testId="speak-language-filter"
+                placeholder="All languages"
+                searchPlaceholder="language code"
+              />
+            </div>
           ) : null}
 
           <label className="field">

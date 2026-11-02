@@ -138,6 +138,11 @@ def test_every_check_the_table_names_is_in_the_run_it_cites():
 def test_the_cited_run_passed_and_was_taken_over_a_clean_tree():
     result = run_result()
     assert result["passed"] == len(result["checks"]), "the cited run has failing checks"
+    # "passed" is the harness's own arithmetic. A judge pass on round 2 of slice C
+    # pointed out that a file could keep that total while flipping one check's own
+    # verdict, so the individual verdicts are read as well.
+    not_ok = [check["name"] for check in result["checks"] if not check.get("ok")]
+    assert not_ok == [], f"the cited run records these checks as not ok: {not_ok}"
     assert result["revision"]["worktree_dirty"] is False, (
         "the cited run was taken over a dirty tree, so it is not evidence about any "
         "revision"

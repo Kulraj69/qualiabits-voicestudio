@@ -103,9 +103,10 @@ serialising (and which cookie is httpOnly, and which is readable), the voice
 grouping and language filtering, the number and status formatting, and the plane
 client's URL joining and error-message handling, and the transcript helpers that
 turn an answer into a `.srt` (including the case where the engine returned no
-segments), the voice search and kind filter the library uses, and the five
+segments), the voice search and kind filter the library uses, the grouping and
+keyboard rules of the select control below, and the five
 library claims the browser run is supposed to make, and the plane's own upload
-ceiling and the sentence it is refused with. Fifty-nine checks, no browser —
+ceiling and the sentence it is refused with. Seventy-eight checks, no browser —
 nine of them read
 `e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
 browser run is supposed to record cannot be deleted without a test failing.
@@ -118,23 +119,23 @@ revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. The counts, for both paths, from the runs committed in this
-repository: **sixty-eight checks on the stub path** (sixty-nine with `--keep`,
-which adds the screenshot check because only then is there somewhere to keep
-them) and **seventy-four against the real engine** (seventy-five with `--keep`).
-The real path adds seven checks a constant-size stub cannot pass — the engine's
-own answers about itself, from its identity and active backend to the sha256 of
-its model files — and drops the one check that only a stub can satisfy, so the
-two totals differ by six. They come from
-`hermes-reports/M3-slot55-web-e2e-stub-r2/result.json` and
-`hermes-reports/M3-slot55-web-e2e-r2/result.json`, and a test reads the counts and
-that seven-and-one difference back out of those two files rather than trusting
-this paragraph. This path also checks the transcript's three
+next request. The counts come from two committed runs taken in this repository — one
+per path, both with `--keep`, which is also what keeps the full-page screenshot of each
+of the seven pages: **seventy-nine checks on the stub path** and **eighty-five against
+the real engine**. Without `--keep` the same two paths run one fewer check each
+(**seventy-eight** and **eighty-four**), because the screenshot check has nowhere to
+write; `--no-build` skips one more, the check that the build succeeds. The kept runs
+are `hermes-reports/M3-slot56-web-e2e-stub-r1/result.json` and
+`hermes-reports/M3-slot56-web-e2e-r1/result.json`, and a test reads the counts, the
+one-check difference and the seven-and-one difference below back out of those files
+rather than trusting this paragraph. The real path adds seven checks a constant-size
+stub cannot pass — the engine's own answers about itself, from its identity and
+active backend to the sha256 of its model files — and drops the one check that only a
+stub can satisfy, so the two totals differ by six. This path also checks the transcript's three
 downloads (each one a real click and a real file read back off disk) and sends one byte
 past the plane's own 25 MiB upload ceiling, refused with the sentence that names
-the limit. `node e2e/dashboard.mjs
---no-build` reuses an existing build; `--keep` writes `result.json`, the process
-logs and a full-page screenshot of each of the seven pages to `e2e/.evidence/`.
+the limit. `--keep` writes `result.json`, the process logs and a full-page screenshot of
+each of the seven pages to `e2e/.evidence/`.
 
 **The one substitution** is the engine: `e2e/engine_stub.py`, the same shape as
 the stub the Python suite uses, so the browser run needs no model download. The
@@ -228,6 +229,22 @@ a recording being handed in is not that, and requiring a customer to mint a
 credential to send their own file is friction with no safety gain. It still needs a
 session, it is still metered, and it is still the plane — not this app — that bounds
 the upload and attributes the seconds.
+
+### Select controls
+
+The repository's rule (`AGENTS.md`, "Shared select controls") is that new or
+redesigned select boxes are searchable, carry a localized `ariaLabel`, keep keyboard
+selection and disabled states, and that native `<select>` controls are not
+introduced. The fork's own control is an Electron component, and this package imports
+nothing from outside itself, so this package has its own:
+`components/SearchableSelect.jsx`, with the half a browser is not needed to test in
+`lib/searchable-select.js` (`npm test` covers it). Every picker on the site uses it —
+the voice on Speak and Jobs, the language filter, the transcription language and
+answer format, and the library's kind filter. To try one: **Tab to the control, press
+Enter or ArrowDown, type a few characters, press Enter** — you see it commit, and
+`Escape` leaves it without choosing. The browser run walks exactly those keys and
+then compares the picker's rows with the plane's catalogue in both directions, and
+checks that no page renders a `<select>` at all.
 
 Nothing here imports from `backend/` or `hosted/control_plane`; the app's only
 contact with either is HTTP.

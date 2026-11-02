@@ -191,6 +191,51 @@ async function runToEnd(command, args, env, cwd) {
 }
 
 // ── the control plane, read directly, for comparison ──────────────────────────
+/**
+ * Drive the dashboard's searchable selects the way a keyboard user does.
+ *
+ * These pages used native `<select>` elements, which Playwright can set directly.
+ * The repository rule forbids native selects and the dashboard now uses the
+ * package's own control, so a choice is a sequence of real key presses: focus the
+ * trigger, open the list, type into the control's own search, step to the exact
+ * row by its value, and commit. `selectValues` reads the rows a picker offers
+ * without choosing one.
+ */
+async function chooseSelect(page, testId, value) {
+  const trigger = `[data-testid="${testId}"]`;
+  const wanted = String(value);
+  await page.focus(trigger);
+  await page.keyboard.press("ArrowDown");
+  await page.waitForSelector(`[data-testid="${testId}-list"]`, { timeout: 30000 });
+  await page.fill(`[data-testid="${testId}-search"]`, wanted);
+  const values = await page.$$eval(
+    `[data-testid="${testId}-list"] [role="option"]`,
+    (nodes) => nodes.map((node) => node.getAttribute("data-value")),
+  );
+  const index = values.indexOf(wanted);
+  if (index < 0) throw new Error(`${testId}: no row for ${wanted}; the list holds ${values.join(", ")}`);
+  for (let step = 0; step < index; step += 1) await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(
+    ([selector, expected]) => document.querySelector(selector)?.getAttribute("data-value") === expected,
+    [trigger, wanted],
+    { timeout: 30000 },
+  );
+}
+
+/** The values a select offers, read from its own list, then closed again. */
+async function selectValues(page, testId) {
+  await page.focus(`[data-testid="${testId}"]`);
+  await page.keyboard.press("ArrowDown");
+  await page.waitForSelector(`[data-testid="${testId}-list"]`, { timeout: 30000 });
+  const values = await page.$$eval(
+    `[data-testid="${testId}-list"] [role="option"]`,
+    (nodes) => nodes.map((node) => node.getAttribute("data-value")),
+  );
+  await page.keyboard.press("Escape");
+  return values;
+}
+
 async function plane(base, urlPath, { method = "GET", token, body } = {}) {
   const init = { method, headers: {} };
   if (token) init.headers.Authorization = `Bearer ${token}`;
@@ -517,9 +562,11 @@ async function main() {
           tag: active?.tagName || "",
           outline: style ? `${style.outlineStyle} ${style.outlineWidth}` : "",
           heading: (document.querySelector("h1")?.textContent || "").trim().slice(0, 60),
+          selects: document.querySelectorAll("select").length,
         };
       });
-      const entry = { route, status, focus_tag: seen.tag, focus_outline: seen.outline, heading: seen.heading };
+      const entry = { route, status, focus_tag: seen.tag, focus_outline: seen.outline,
+        heading: seen.heading, native_selects: seen.selects };
       if (KEEP) {
         const file = path.join(shotDir, `${route === "/" ? "home" : route.slice(1)}.png`);
         await page.screenshot({ path: file, fullPage: true });
@@ -536,6 +583,9 @@ async function main() {
     check("every page shows a visible focus outline",
       result.pages.every((p) => p.focus_outline.startsWith("solid") && !p.focus_outline.includes("0px")),
       JSON.stringify(result.pages.map((p) => [p.route, p.focus_outline])));
+    check("the app contains no native select control on any page",
+      result.pages.every((p) => p.native_selects === 0),
+      JSON.stringify(result.pages.map((p) => [p.route, p.native_selects])));
     if (KEEP) {
       check("every page was captured as a screenshot",
         result.pages.every((p) => (p.screenshot_bytes || 0) > 10000),
@@ -543,10 +593,21 @@ async function main() {
     }
 
     // ── speak: a real WAV through the plane, played and downloadable ────────
+    // The picker is compared with the plane's own catalogue here, which means
+    // reading that catalogue before the library block below reads it again.
+    const speakToken = (await plane(planeBase, "/v1/auth/token", {
+      method: "POST",
+      body: { email: EMAIL, password: PASSWORD },
+    })).data?.token;
+    const planeCatalogue = (await plane(planeBase, "/v1/voices", { token: speakToken })).data;
     await page.goto(`${webBase}/speak`, { waitUntil: "load" });
-    const voiceOptions = await page.$$eval('[data-testid="voice-select"] option', (nodes) => nodes.map((n) => n.value));
+    const voiceOptions = await selectValues(page, "voice-select");
     check("the voice list is served by the plane, not hard-coded", voiceOptions.includes(VOICE), voiceOptions.join(","));
-    await page.selectOption('[data-testid="voice-select"]', SPEAK_VOICE);
+    check("the voice picker offers every voice the plane serves, and nothing else",
+      voiceOptions.length === planeCatalogue.voices.length
+        && planeCatalogue.voices.every((voice) => voiceOptions.includes(voice.id)),
+      `${voiceOptions.length} rows vs ${planeCatalogue.voices.length} from the plane`);
+    await chooseSelect(page, "voice-select", SPEAK_VOICE);
     await page.fill('[data-testid="speak-text"]', SPEAK_TEXT);
     if (SPEAK_LANGUAGE) await page.fill('[data-testid="speak-language"]', SPEAK_LANGUAGE);
     await page.click('[data-testid="speak-submit"]');
@@ -607,8 +668,8 @@ async function main() {
       mimeType: "audio/wav",
       buffer: spokenBytes || Buffer.alloc(0),
     });
-    await page.selectOption('[data-testid="transcribe-language"]', TRANSCRIBE_LANGUAGE);
-    await page.selectOption('[data-testid="transcribe-format"]', "verbose_json");
+    await chooseSelect(page, "transcribe-language", TRANSCRIBE_LANGUAGE);
+    await chooseSelect(page, "transcribe-format", "verbose_json");
     await page.click('[data-testid="transcribe-submit"]');
     await page.waitForSelector('[data-testid="transcribe-text"]', { timeout: TRANSCRIBE_TIMEOUT_MS });
     const transcribed = await page.evaluate(() => ({
@@ -827,6 +888,118 @@ async function main() {
       libraryCountLine.startsWith(`${catalogue.count} of ${catalogue.count} voices`),
       libraryCountLine.slice(0, 60));
 
+    // The kind filter. The repository rule forbids introducing a native <select>
+    // and this package imports nothing from electron/, so the page uses its own
+    // searchable select. It is exercised the way a keyboard user reaches it:
+    // focus, open, narrow, commit — and the cards are compared with the plane in
+    // both directions afterwards, so a filter that dropped or invented a voice fails.
+    const planeKinds = Object.entries(catalogue.kinds || {}).filter(
+      ([kind, count]) => kind !== "other" && count > 0,
+    );
+    // (Whether the app holds any native select at all is checked for every page in
+    // the sweep above, where the rule applies.)
+
+    const kindTrigger = await page.$('[data-testid="voice-kind"]');
+    check("the kind filter is present exactly when the plane reported more than one kind",
+      (planeKinds.length > 1) === Boolean(kindTrigger),
+      `${planeKinds.length} kinds from the plane, filter ${kindTrigger ? "present" : "absent"}`);
+
+    let kindChosen = null;
+    if (kindTrigger) {
+      const described = await page.$eval('[data-testid="voice-kind"]', (node) => ({
+        tag: node.tagName.toLowerCase(),
+        role: node.getAttribute("role"),
+        label: node.getAttribute("aria-label") || "",
+        expanded: node.getAttribute("aria-expanded"),
+        name: node.querySelector(".ss__value")?.textContent.trim() || "",
+      }));
+      check("the kind filter is a labeled combobox, closed until it is opened",
+        described.tag === "button" && described.role === "combobox"
+          && described.label.length > 3 && described.expanded === "false",
+        JSON.stringify(described));
+
+      await page.focus('[data-testid="voice-kind"]');
+      await page.keyboard.press("Enter");
+      await page.waitForSelector('[data-testid="voice-kind-list"]', { timeout: 30000 });
+      const kindRows = await page.$$eval(
+        '[data-testid="voice-kind-list"] [role="option"]',
+        (nodes) => nodes.map((node) => node.textContent.trim()),
+      );
+      check("Enter on the trigger opens a list holding every kind the plane reported, plus All",
+        kindRows.length === planeKinds.length + 1
+          && kindRows[0].startsWith("All kinds")
+          && kindRows.every((row) => /\(\d+\)$/.test(row)),
+        `${kindRows.length} rows: ${kindRows.join(" | ")}`);
+
+      await page.keyboard.press("Escape");
+      const afterEscape = await page.$eval('[data-testid="voice-kind"]', (node) => ({
+        expanded: node.getAttribute("aria-expanded"),
+        name: node.querySelector(".ss__value")?.textContent.trim() || "",
+      }));
+      const cardsAfterEscape = await page.$$eval("[data-voice-id]", (nodes) => nodes.length);
+      check("Escape closes the kind filter without choosing anything",
+        afterEscape.expanded === "false"
+          && afterEscape.name.startsWith("All kinds")
+          && cardsAfterEscape === libraryCards.length,
+        `${afterEscape.name} — ${cardsAfterEscape} cards`);
+
+      // Choose the first kind that is not "All", by typing its own name.
+      const target = kindRows.find((row) => !row.startsWith("All kinds")) || "";
+      const wanted = target.split(" (")[0];
+      const wantedCount = Number(target.match(/\((\d+)\)$/)?.[1]);
+      await page.focus('[data-testid="voice-kind"]');
+      await page.keyboard.press("ArrowDown");
+      await page.waitForSelector('[data-testid="voice-kind-search"]', { timeout: 30000 });
+      await page.fill('[data-testid="voice-kind-search"]', wanted);
+      const survivorRows = await page.$$eval(
+        '[data-testid="voice-kind-list"] [role="option"]',
+        (nodes) => nodes.map((node) => node.textContent.trim()),
+      );
+      check("typing into the filter's own search narrows the kinds to the one that matches",
+        survivorRows.length === 1 && survivorRows[0] === target,
+        `${survivorRows.length}: ${survivorRows.join(" | ")}`);
+
+      await page.keyboard.press("Enter");
+      await page.waitForFunction(
+        (label) => document.querySelector('[data-testid="voice-kind"] .ss__value')?.textContent.trim() === label,
+        target,
+        { timeout: 30000 },
+      );
+      const badges = await page.$$eval("[data-voice-id]", (nodes) => nodes.map((node) => ({
+        id: node.getAttribute("data-voice-id"),
+        badge: node.querySelector(".badge")?.textContent.trim() || "",
+      })));
+      const chosen = badges.filter((card) => card.badge === wanted).map((card) => card.id);
+      const chosenCountLine = (await page.textContent('[data-testid="voice-count"]')).trim();
+      kindChosen = { kind: wanted, count: chosen.length };
+      check("choosing a kind with the keyboard narrows the cards to exactly that kind, and invents none",
+        Number.isFinite(wantedCount)
+          && chosen.length === wantedCount
+          && chosen.length < libraryCards.length
+          && chosen.every((id) => libraryCards.includes(id))
+          && badges.every((card) => chosen.includes(card.id) || card.badge !== wanted),
+        `${chosen.length} cards badged ${wanted} (the filter says ${wantedCount}) of ${libraryCards.length}`);
+      check("the narrowed count line names how many of the plane's voices that kind holds",
+        chosenCountLine.startsWith(`${chosen.length} of ${catalogue.count} voices`),
+        chosenCountLine.slice(0, 60));
+
+      // Back to every kind: the filter must be able to undo itself.
+      await page.focus('[data-testid="voice-kind"]');
+      await page.keyboard.press("ArrowDown");
+      await page.waitForSelector('[data-testid="voice-kind-search"]', { timeout: 30000 });
+      await page.fill('[data-testid="voice-kind-search"]', "All kinds");
+      await page.keyboard.press("Enter");
+      await page.waitForFunction(
+        (expected) => document.querySelector('[data-testid="voice-count"]')?.textContent.trim()
+          .startsWith(`${expected} of`),
+        libraryCards.length,
+        { timeout: 30000 },
+      );
+      const restored = await page.$$eval("[data-voice-id]", (nodes) => nodes.length);
+      check("choosing All kinds brings every voice the plane serves back",
+        restored === libraryCards.length, `${restored} of ${libraryCards.length} cards`);
+    }
+
     await page.fill('[data-testid="voice-search"]', "hf_");
     const narrowed = await page.$$eval("[data-voice-id]", (nodes) =>
       nodes.map((node) => node.getAttribute("data-voice-id")),
@@ -881,15 +1054,15 @@ async function main() {
     // preselects it — and only when the plane's catalogue really has it.
     await page.click(`[data-voice-id="${previewVoice}"] [data-testid="voice-use"]`);
     await page.waitForFunction(
-      (expected) => document.querySelector('[data-testid="voice-select"]')?.value === expected,
+      (expected) => document.querySelector('[data-testid="voice-select"]')?.getAttribute("data-value") === expected,
       previewVoice,
       { timeout: 20000 },
     );
-    const handedOver = await page.$eval('[data-testid="voice-select"]', (node) => node.value);
+    const handedOver = await page.$eval('[data-testid="voice-select"]', (node) => node.getAttribute("data-value"));
     check("Use in Speak carries the voice to the Speak page, which selects it",
       handedOver === previewVoice, `${handedOver} vs ${previewVoice}`);
     await page.goto(`${webBase}/speak?voice=${encodeURIComponent("definitely-not-a-voice")}`, { waitUntil: "load" });
-    const notHonoured = await page.$eval('[data-testid="voice-select"]', (node) => node.value);
+    const notHonoured = await page.$eval('[data-testid="voice-select"]', (node) => node.getAttribute("data-value"));
     check("a voice the plane does not have is not preselected, it falls back to the default",
       notHonoured !== "definitely-not-a-voice" && catalogue.voices.some((voice) => voice.id === notHonoured),
       notHonoured);
@@ -952,7 +1125,7 @@ async function main() {
 
     // ── jobs: queued, cancelled, and spoken by the real worker ──────────────
     await page.goto(`${webBase}/jobs`, { waitUntil: "load" });
-    await page.selectOption('[data-testid="job-voice"]', VOICE);
+    await chooseSelect(page, "job-voice", VOICE);
 
     // (1) a job cancelled before any worker runs: never spoken, meter untouched.
     const usageBeforeCancel = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;

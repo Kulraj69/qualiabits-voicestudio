@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { filterVoices, KIND_LABELS, kindCounts, PREVIEW_TEXT } from "../lib/voices.js";
+import SearchableSelect from "./SearchableSelect.jsx";
 
 /**
  * The Voice Library.
@@ -95,6 +96,15 @@ export default function VoiceLibraryView({ catalogue }) {
   const otherKinds = Object.entries(counts).filter(
     ([key, count]) => key !== "other" && count > 0,
   );
+  // The kinds the plane actually reported, with the counts the plane's own list
+  // produced — the same numbers the cards below would show.
+  const kindOptions = [
+    { value: "all", label: `All kinds (${voices.length})` },
+    ...otherKinds.map(([key, count]) => ({
+      value: key,
+      label: `${KIND_LABELS[key] || key} (${count})`,
+    })),
+  ];
 
   return (
     <div className="stack">
@@ -114,26 +124,28 @@ export default function VoiceLibraryView({ catalogue }) {
             </span>
           </label>
           {otherKinds.length > 1 ? (
-            <label className="field">
-              <span className="field__label">Kind</span>
-              {/* A native control, on purpose: this package imports nothing outside
-                  itself, and the fork's styled searchable select lives in the Electron
-                  app. The filter itself is lib/voices.js's own pure function, tested
-                  on its own; hiding it when the catalogue has one kind is deliberate —
-                  a filter that cannot change what is shown is noise. */}
-              <select
-                data-testid="voice-kind"
+            <div className="field">
+              <span className="field__label" id="voice-kind-label">
+                Kind
+              </span>
+              {/* The repository rule (AGENTS.md, "Shared select controls") is that new
+                  select boxes are searchable and that native select elements are not
+                  introduced; the fork's own control is an Electron component and this
+                  package imports nothing from outside itself, so this is the package's
+                  own SearchableSelect, with its pure half in lib/searchable-select.js.
+                  The filter itself is lib/voices.js's own pure function, tested on its
+                  own; hiding it when the catalogue has one kind is deliberate — a
+                  filter that cannot change what is shown is noise. */}
+              <SearchableSelect
+                options={kindOptions}
                 value={kind}
-                onChange={(event) => setKind(event.target.value)}
-              >
-                <option value="all">All kinds ({voices.length})</option>
-                {otherKinds.map(([key, count]) => (
-                  <option key={key} value={key}>
-                    {KIND_LABELS[key] || key} ({count})
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={setKind}
+                ariaLabel="Kind of voice"
+                testId="voice-kind"
+                placeholder="All kinds"
+                searchPlaceholder="narrow the kinds"
+              />
+            </div>
           ) : null}
         </div>
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { formatBytes, formatDateTime, formatSeconds, statusLabel, isTerminal } from "../lib/format.js";
 import { defaultVoiceId, groupVoices, KIND_LABELS } from "../lib/voices.js";
+import SearchableSelect from "./SearchableSelect.jsx";
 
 /**
  * The Jobs page.
@@ -16,6 +17,17 @@ import { defaultVoiceId, groupVoices, KIND_LABELS } from "../lib/voices.js";
 export default function JobsView({ catalogue, initialJobs }) {
   const voices = catalogue?.voices ?? [];
   const groups = useMemo(() => groupVoices(voices), [voices]);
+  // One row per voice the plane reported, grouped by the kind it reported. The
+  // group name is display only; the value on every row is a voice id.
+  const voiceChoices = useMemo(
+    () => Object.entries(groups).flatMap(([kind, list]) =>
+      list.map((item) => ({
+        value: item.id,
+        group: KIND_LABELS[kind] || kind,
+        label: `${item.name}${item.default ? " (engine default)" : ""}`,
+      }))),
+    [groups],
+  );
   const [jobs, setJobs] = useState(initialJobs || []);
   const [text, setText] = useState(
     "This paragraph is queued rather than spoken in one request. A worker process claims it, asks the engine, and stores the audio, which this page then plays back.",
@@ -93,27 +105,21 @@ export default function JobsView({ catalogue, initialJobs }) {
           <span className="field__hint">{text.length} characters · the queue takes up to 20,000</span>
         </label>
         <div className="row">
-          <label className="field field--grow">
+          <div className="field field--grow">
             <span className="field__label">Voice</span>
-            <select
-              data-testid="job-voice"
+            {/* A searchable select, not a native one: the repository rule
+                (AGENTS.md, "Shared select controls"). The rows are the voices the
+                plane reported, grouped by the kind it reported them under. */}
+            <SearchableSelect
+              options={voiceChoices}
               value={voice}
-              onChange={(event) => setVoice(event.target.value)}
-            >
-              {Object.entries(groups).map(([kind, list]) =>
-                list.length === 0 ? null : (
-                  <optgroup key={kind} label={KIND_LABELS[kind] || kind}>
-                    {list.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                        {item.default ? " (engine default)" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                ),
-              )}
-            </select>
-          </label>
+              onChange={setVoice}
+              ariaLabel="Voice for the queued job"
+              testId="job-voice"
+              placeholder="Pick a voice"
+              searchPlaceholder="voice id or name"
+            />
+          </div>
           <button className="btn" type="submit" data-testid="job-queue" disabled={busy || !text.trim()}>
             {busy ? "Queueing…" : "Queue job"}
           </button>

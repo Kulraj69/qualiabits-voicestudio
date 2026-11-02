@@ -13,13 +13,18 @@ Three slices are built. **Slice A** is the four things a customer does first —
 up, speak, mint keys, see what was used. **Slice B** is transcription: a recording in,
 the engine's transcript out, metered in its own counters. **Slice C** is the Voice
 Library: every voice the plane reports, searchable, each one previewable through the
-same metered route the Speak page uses, with a hand-off into Speak. Two of the pages
+same metered route the Speak page uses, with a hand-off into Speak. Slice C also had
+to satisfy the repository's own select rule (`AGENTS.md`, "Shared select controls"):
+the five pickers on the site — the voice on Speak and Jobs, the language filter, the
+transcription language and answer format, and the library's kind filter — are now one
+package-local searchable control instead of native selects, with its pure half tested
+without a browser. Two of the pages
 M3 names — Voice Clone with a consent checkbox and Voice Design — and two more —
 Dubbing and Audiobooks — are **not built**, and the last section of this page says so
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot55-web-e2e-r2/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot56-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -53,6 +58,11 @@ is a command a reader can re-run, not a policy to take on trust.
 | One press of Preview moves the plane's meter by exactly one request | `hosted/web/e2e/dashboard.mjs` | `hosted/web/test/harness.test.mjs` | `the preview was metered as exactly one more speech request under this workspace` |
 | A voice chosen in the library carries into Speak, and only if the plane has it | `hosted/web/app/speak/page.jsx` | `hosted/web/test/harness.test.mjs` | `Use in Speak carries the voice to the Speak page, which selects it` |
 | Every page one click from home, keyboard focus visible | `hosted/web/components/NavLinks.jsx` | `hosted/web/test/format.test.mjs` | `every page takes a keyboard Tab onto a focusable control` |
+| Every picker is the package's own searchable select, and no page renders a native one | `hosted/web/components/SearchableSelect.jsx` | `hosted/web/test/searchable-select.test.mjs` | `the app contains no native select control on any page` |
+| The control's keyboard: open, narrow, step to a row, commit, leave | `hosted/web/lib/searchable-select.js` | `hosted/web/test/searchable-select.test.mjs` | `the kind filter is a labeled combobox, closed until it is opened` |
+| The voice picker offers the plane's voices and nothing else | `hosted/web/components/SpeakView.jsx` | `hosted/web/test/searchable-select.test.mjs` | `the voice picker offers every voice the plane serves, and nothing else` |
+| Grouped rows come from the kind the plane reported, and filtering keeps the grouping | `hosted/web/lib/searchable-select.js` | `hosted/web/test/voices.test.mjs` | `choosing a kind with the keyboard narrows the cards to exactly that kind, and invents none` |
+| The transcription controls are the same control as every other picker | `hosted/web/components/TranscribeView.jsx` | `hosted/web/test/searchable-select.test.mjs` | `the Transcribe page shows a transcript` |
 | Dark, and the QualiaBits palette and spacing | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
 
 Two sentences that belong beside that table, because the gap between what is proven
