@@ -1409,3 +1409,100 @@ cd hosted/web && npm test              -> 44 tests, 44 pass, 0 fail
    tests move after a run while the measured directories do not — and points at
    the guard that runs that `git diff`, so the policy is a command a reader can
    re-run rather than something to take on trust.
+
+### Round 4 — judge pass 3 (cheap+), 2/3/3/4/2/3/2 — FAIL, on two things the files contradict
+
+Review: `hermes-reports/M3-slot51-review3.txt`. This pass is recorded in full
+because it is the one pass that got the evidence wrong, and the honest thing to do
+with a wrong review is say so with the lines rather than average it away.
+
+It scored honesty 2 and named as its first flaw that the acceptance page "cites
+`hermes-reports/M3-slot47-web-e2e-r2/result.json`, while the claimed evidence is
+`M3-slot51-web-e2e-r1`". It named as its second that the page "says two of the
+five". Both were false when it ran, and the files say so:
+
+```
+$ grep -n "web-e2e-r" hosted/M3-ACCEPTANCE.md
+16:at: the checks come from `hermes-reports/M3-slot51-web-e2e-r1/result.json`, taken
+$ grep -n "of the five words" hosted/M3-ACCEPTANCE.md
+55:  page cites, three of the five words of the Hindi sentence came back — एक, हिन्दी
+```
+
+`M3-slot51-web-e2e-r1` was committed at `c983205b5` and the string
+`M3-slot47-web-e2e-r2` appears nowhere in the bundle that judge was given; it
+appears in `M3-slot51-review1.txt` and `-review2.txt`, which is where the claim
+came from. So this is not a disagreement about taste: the pass repeated its
+predecessors' text against a repository it did not re-read. It is logged, not
+argued with, and it is why the next pass was handed the verbatim lines.
+
+One thing in it was real and is fixed: the fetch command for the transcription
+model named no revision. It now pins
+`536b0662742c02347bc0e980a01041f333bce120`, with the honest qualifier that the
+revision is not the guarantee — `model.bin`'s sha256
+`3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671` is what the
+script checks, and Hugging Face names the blob it serves by that same hash, which
+was checked here by reading the cache symlink rather than assumed.
+
+### Round 5 — judge pass 4 (cheap+), 2/4/4/4/1/3/5 — FAIL, and honesty is the 5
+
+Review: `hermes-reports/M3-slot51-review4.txt` (bundle: `-review4-prompt.txt`,
+which quotes the cited lines verbatim and shows the cited directory listing).
+Taste 4, human feel 4, technical depth 4, **honesty 5** with the judge quoting
+`hosted/M3-ACCEPTANCE.md:16` and `:55` back correctly — the misreading is gone and
+the top score in the pass is the one that matters most for this repo.
+
+It still fails, on things this lane cannot reach:
+
+* **Originality 2.** A hosted dashboard with speech, keys, jobs, usage and
+  transcription is familiar; the one memorable element is the closed Hindi loop,
+  and its accuracy is weak. A differentiator is a product decision and stays
+  Kulraj's.
+* **Criteria fit 1.** The judge wanted the official hackathon rules and sponsor
+  criteria mapped. There are none: this is the owner's product milestone, not a
+  hackathon entry, and the bundle did not claim otherwise. The milestone also
+  names seven pages this slice does not build.
+* **Reviewer path 3.** `uv sync`, Node install, model provisioning, three
+  processes and a CPU run that takes minutes. That is a real cost of not being
+  deployed, and deploying needs the owner.
+
+### DONE GATE (self-loop item 8), item by item
+
+* (a) every definition-of-done item, from evidence in this log: **D1 yes** — the
+  cited run is a clean-tree real-engine run at `533095257`, 62/62, archived and
+  committed, with the speech model's three sha256 values and the transcription
+  model's four in `result.json`. **D2 yes** — `147 passed`, the acceptance guard
+  included, and the guard's own `git diff` is empty. **D3 yes** — 44 unit checks,
+  56/56 stub browser checks. **D4 yes** — three judge passes on real artifacts,
+  every fixable flaw fixed. **D5 yes** — nothing deployed, no GPU, no bucket, no
+  provider call, no terms accepted, no spend, no pricing.
+* (b) all tests pass in the last round: **yes** (`147 passed`; 44/44; 62/62 and
+  56/56 browser checks).
+* (c) the last judge round passes with no criterion below 4: **no.** Honesty is
+   the only criterion that fails nothing — originality and criteria fit are the
+   owner's, and reviewer path is the price of being undeployed.
+* (d) a stranger-read of the README works: **yes**, and this slot removed two of
+  the reasons it did not — the venv command is now inline, and the fetch command
+  for the second model is now pinned and copy-pasteable.
+
+So slice B is **not marked done**, by the letter of the gate, and no pass is
+claimed. What changed is that the repository is now in a state where the only
+thing standing between it and the gate is the owner's list below, rather than a
+red test suite and an uncommitted run.
+
+Needs-Kulraj exact actions: (1) the unchanged M1 item — an approved g5/g6 scoped
+runtime with automatic idle shutdown and a hard spending limit; (2) the unchanged
+listening check — the only audio no human has judged is the WAVs earlier slots
+committed under `hermes-reports/M1-slot23-speech-r2/audio/` and
+`hermes-reports/M2-slot44-e2e-r1/audio/` (this slot's browser run records the
+transcript and the durations but commits no audio of its own); (3) name one
+differentiator for the product — the single item that can move originality to 4;
+(4) decide deployment and a real object-store bucket, which is what would move
+reviewer path and criteria fit; (5) choose which of the remaining M3 pages (Voice
+Library, Clone with consent, Design, Dubbing, Audiobooks) or a light theme this
+lane should build next, since they are all buildable on CPU without him and none
+of them is started.
+
+No deployment, no publication, no message, no submission, no provider call, no
+terms acceptance, no spend, no pricing anywhere. Fork pushed to
+`Kulraj69/qualiabits-voicestudio` `work/m1-headless`,
+`82fc6dded..1aa2ea1ca`, remote SHA read back and equal.
