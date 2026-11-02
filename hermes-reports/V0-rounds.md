@@ -1205,3 +1205,61 @@ non-invented durations, D7's boundary and licence sentence), taste and human fee
 Cost intent: mid tier for the build and the tests, cheap+ for the judge rounds, no
 hard tier, no GPU, no provider call. The repo is AGPL and stays public with
 attribution.
+
+### Round 1 — build and first evidence
+
+Tests, with the command and the result lines:
+
+```
+.venv/bin/python -m pytest tests/hosted -q           141 passed, 5 failed
+.venv/bin/python -m pytest tests/hosted/test_hosted_transcription.py -q
+                                                      16 passed
+cd hosted/web && npm test                            39 tests, 39 pass, 0 fail
+node e2e/dashboard.mjs --keep                        52/52 checks passed   (stub engine)
+e2e/real-engine.sh --keep --no-build                 55/55 checks passed   (real engine)
+```
+
+The five failures were `tests/hosted/test_m3_acceptance_matrix.py`, and they were
+the new guard doing its job: `hosted/M3-ACCEPTANCE.md` cites a run file that did
+not exist yet, so every one of its checks failed. That is the intended
+behaviour — the table cannot describe evidence that is not there — and they pass
+in the last round, after the run they cite is committed.
+
+The three defects the runs themselves found, and what happened to each:
+
+1. **`isinstance(part, UploadFile)` refused every real upload.** Starlette's form
+   parser hands back a `starlette.datastructures.UploadFile`, and
+   `fastapi.UploadFile` is a *subclass* of it, not a superclass — so the check was
+   false for every genuine upload and the route answered 400 "There is no 'file'
+   part". Twelve of the sixteen new tests failed on it, which is what found it.
+   Fixed by checking against Starlette's class, with the comment kept next to the
+   import so nobody re-introduces it.
+2. **`x-omnivoice-backend` is the engine's version, not a backend name.** The real
+   run's meta line read "engine build 0.5.7" only after the fix; before it, the
+   page would have printed ` · 0.5.7` as though it were the engine that spoke.
+   `backend/main.py` stamps `x-omnivoice-backend: <version>`, and the plane's own
+   comment claimed it was the engine's name. The comment now says what the header
+   is, and both pages label it as a build.
+3. **The word comparison was matching single Devanagari letters.** `words()`
+   split on `\p{L}` only, and a Devanagari syllable is a letter plus combining
+   marks, so "हिन्दी" became "ह","न","द" — characters that match anything. The
+   run's own `shared_words` list showed it (`['यह','एक','ह','द','व','क','ह']`).
+   With `\p{M}` included the same run gives `['यह','एक','है']` — three real words —
+   and the assertion now demands two words, at least one of them longer than a
+   single letter.
+
+What the evidence says, in the run's own fields:
+
+```
+engine: sherpa-onnx on kokoro-int8-multi-lang-v1_0 (QB_E2E_ENGINE_CMD)
+spoken:  यह एक हिन्दी वाक्य है।        (Kokoro, hf_alpha, hi, 1.831958 s)
+heard:   यह एक हिंदी वाग के है          (faster-whisper small, 1 segment)
+shared:  ["यह", "एक", "है"]
+the plane measured the upload as 1.831958 s — the same number, down to the
+microsecond, that it reported for the audio it had just returned
+meter:   transcript_characters 21, equal to the length of the transcript the
+         page shows; speech characters unchanged by the transcription
+```
+
+Not measured, and not claimed: whether the voice is worth paying for. No human
+has heard it. That stays the owner's.
