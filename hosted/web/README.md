@@ -154,8 +154,14 @@ this line when it does. One command fills the gap, and the script still checks t
 
 ```sh
 cd ../..        # the repository root
-.venv/bin/python -c "from huggingface_hub import snapshot_download as d; print(d('Systran/faster-whisper-small'))"
+.venv/bin/python -c "from huggingface_hub import snapshot_download as d; print(d('Systran/faster-whisper-small', revision='536b0662742c02347bc0e980a01041f333bce120'))"
 ```
+
+The revision is pinned so the fetch is repeatable, but the revision is not the
+guarantee. `model.bin`'s sha256 is
+`3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671`, that number is
+what the script checks, and Hugging Face names the blob it serves by the same hash —
+so the pin and the fetch can be compared instead of believed.
 
 **Its bytes are
 recorded as well**: `result.json` names the transcription model's directory and the

@@ -1305,3 +1305,107 @@ gap, not claimable here).
 
 Cost intent: mid tier for the build and the tests, cheap+ for the judge passes,
 no hard tier, no GPU, no provider call. AGPL, public fork with attribution.
+
+### Round 1 — take the evidence that was missing, and check the suites
+
+The repository as pushed did not pass its own tests. At `82fc6dded` the Python
+suite was **143 passed, 3 failed**, and all three failures were
+`tests/hosted/test_m3_acceptance_matrix.py`:
+
+```
+AssertionError: the cited run does not exist:
+  .../hermes-reports/M3-slot47-web-e2e-r2/result.json
+```
+
+`hosted/M3-ACCEPTANCE.md` cited a browser run that slot 47 had taken but never
+archived or committed. So this round took it again, properly:
+
+```
+rm -rf hosted/web/e2e/.evidence
+hosted/web/e2e/real-engine.sh --keep          -> 62/62 checks passed, EXIT=0
+cp -r hosted/web/e2e/.evidence/{result.json,*.log,screenshots} \
+      hermes-reports/M3-slot47-web-e2e-r2/
+```
+
+The run the first attempt produced was discarded, because it recorded
+`worktree_dirty: true` — the slot's own plan file was uncommitted while it ran,
+and a run over a dirty tree is evidence about nothing in particular. The tree was
+committed clean and the run was retaken at `c3f345e7a`, `worktree_dirty: false`.
+After that archive landed the guard passed (**146 passed**), and so did the rest:
+
+```
+.venv/bin/python -m pytest tests/hosted -q      -> 146 passed
+cd hosted/web && npm test                       -> 44 tests, 44 pass, 0 fail
+cd hosted/web && npm run e2e                    -> 55/55 checks passed
+hosted/web/e2e/real-engine.sh --keep            -> 62/62 checks passed
+```
+
+That is the first round's whole content: the repo's own test suite went from red
+to green, and the reason it was red was a real missing-evidence defect rather than
+a flaky test.
+
+### Round 2 — judge pass 1 (cheap+), 3/4/4/4/3/4/2 — FAIL
+
+Review: `hermes-reports/M3-slot51-review1.txt` (bundle:
+`M3-slot51-review1-prompt.txt`). Originality 3, taste 4, human feel 4, technical
+depth 4, criteria fit 3, reviewer path 4, **honesty 2** — the pass bar is every
+criterion 4 or more with no honesty flaw, so this failed.
+
+What it found, and what happened to each:
+
+1. **"README claims Fifty-six checks while the stub run passed 55/55."** Real, as
+   written. Measuring it turned up something worth knowing: `npm run e2e` passes
+   55 checks and `npm run e2e -- --keep` passes 56, because the screenshot check
+   only runs when there is somewhere to keep them. The page now says both numbers
+   and why they differ.
+2. **"M3-ACCEPTANCE says two of the five words came back; the run records three."**
+   Real. The page now says three, names them (एक, हिन्दी, है), and a new guard —
+   `test_the_shared_word_count_in_the_prose_is_the_run_s_own` — reads the number
+   and the words back out of the run's `transcript.shared_words`, so the sentence
+   cannot drift again. Python suite: **147 passed**.
+3. **"The cited result provides no pinned sha256 for the speech model."** False as
+   stated, and the fault was this lane's: the bundle summarised `result.json` with
+   an explicit key list that omitted `engine_model`, which holds the three hashes.
+   The artifact was fine; the evidence handed to the judge was incomplete. The
+   correction is in pass 3's bundle, and the omission is recorded here rather than
+   quietly re-sent.
+4. **"Most of the advertised M3 product is absent."** True and not fixable in this
+   slice; the missing pages are the later slices and the page says so.
+5. **"Bootstrap: a fresh reviewer is not sure what to run, and the run names a
+   machine-local path."** Partly accepted. The web README now gives the venv
+   command inline instead of pointing at another file, and the acceptance page says
+   the directories in the run are where this machine keeps the weights, not
+   something a reader copies, with `real-engine.sh` deciding which bytes are
+   acceptable in one place.
+
+### Round 3 — judge pass 2 (cheap+), 2/4/4/4/2/3/4 — FAIL
+
+Review: `hermes-reports/M3-slot51-review2.txt`. Honesty rose to 4; originality 2,
+criteria fit 2 and reviewer path 3 keep it failing, and the first two are the
+owner's, as slot 44 recorded.
+
+1. **"Real transcription is materially inaccurate."** True, and now said in the
+   artifact instead of being left for a reader to notice: the acceptance page
+   states that the engine heard वाक्य as *वाग के*, and that the loop proves the
+   wiring, the metering and which bytes spoke — not transcription quality.
+2. **"Fresh-clone reproducibility: the transcription model must be supplied."**
+   Accepted as far as it can honestly be fixed. Auto-downloading that model would
+   reverse a licence stance the page states on purpose, so the README now carries
+   the exact copy-pasteable command that fetches it, and still says the script
+   checks the bytes it lands against the pinned sha256.
+3. **"Evidence is split across revisions."** Accepted, and fixed by making the
+   whole chain answer to one commit. The docs were frozen at `533095257`, both
+   browser paths were re-taken there over a clean tree, and the page now cites
+   `hermes-reports/M3-slot51-web-e2e-r1/result.json`:
+
+```
+hosted/web/e2e/real-engine.sh --keep   -> 62/62, worktree_dirty false, commit 533095257
+npm run e2e -- --keep                  -> 56/56, worktree_dirty false, commit c983205b5
+.venv/bin/python -m pytest tests/hosted -q -> 147 passed    (at 1048851e4)
+cd hosted/web && npm test              -> 44 tests, 44 pass, 0 fail
+```
+
+   The page now also says the one thing that is still true — documentation and
+   tests move after a run while the measured directories do not — and points at
+   the guard that runs that `git diff`, so the policy is a command a reader can
+   re-run rather than something to take on trust.
