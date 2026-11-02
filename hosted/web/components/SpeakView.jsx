@@ -16,7 +16,7 @@ const LANGUAGE_CODES = ["en", "hi", "es", "fr", "de", "it", "pt", "ru", "ja", "z
  * metered route. The engine's own refusal sentence is shown verbatim if the
  * voice is not one it can speak.
  */
-export default function SpeakView({ catalogue }) {
+export default function SpeakView({ catalogue, initialVoice = "" }) {
   const voices = catalogue?.voices ?? [];
   const languages = useMemo(() => languageOptions(voices), [voices]);
   const [languageFilter, setLanguageFilter] = useState("all");
@@ -26,7 +26,7 @@ export default function SpeakView({ catalogue }) {
   );
 
   const [text, setText] = useState("The dashboard speaks through the control plane.");
-  const [voice, setVoice] = useState(defaultVoiceId(voices));
+  const [voice, setVoice] = useState(initialVoice || defaultVoiceId(voices));
   const [language, setLanguage] = useState("auto");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

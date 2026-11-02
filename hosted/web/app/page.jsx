@@ -13,6 +13,12 @@ const TILES = [
     body: "Pick a voice from the engine's own catalogue and hear the audio come back through the control plane.",
   },
   {
+    href: "/voices",
+    kicker: "The engine's catalogue",
+    title: "Voice library",
+    body: "Every voice the plane reports, searchable, with a metered preview of any of them and a one-click hand-off to Speak.",
+  },
+  {
     href: "/transcribe",
     kicker: "Speech to text",
     title: "Transcribe",
@@ -97,7 +103,7 @@ export default async function HomePage() {
         <p className="page-head__eyebrow">Workspace</p>
         <h1>{workspace?.display_name || workspace?.email || "Your workspace"}</h1>
         <p className="page-head__lede">
-          Four things a customer does first. Every page below is one click away.
+          The things a customer does first. Every page below is one click away.
         </p>
       </div>
 

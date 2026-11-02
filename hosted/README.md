@@ -79,7 +79,8 @@ subtitle file would count timecodes as speech; its seconds are still recorded.
 
 ## The dashboard
 
-The dashboard has six pages now — home, Speak, Transcribe, Jobs, Keys, Usage. The
+The dashboard has seven pages now — home, Speak, Voices, Transcribe, Jobs, Keys,
+Usage. The
 browser front end that speaks through this plane lives in
 [`hosted/web/`](web/README.md) — its own Next.js package, importing nothing from
 `backend/`, this plane's own routes being its only contact with it. Run it, and

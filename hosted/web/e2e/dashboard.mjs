@@ -487,7 +487,7 @@ async function main() {
 
     // ── every page reachable in one click from home ─────────────────────────
     const hrefs = await page.$$eval(".main a[href^='/']", (nodes) => [...new Set(nodes.map((n) => n.getAttribute("href")))]);
-    for (const href of ["/speak", "/transcribe", "/jobs", "/keys", "/usage"]) {
+    for (const href of ["/speak", "/voices", "/transcribe", "/jobs", "/keys", "/usage"]) {
       check(`home links to ${href}`, hrefs.includes(href), hrefs.join(", "));
     }
     let deadLinks = [];
@@ -502,7 +502,7 @@ async function main() {
     // /speak (its focus) and let the other three pages be covered by inference.
     // A judge was right to call that narrower than the claim, so each page is
     // now visited, tabbed into and, when evidence is kept, captured.
-    const PAGES = ["/", "/speak", "/transcribe", "/keys", "/usage", "/jobs"];
+    const PAGES = ["/", "/speak", "/voices", "/transcribe", "/keys", "/usage", "/jobs"];
     const shotDir = path.join(runDir, "screenshots");
     if (KEEP) mkdirSync(shotDir, { recursive: true });
     result.pages = [];
@@ -786,6 +786,110 @@ async function main() {
       body: { input: "hello", voice: VOICE, response_format: "wav" },
     });
     check("a revoked key is refused on the next request", afterRevoke.status === 401, `status ${afterRevoke.status}`);
+
+    // ── voice library: every voice the plane serves, searchable, auditioned ──
+    // The page is compared with the plane in both directions: a card the plane
+    // never reported is an invention, and a voice the plane reported but the page
+    // omits is a hidden one. The preview is measured the same way — the plane's
+    // meter is read either side of one press, so "metered" is a delta and not a
+    // sentence on a page.
+    const libraryToken = (await plane(planeBase, "/v1/auth/token", {
+      method: "POST",
+      body: { email: EMAIL, password: PASSWORD },
+    })).data?.token;
+    const catalogue = (await plane(planeBase, "/v1/voices", { token: libraryToken })).data;
+    const usageBeforeLibrary = (await plane(planeBase, "/v1/usage", { token: libraryToken })).data?.usage;
+
+    await page.goto(`${webBase}/voices`, { waitUntil: "load" });
+    const libraryCards = await page.$$eval("[data-voice-id]", (nodes) =>
+      nodes.map((node) => node.getAttribute("data-voice-id")),
+    );
+    const libraryCountLine = (await page.textContent('[data-testid="voice-count"]')).trim();
+    check("the voice library lists exactly the voices the plane serves",
+      libraryCards.length === catalogue.voices.length
+        && catalogue.voices.every((voice) => libraryCards.includes(voice.id)),
+      `${libraryCards.length} cards vs ${catalogue.voices.length} from the plane`);
+    check("the library's own count line agrees with the plane's catalogue",
+      libraryCountLine.startsWith(`${catalogue.count} of ${catalogue.count} voices`),
+      libraryCountLine.slice(0, 60));
+
+    await page.fill('[data-testid="voice-search"]', "hf_");
+    const narrowed = await page.$$eval("[data-voice-id]", (nodes) =>
+      nodes.map((node) => node.getAttribute("data-voice-id")),
+    );
+    const narrowedCountLine = (await page.textContent('[data-testid="voice-count"]')).trim();
+    check("searching the library narrows it to the voices that match, and invents none",
+      narrowed.length > 0
+        && narrowed.length < libraryCards.length
+        && narrowed.every((id) => id.toLowerCase().includes("hf_"))
+        && narrowed.every((id) => libraryCards.includes(id)),
+      `${narrowed.length} of ${libraryCards.length}: ${narrowed.join(",")}`);
+    check("the narrowed count line names how many of the plane's voices are shown",
+      narrowedCountLine.startsWith(`${narrowed.length} of ${catalogue.count} voices`),
+      narrowedCountLine.slice(0, 60));
+
+    // Preview a voice from the narrowed list — an id the page itself offered, so
+    // the press is the page's own suggestion and not a constant in this file.
+    const previewVoice = narrowed.find((id) => id === SPEAK_VOICE) || narrowed[0] || libraryCards[0];
+    await page.click(`[data-voice-id="${previewVoice}"] [data-testid="voice-preview"]`);
+    await page.waitForSelector('[data-testid="voice-preview-player"] audio', { timeout: SPEAK_TIMEOUT_MS });
+    const preview = await page.evaluate(async () => {
+      const player = document.querySelector('[data-testid="voice-preview-player"]');
+      const audio = player.querySelector("audio");
+      const response = await fetch(audio.getAttribute("src"));
+      const buffer = new Uint8Array(await response.arrayBuffer());
+      return {
+        header: String.fromCharCode(...buffer.slice(0, 4)),
+        bytes: buffer.length,
+        playerText: player.textContent,
+        download: player.querySelector("a[download]")?.getAttribute("download") || "",
+      };
+    });
+    check("the library previews a voice it offered, and real WAV bytes come back through the plane",
+      preview.header === "RIFF" && preview.bytes > 1000,
+      JSON.stringify({ voice: previewVoice, header: preview.header, bytes: preview.bytes }));
+    check("the preview player reports the measured duration and size",
+      /s of audio/.test(preview.playerText) && preview.download === `preview-${previewVoice}.wav`,
+      `${preview.playerText.slice(0, 80)} / ${preview.download}`);
+
+    const usageAfterLibrary = (await plane(planeBase, "/v1/usage", { token: libraryToken })).data?.usage;
+    const previewSeconds = Number(preview.playerText.match(/([\d.]+) s of audio/)?.[1]);
+    check("the preview was metered as exactly one more speech request under this workspace",
+      usageAfterLibrary.requests - usageBeforeLibrary.requests === 1,
+      `${usageBeforeLibrary.requests} -> ${usageAfterLibrary.requests}`);
+    check("the preview's own measured seconds are the seconds the plane added to the meter",
+      Number.isFinite(previewSeconds)
+        && Math.abs((usageAfterLibrary.audio_seconds - usageBeforeLibrary.audio_seconds) - previewSeconds) < 0.005,
+      `page says ${previewSeconds} s, plane added `
+        + `${usageAfterLibrary.audio_seconds - usageBeforeLibrary.audio_seconds} s`);
+
+    // The hand-off: the library's link carries a voice into the Speak page, which
+    // preselects it — and only when the plane's catalogue really has it.
+    await page.click(`[data-voice-id="${previewVoice}"] [data-testid="voice-use"]`);
+    await page.waitForFunction(
+      (expected) => document.querySelector('[data-testid="voice-select"]')?.value === expected,
+      previewVoice,
+      { timeout: 20000 },
+    );
+    const handedOver = await page.$eval('[data-testid="voice-select"]', (node) => node.value);
+    check("Use in Speak carries the voice to the Speak page, which selects it",
+      handedOver === previewVoice, `${handedOver} vs ${previewVoice}`);
+    await page.goto(`${webBase}/speak?voice=${encodeURIComponent("definitely-not-a-voice")}`, { waitUntil: "load" });
+    const notHonoured = await page.$eval('[data-testid="voice-select"]', (node) => node.value);
+    check("a voice the plane does not have is not preselected, it falls back to the default",
+      notHonoured !== "definitely-not-a-voice" && catalogue.voices.some((voice) => voice.id === notHonoured),
+      notHonoured);
+    result.library = {
+      plane_voices: catalogue.voices.length,
+      cards: libraryCards.length,
+      narrowed: narrowed.length,
+      previewed: previewVoice,
+      preview_bytes: preview.bytes,
+      preview_seconds: previewSeconds,
+      requests_before: usageBeforeLibrary.requests,
+      requests_after: usageAfterLibrary.requests,
+      handed_over: handedOver,
+    };
 
     // ── usage: the page agrees with the plane's own meter ───────────────────
     const session = (await plane(planeBase, "/v1/auth/token", {

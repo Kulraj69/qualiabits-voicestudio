@@ -58,3 +58,32 @@ test("the run's own revision and worktree state are recorded, not assumed", () =
   assert.match(HARNESS, /tested_commit: git\(\["rev-parse", "HEAD"\]\)/);
   assert.match(HARNESS, /worktree_dirty: status === null \? null : status\.length > 0/);
 });
+test("the library run compares the page with the plane in both directions", () => {
+  // A page that lists fewer voices than the plane would hide some; one that lists
+  // more would be inventing them. The run has to say which it saw.
+  assert.match(HARNESS, /const catalogue = \(await plane\(planeBase, "\/v1\/voices"/);
+  assert.match(HARNESS, /libraryCards\.length === catalogue\.voices\.length/);
+  assert.match(HARNESS, /catalogue\.voices\.every\(\(voice\) => libraryCards\.includes\(voice\.id\)\)/);
+});
+
+test("the library preview is a real synthesis, not a bundled sample", () => {
+  assert.match(HARNESS, /\[data-voice-id="\$\{previewVoice\}"\] \[data-testid="voice-preview"\]/);
+  assert.match(HARNESS, /preview\.header === "RIFF"/);
+  assert.match(HARNESS, /preview\.bytes > 1000/);
+});
+
+test("the preview's metering is read as a delta out of the plane's own meter", () => {
+  assert.match(HARNESS, /const usageBeforeLibrary = \(await plane\(planeBase, "\/v1\/usage"/);
+  assert.match(HARNESS, /usageAfterLibrary\.requests - usageBeforeLibrary\.requests === 1/);
+  assert.match(HARNESS, /usageAfterLibrary\.audio_seconds - usageBeforeLibrary\.audio_seconds/);
+});
+
+test("the hand-off into Speak is driven and checked, both ways", () => {
+  assert.match(HARNESS, /\[data-testid="voice-use"\]/);
+  assert.match(HARNESS, /handedOver === previewVoice/);
+  assert.match(HARNESS, /a voice the plane does not have is not preselected/);
+});
+
+test("the library is one of the pages the run visits, tabs into and captures", () => {
+  assert.match(HARNESS, /const PAGES = \["\/", "\/speak", "\/voices"/);
+});

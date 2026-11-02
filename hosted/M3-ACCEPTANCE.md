@@ -5,12 +5,14 @@ dashboard — Text to Speech, Voice Library, Voice Clone (with consent), Voice D
 Dubbing, Transcription, Audiobooks/Projects, API Keys, Usage. Responsive, fast,
 dark/light.*
 
-Two slices are built. **Slice A** is the four things a customer does first — sign up,
-speak, mint keys, see what was used. **Slice B** is transcription: a recording in, the
-engine's transcript out, metered in its own counters. Three of the pages M3 names —
-Voice Library, Voice Clone, Voice Design — and two more — Dubbing, Audiobooks — are
-**not built**, and the last section of this page says so in the place a reader would
-otherwise expect a link.
+Three slices are built. **Slice A** is the four things a customer does first — sign
+up, speak, mint keys, see what was used. **Slice B** is transcription: a recording in,
+the engine's transcript out, metered in its own counters. **Slice C** is the Voice
+Library: every voice the plane reports, searchable, each one previewable through the
+same metered route the Speak page uses, with a hand-off into Speak. Two of the pages
+M3 names — Voice Clone with a consent checkbox and Voice Design — and two more —
+Dubbing and Audiobooks — are **not built**, and the last section of this page says so
+in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
 at: the checks come from `hermes-reports/M3-slot51-web-e2e-r1/result.json`, taken
@@ -40,6 +42,11 @@ is a command a reader can re-run, not a policy to take on trust.
 | The engine's own payload, kept as JSON | `hosted/web/app/transcribe/page.jsx` | `hosted/web/test/transcript.test.mjs` | `the transcript downloads as .json holding the engine's own payload` |
 | The model that read the words back, named by its own bytes | `hosted/web/e2e/real-engine.sh` | `hosted/web/test/harness.test.mjs` | `the transcription model on disk is the one this run pins` |
 | The upload limit is the plane's, refused before a byte is read | `hosted/control_plane/app.py` | `hosted/web/test/harness.test.mjs` | `an upload past the plane's ceiling is refused with a sentence naming the limit` |
+| The engine's catalogue, browsable, every card a voice the plane reported | `hosted/web/components/VoiceLibraryView.jsx` | `hosted/web/test/voices.test.mjs` | `the voice library lists exactly the voices the plane serves` |
+| The library's search narrows what arrived and can never add a voice | `hosted/web/lib/voices.js` | `hosted/web/test/voices.test.mjs` | `searching the library narrows it to the voices that match, and invents none` |
+| Auditioning a voice is a real synthesis, through the plane, not a bundled sample | `hosted/web/app/voices/page.jsx` | `hosted/web/test/harness.test.mjs` | `the library previews a voice it offered, and real WAV bytes come back through the plane` |
+| One press of Preview moves the plane's meter by exactly one request | `hosted/web/e2e/dashboard.mjs` | `hosted/web/test/harness.test.mjs` | `the preview was metered as exactly one more speech request under this workspace` |
+| A voice chosen in the library carries into Speak, and only if the plane has it | `hosted/web/app/speak/page.jsx` | `hosted/web/test/harness.test.mjs` | `Use in Speak carries the voice to the Speak page, which selects it` |
 | Every page one click from home, keyboard focus visible | `hosted/web/components/NavLinks.jsx` | `hosted/web/test/format.test.mjs` | `every page takes a keyboard Tab onto a focusable control` |
 | Dark, and the QualiaBits palette and spacing | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
 
@@ -72,8 +79,8 @@ and what is not is exactly where a product page starts lying:
 
 ## What is not built, and is not stubbed
 
-Voice Library (browsing and previewing the model's own voices one by one), Voice Clone
-with a consent checkbox, Voice Design, Dubbing, Audiobooks/Projects, the agents tab,
-a light theme, and the marketing landing page are all **later slices of M3**. None of
+Voice Clone with a consent checkbox, Voice Design, Dubbing, Audiobooks/Projects, the
+agents tab, a light theme, and the marketing landing page are all **later slices of
+M3**. None of
 them is a greyed-out button or a "coming soon" card: a page that is not built is not on
 the site, and the dashboard's navigation lists only pages that answer.

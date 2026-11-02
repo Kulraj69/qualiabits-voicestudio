@@ -78,3 +78,57 @@ test("an unreachable engine is described as unreachable, not as zero voices", ()
 test("a missing catalogue is described without inventing one", () => {
   assert.match(describeCatalogue(null), /did not answer/);
 });
+// ── the search and the kind filter the Voice Library uses ─────────────────────
+// These are the same catalogue the page receives, so the guarantee under test is
+// not "the search works" but "the search can only ever return what the plane
+// sent": every case below asserts a subset, never an addition.
+
+import { filterVoices, kindCounts, PREVIEW_TEXT } from "../lib/voices.js";
+
+test("an empty search keeps every voice the plane sent, in its order", () => {
+  const kept = filterVoices(CATALOGUE.voices, { query: "" });
+  assert.deepEqual(kept.map((v) => v.id), CATALOGUE.voices.map((v) => v.id));
+  assert.deepEqual(filterVoices(CATALOGUE.voices).map((v) => v.id), CATALOGUE.voices.map((v) => v.id));
+});
+
+test("the search folds case and trims, and matches a substring of id or name", () => {
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { query: "HF_" }).map((v) => v.id), ["hf_alpha"]);
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { query: "  alloy  " }).map((v) => v.id), ["af_alloy", "alloy"]);
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { query: "studio" }).map((v) => v.id), ["profile-1"]);
+});
+
+test("the search reads the language the plane named, not a guessed one", () => {
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { query: "hi" }).map((v) => v.id), ["profile-1"]);
+  // Nothing in the catalogue is named English, so an "en" search returns nothing
+  // rather than every voice whose language the plane left null.
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { query: "en" }), []);
+});
+
+test("the search can only ever return voices that arrived", () => {
+  for (const query of ["a", "o", "-", "af", "zzz", PREVIEW_TEXT]) {
+    const kept = filterVoices(CATALOGUE.voices, { query });
+    for (const voice of kept) {
+      assert.ok(CATALOGUE.voices.includes(voice), `${voice.id} was not in the catalogue`);
+    }
+  }
+});
+
+test("the kind filter keeps one kind and never invents a bucket", () => {
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { kind: "alias" }).map((v) => v.id), ["alloy"]);
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { kind: "profile" }).map((v) => v.id), ["profile-1"]);
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { kind: "all" }).map((v) => v.id),
+    CATALOGUE.voices.map((v) => v.id));
+  assert.deepEqual(filterVoices(CATALOGUE.voices, { kind: "made-up" }), []);
+});
+
+test("kind counts are the plane's own numbers, and an unknown kind is counted apart", () => {
+  assert.deepEqual(kindCounts(CATALOGUE.voices), { engine: 2, alias: 1, profile: 1, other: 0 });
+  assert.deepEqual(kindCounts([{ id: "x", kind: "mystery" }]), { engine: 0, alias: 0, profile: 0, other: 1 });
+  assert.deepEqual(kindCounts([]), { engine: 0, alias: 0, profile: 0, other: 0 });
+});
+
+test("the preview sentence is one fixed line, so two voices are comparable", () => {
+  assert.equal(typeof PREVIEW_TEXT, "string");
+  assert.ok(PREVIEW_TEXT.length > 20);
+  assert.match(PREVIEW_TEXT, /preview/i);
+});

@@ -1,9 +1,10 @@
 # The QualiaBits Voice dashboard
 
-The browser front end for the hosted control plane in [`hosted/`](../). Six pages,
+The browser front end for the hosted control plane in [`hosted/`](../). Seven pages,
 each one a real thing a customer does: sign up and sign in; speak text and hear it;
-send a recording in and read the transcript back; mint and revoke API keys; watch a
-queued job and download what it made; read the meter the plane keeps.
+browse the engine's own voice catalogue and preview any of them; send a recording in
+and read the transcript back; mint and revoke API keys; watch a queued job and
+download what it made; read the meter the plane keeps.
 
 Not deployed. Not public. No public URL, no real S3 bucket, no GPU. Everything
 runs on this machine on loopback.
@@ -54,16 +55,25 @@ Now walk it, and each step says what you should see:
    duration the plane measured from the WAV header, and a **Download WAV** link.
    Ask for a voice the engine does not have and you get *the engine's own
    sentence*, passed through the plane.
-3. **Keys** at `/keys` — create a key. It is shown once, with a copy button;
+3. **Voices** at `/voices` — every voice the plane reports, as a card each, with
+   the kind, the engine's default marked, and a search that narrows what arrived
+   (it can only ever return voices from the plane, never add one). Press
+   **Preview** on a card and the same sentence is spoken by that voice through the
+   metered route — the player shows the seconds the plane measured and the bytes,
+   and **Download WAV** takes it away. Every preview says the same sentence so two
+   voices are comparable. **Use in Speak** hands the voice to `/speak?voice=<id>`,
+   which preselects it; an id the plane does not have is ignored rather than
+   pasted into a form that would fail on submit.
+4. **Keys** at `/keys` — create a key. It is shown once, with a copy button;
    reload the page and it is gone from view, because only a digest is stored.
    The table shows each key's public id and label and nothing else. Press
    **Revoke** and the very next request with that key is refused.
-4. **Jobs** at `/jobs` — queue a paragraph. It goes to **Queued**; a worker
+5. **Jobs** at `/jobs` — queue a paragraph. It goes to **Queued**; a worker
    process (`hosted/scripts/run_worker.py`) claims it, speaks it, stores the
    audio, and the row moves to **Done** with **Play** and **Download**. Queue a
    second one and press **Cancel** before a worker runs: it reads **Cancelled**
    and the meter does not move.
-5. **Transcribe** at `/transcribe` — choose a recording (a WAV downloaded from the
+6. **Transcribe** at `/transcribe` — choose a recording (a WAV downloaded from the
    Speak page works), pick a language and an answer format, press **Transcribe**.
    The text comes back in a monospaced block with the engine's segments and their
    timestamps below it, and above them the plane's own numbers for the request: the
@@ -71,7 +81,7 @@ Now walk it, and each step says what you should see:
    bytes you sent and the seconds the engine spent. **Download .txt / .srt / .json**
    take it away. A file the engine cannot read, or one over the size ceiling, is
    refused with a sentence that names the limit.
-6. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
+7. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
    the plane's own notes about what each counter means. **Characters** and
    **characters transcribed** are separate lines on purpose: one is text you asked
    the engine to say, the other is text it handed back.
@@ -93,25 +103,28 @@ serialising (and which cookie is httpOnly, and which is readable), the voice
 grouping and language filtering, the number and status formatting, and the plane
 client's URL joining and error-message handling, and the transcript helpers that
 turn an answer into a `.srt` (including the case where the engine returned no
-segments). Forty-four checks, no browser — the last five of them read
+segments), the voice search and kind filter the library uses, and the five
+library claims the browser run is supposed to make. Fifty-six checks, no browser —
+nine of them read
 `e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
 browser run is supposed to record cannot be deleted without a test failing.
 
 `npm run e2e` is the honest one. It builds the app, then starts **the real
 control plane** (its own SQLite file and object store), **the real web server**
 (the production Next build) and **real headless Chromium**, signs up through the
-form, speaks, mints and revokes a key, queues, cancels and speaks a job with the
+form, speaks, browses the voice library and previews a voice from it, mints and
+revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. **Fifty-five checks** on this path — fifty-six with `--keep`, which
+next request. **Sixty-seven checks** on this path — sixty-eight with `--keep`, which
 adds the screenshot check because only then is there somewhere to keep them —
 including the transcript's three
 downloads (each one a real click and a real file read back off disk) and one byte
 past the plane's own 25 MiB upload ceiling, refused with the sentence that names
 the limit. `node e2e/dashboard.mjs
 --no-build` reuses an existing build; `--keep` writes `result.json`, the process
-logs and a full-page screenshot of each of the six pages to `e2e/.evidence/`.
+logs and a full-page screenshot of each of the seven pages to `e2e/.evidence/`.
 
 **The one substitution** is the engine: `e2e/engine_stub.py`, the same shape as
 the stub the Python suite uses, so the browser run needs no model download. The
