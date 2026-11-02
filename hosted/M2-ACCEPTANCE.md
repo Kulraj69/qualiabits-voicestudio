@@ -19,7 +19,7 @@ quietly become a description of a previous version of the code.
 | A queue that survives a worker dying mid-job | `hosted/control_plane/jobs.py` | `tests/hosted/test_hosted_queue.py` | `a_cancelled_job_is_never_spoken_or_metered` |
 | A worker as its own process, speaking jobs one at a time | `hosted/worker/runner.py` | `tests/hosted/test_hosted_jobs.py` | `a_queued_job_is_spoken_by_a_real_worker_and_metered_once` |
 | One job refused, one cancelled, and neither metered twice | `hosted/control_plane/jobs.py` | `tests/hosted/test_hosted_jobs.py` | `a_refused_job_fails_once_with_the_engine_s_own_message` |
-| Slice A's database upgradable in place, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | `"schema_version": "m2b1"` |
+| Slice A's database upgradable in place, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | `"schema_version": "m2c1"` |
 | Workspaces: signup with email and password, one per customer | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_accounts.py` | `two_workspaces_signed_up_with_keys` |
 | Login that returns a session token | `hosted/control_plane/auth.py` | `tests/hosted/test_hosted_accounts.py` | `key_refusals_are_401` |
 | API keys stored as digests, shown once, revocable | `hosted/control_plane/security.py` | `tests/hosted/test_hosted_accounts.py` | `revoked_key_refused_and_other_workspace_untouched` |

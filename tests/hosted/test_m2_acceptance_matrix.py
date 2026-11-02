@@ -120,8 +120,16 @@ def test_the_run_the_table_is_checked_against_is_the_page_s_run():
         "no row of the acceptance table names a check of the quoted run, so the table "
         "and the run are connected by nothing"
     )
-    # The two fields the table quotes as prose must be the ones the run recorded.
-    assert any("schema_version" in name for name in named), (
+    # The field the table quotes as prose has to be the one the run recorded.
+    # The schema version moves when a migration lands (the transcription slice took
+    # it from m2b1 to m2c1), so it is read from the run this page quotes rather than
+    # pinned here -- a table left quoting the old one fails the run-file check above.
+    reported = run["control_plane_health"]["schema_version"]
+    quoted = sorted(name for name in named if "schema_version" in name)
+    assert quoted, (
         "the table no longer checks the schema version the run reports"
     )
-    assert run["control_plane_health"]["schema_version"] == "m2b1"
+    assert all(f'"{reported}"' in name for name in quoted), (
+        f"the table quotes a schema version the quoted run does not report "
+        f"(the run says {reported}): {quoted}"
+    )

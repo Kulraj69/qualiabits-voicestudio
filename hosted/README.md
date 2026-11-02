@@ -155,14 +155,18 @@ reads both meters and revokes a key. `result.json` records every check, the work
 counters, the model file hashes and the commit the run tested.
 
 What a pass looks like: the "Measured" section below, rendered from the run file
-that section names, by `hosted/scripts/render_measured.py`. That run was taken in a
-fresh clone at the revision it reports, with no copy of the model where the script
-looks, so the script downloaded the bundle, checked the three pinned hashes and then
-ran the proof. `hermes-reports/M2-slot44-demo-r1.log` is its transcript, the four
-WAVs are committed in the `audio/` directory beside it — they are that run's output,
-and nothing about the voice is claimed beyond "this is what the engine returned" —
-and the suite log from the same replay is `hermes-reports/M2-slot44-clean-tests-r1.log`,
-which records its own revision and command.
+that section names, by `hosted/scripts/render_measured.py`. That run started the
+engine, the plane and real worker processes on this CPU box at the revision it
+reports, over a clean checkout; `result.json` records the model directory it was
+pointed at and the sha256 of the files in it, and the two this repository pins
+(`tokens.txt`, `voices.bin`) are the pinned values. The same proof taken in a fresh
+clone with no model on the machine, where the one-command script downloaded the
+bundle and checked those hashes itself before speaking, is
+`hermes-reports/M2-slot44-demo-r1.log`; the four WAVs it produced are committed in
+the `audio/` directory beside it — that run's output, and nothing about the voice is
+claimed beyond "this is what the engine returned" — and the suite log from the same
+replay is `hermes-reports/M2-slot44-clean-tests-r1.log`, which records its own
+revision and command.
 
 A test refuses this citation if any file under `hosted/control_plane`, `hosted/worker`
 or `hosted/scripts` changes afterwards, so a run over edited code cannot be quoted as
@@ -173,12 +177,12 @@ failed and why.
 
 ## Measured
 
-From `hermes-reports/M2-slot44-e2e-r1/result.json` — engine, plane and worker processes all started fresh by the
+From `hermes-reports/M2-slot47-e2e-r1/result.json` — engine, plane and worker processes all started fresh by the
 harness on one CPU box (x86_64, 2 CPUs, Python 3.12.3, no
 GPU). The section is rendered from that file by
 `hosted/scripts/render_measured.py`, and a test fails if the page and the file
 disagree. The run records the commit it tested
-(71c333962, worktree clean), the model hashes below, and the
+(3aeff983c, worktree clean), the model hashes below, and the
 sha256 of every tracked file as it was at run time -- so a run over edited code
 cannot pass itself off as a run of the pushed revision.
 
@@ -192,22 +196,22 @@ itself dirty and its numbers would be worth less than these.
 ```
 
 ```
-engine ready 10.7 s   control plane ready 14.9 s   whole run 217.0 s
+engine ready 13.1 s   control plane ready 19.1 s   whole run 251.2 s
 every process it started: clean shutdown
 
 three direct requests through the control plane, workspace A:
-  hf_alpha  hi   1.822 s audio, 24 kHz mono, peak 0.79   engine took 20.1 s
-  hm_omega  hi   1.826 s audio, 24 kHz mono, peak 0.77   engine took 10.7 s
-  hf_alpha  en   3.511 s audio, 24 kHz mono, peak 0.79   engine took 18.8 s
+  hf_alpha  hi   1.822 s audio, 24 kHz mono, peak 0.80   engine took 33.9 s
+  hm_omega  hi   1.825 s audio, 24 kHz mono, peak 0.78   engine took 15.2 s
+  hf_alpha  en   3.487 s audio, 24 kHz mono, peak 0.79   engine took 21.4 s
   plus one request for a voice the model does not have, refused 400 by the
   engine and passed through with the engine's own message naming its 54 voices.
 
 one queued job, spoken by a separate worker process (run_worker.py --once):
-  job 1  hm_omega  hi   208 characters -> 16.458 s of 24 kHz mono audio,
-                         790,010 bytes, engine took 115.4 s
+  job 1  hm_omega  hi   208 characters -> 16.466 s of 24 kHz mono audio,
+                         790,426 bytes, engine took 109.9 s
   worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
   the object on disk, the job's receipt and the download all hash to
-  dc86389cc52258df2ec3611b038d311991ba0962b02fe7433a7d14a5e13cf7a4
+  794235aad8138da10df6514ac0b2210ba15cc501d47f3a64810b5a11ae98ccf4
 
 one refused job (a voice the model does not have):
   failed 400 after 1 attempt, no retry, no audio served (409), error is the
@@ -215,28 +219,28 @@ one refused job (a voice the model does not have):
 one cancelled job:
   never claimed by the next worker pass, and it moved the meter by nothing
 
-meter for A, at the end of the run: 6 requests, 388 characters, 23.617 s audio,
-              1,133,782 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+meter for A, at the end of the run: 6 requests, 388 characters, 23.601 s audio,
+              1,133,008 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
               requests_without_audio_seconds 2
-              by_key: one key, label "a", same 6 requests and 23.617 s
+              by_key: one key, label "a", same 6 requests and 23.601 s
 meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
 
 same English request straight at the engine, for comparison:
-  direct 3.511 s / 168,584 bytes   through the plane 3.511 s / 168,586 bytes
+  direct 3.508 s / 168,450 bytes   through the plane 3.487 s / 167,420 bytes
 
 the engine's refusal for an unknown voice, taken both ways:
   sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
 
 engine seconds spent per second of speech, the number that decides whether this
 is sellable on a box like this one:
-  hindi_hf_alpha     11.0 s
-  hindi_hm_omega     5.9 s
-  english            5.4 s
+  hindi_hf_alpha     18.6 s
+  hindi_hm_omega     8.3 s
+  english            6.1 s
 ```
 
 The English lines differ because the engine samples: the two numbers above are the
 same request taken both ways, and they differ by
-2 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
+1,030 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
 computes deterministically: its refusal, checked against the real engine on every
 run; the 200 path is compared against a deterministic stub in the unit suite.
 
@@ -245,7 +249,7 @@ downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); 
 recorded the same hashes plus the commit it tested, in the same file.
 
 The CPU is not production, and the rates above are the clearest evidence of it: the
-queued job spent 115.4 s of engine time on 16.458 s of audio, about 7.0 s
+queued job spent 109.9 s of engine time on 16.466 s of audio, about 6.7 s
 per second. That is why the GPU run is the owner's to approve, and exactly what
 this layer cannot work around — the plane can hold a request open for a paragraph,
 but nothing here makes the engine faster.
