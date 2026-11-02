@@ -156,3 +156,32 @@ def test_the_code_the_cited_run_exercised_has_not_changed_since():
         "the page cites a run taken before these files changed, so it describes a "
         "revision that is no longer here; re-run the browser suite:\n" + changed
     )
+
+
+#: The prose spells its small numbers out, so the guard has to read them back.
+WORD_NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+
+
+def test_the_shared_word_count_in_the_prose_is_the_run_s_own():
+    """The page says how much of the spoken sentence came back. Keep it true.
+
+    That sentence said *two* while the run it cites records *three* shared words,
+    which is exactly the kind of count a judge is right to call a lie. Reading the
+    number back out of the run is cheaper than trusting prose, so the page's
+    sentence, the number and the words it names are all checked here.
+    """
+    text = page_text()
+    transcript = run_result()["transcript"]
+    match = re.search(r"(\w+) of the (\w+) words of the Hindi sentence", text)
+    assert match, "the page no longer says how many of the spoken words came back"
+    shared, spoken = transcript["shared_words"], transcript["spoken_words"]
+    assert WORD_NUMBERS.get(match.group(1)) == len(shared), (
+        f"the page says {match.group(1)!r} words came back; the run records "
+        f"{len(shared)}: {shared}"
+    )
+    assert WORD_NUMBERS.get(match.group(2)) == len(spoken), (
+        f"the page says the sentence held {match.group(2)!r} words; the run records "
+        f"{len(spoken)}: {spoken}"
+    )
+    for word in shared:
+        assert word in text, f"the run shared {word!r} and the page never names it"

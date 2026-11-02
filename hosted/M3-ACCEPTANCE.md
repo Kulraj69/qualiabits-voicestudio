@@ -49,7 +49,9 @@ and what is not is exactly where a product page starts lying:
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
   the real engine — that a second engine could hear words it had said. In the run this
-  page cites, two of the five words of the Hindi sentence came back. Whether anybody
+  page cites, three of the five words of the Hindi sentence came back — एक, हिन्दी
+  and है — and a guard below reads that number back out of the run's own
+  `transcript.shared_words` rather than trusting this sentence. Whether anybody
   should *pay* for that voice is a listening judgement this repository has never made,
   and the WAVs are committed so the owner can.
 - **Which model heard the words is recorded, not asserted.** `result.json` carries the

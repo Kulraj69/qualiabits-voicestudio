@@ -104,7 +104,7 @@ form, speaks, mints and revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. **Fifty-six checks** on this path, including the transcript's three
+next request. **Fifty-five checks** on this path, including the transcript's three
 downloads (each one a real click and a real file read back off disk) and one byte
 past the plane's own 25 MiB upload ceiling, refused with the sentence that names
 the limit. `node e2e/dashboard.mjs
@@ -129,10 +129,15 @@ the three pinned sha256 values and starts nothing until they match — the same
 URL, the same pins and the same three files the hosted proof's script checks
 (`../scripts/hosted_demo.sh`). It never falls back to the stub, because a run
 that quietly did would be the opposite of evidence. So from a fresh clone this
-path needs one thing: the venv the sync above builds.
+path needs one thing, the venv [`hosted/README.md`](../README.md) builds:
 
-That run carries six things a constant-size stub cannot produce, every one of
-them the engine's own answer about itself: its identity from `/health`, the
+```sh
+cd ../..        # the repository root, where pyproject.toml is
+uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
+```
+
+That run carries what a constant-size stub cannot produce, every item the
+engine's own answer about itself: its identity from `/health`, the
 backend it reports active with its voice count, the sha256 of `model.int8.onnx`,
 `tokens.txt` and `voices.bin`, a paragraph that produced more audio than the
 one-liner, and the words that come back out of a **closed loop**: the sentence the
