@@ -1,0 +1,437 @@
+{
+  "run": "qualiabits voice — browser dashboard end to end",
+  "engine": "engine_stub.py",
+  "engine_model_source": null,
+  "engine_command": null,
+  "engine_is_stub": true,
+  "engine_model": null,
+  "transcription_model": null,
+  "transcription_model_source": null,
+  "transcription_model_pinned": null,
+  "revision": {
+    "tested_commit": "6bd00b888df60f5f438a875819b76b123b1c8d0d",
+    "worktree_dirty": false,
+    "generated_at_utc": "2026-11-02T05:03:48.207Z"
+  },
+  "browser": "156.0.8078.4",
+  "deployed": false,
+  "public_url": null,
+  "gpu": false,
+  "real_s3": false,
+  "checks": [
+    {
+      "name": "engine is up and answers /health",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+    },
+    {
+      "name": "the control plane is up on its own database",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the control plane can see the engine",
+      "ok": true,
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:35573\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+    },
+    {
+      "name": "the dashboard builds",
+      "ok": true,
+      "detail": "lizing page optimization ...\n\nRoute (app)\n┌ ƒ /\n├ ƒ /_not-found\n├ ƒ /api/auth/login\n├ ƒ /api/auth/logout\n├ ƒ /api/auth/signup\n├ ƒ /api/dashboard-key\n├ ƒ /api/jobs\n├ ƒ /api/jobs/[id]\n├ ƒ /api/jobs/[id]/audio\n├ ƒ /api/keys\n├ ƒ /api/keys/[id]\n├ ƒ /api/speech\n├ ƒ /api/transcribe\n├ ƒ /jobs\n├ ƒ /keys\n├ ƒ /login\n├ ƒ /signup\n├ ƒ /speak\n├ ƒ /transcribe\n└ ƒ /usage\n\n\nƒ  (Dynamic)  server-rendered on demand\n\n"
+    },
+    {
+      "name": "the dashboard is up and rooted at /",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "signup lands on the dashboard and greets the workspace",
+      "ok": true,
+      "detail": "Browser E2E"
+    },
+    {
+      "name": "the session token is not readable by page JavaScript",
+      "ok": true,
+      "detail": "{\"localStorage\":\"[]\",\"cookie\":\"qb_ws={\\\"id\\\":1,\\\"email\\\":\\\"browser-e2e@example.com\\\",\\\"display_name\\\":\\\"Browser E2E\\\"}\",\"hasSecret\":false}"
+    },
+    {
+      "name": "the workspace name cookie is the only cookie the page can see",
+      "ok": true,
+      "detail": "qb_ws={\"id\":1,\"email\":\"browser-e2e@example.com\",\"display_name\":\"Browser E2E\"}"
+    },
+    {
+      "name": "home links to /speak",
+      "ok": true,
+      "detail": "/speak, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /transcribe",
+      "ok": true,
+      "detail": "/speak, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /jobs",
+      "ok": true,
+      "detail": "/speak, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /keys",
+      "ok": true,
+      "detail": "/speak, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /usage",
+      "ok": true,
+      "detail": "/speak, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "no dead links on home",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "/ answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Browser E2E\""
+    },
+    {
+      "name": "/speak answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Speak\""
+    },
+    {
+      "name": "/transcribe answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Transcribe\""
+    },
+    {
+      "name": "/keys answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"API keys\""
+    },
+    {
+      "name": "/usage answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Usage\""
+    },
+    {
+      "name": "/jobs answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Jobs\""
+    },
+    {
+      "name": "every page takes a keyboard Tab onto a focusable control",
+      "ok": true,
+      "detail": "[[\"/\",\"A\"],[\"/speak\",\"A\"],[\"/transcribe\",\"A\"],[\"/keys\",\"A\"],[\"/usage\",\"A\"],[\"/jobs\",\"A\"]]"
+    },
+    {
+      "name": "every page shows a visible focus outline",
+      "ok": true,
+      "detail": "[[\"/\",\"solid 2px\"],[\"/speak\",\"solid 2px\"],[\"/transcribe\",\"solid 2px\"],[\"/keys\",\"solid 2px\"],[\"/usage\",\"solid 2px\"],[\"/jobs\",\"solid 2px\"]]"
+    },
+    {
+      "name": "every page was captured as a screenshot",
+      "ok": true,
+      "detail": "[[\"/\",168805],[\"/speak\",134884],[\"/transcribe\",141374],[\"/keys\",137091],[\"/usage\",189414],[\"/jobs\",152402]]"
+    },
+    {
+      "name": "the voice list is served by the plane, not hard-coded",
+      "ok": true,
+      "detail": "af_alloy,hf_alpha,hm_omega,alloy,echo,profile-1"
+    },
+    {
+      "name": "the Speak page returns real WAV bytes through the plane",
+      "ok": true,
+      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":72044,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.005s · engine build sherpa-onnxDownload WAV\"}"
+    },
+    {
+      "name": "the audio has a download link",
+      "ok": true,
+      "detail": "speech-hf_alpha.wav"
+    },
+    {
+      "name": "the player reports the measured duration and size",
+      "ok": true,
+      "detail": "Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.005s · engine build sherpa-onnxDownload WAV"
+    },
+    {
+      "name": "an unknown voice is refused by the plane with the engine's own sentence",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"detail\":\"Voice 'definitely-not-a-voice' is not one of the model's voices: af_alloy, hf_alpha, hm_omega.\",\"param\":\"voice\",\"code\":\"unknown_voice\"}}"
+    },
+    {
+      "name": "the spoken audio was read back out of the page for transcription",
+      "ok": true,
+      "detail": "72044 bytes"
+    },
+    {
+      "name": "the Transcribe page shows a transcript",
+      "ok": true,
+      "detail": "यह स्टब का जवाब है।"
+    },
+    {
+      "name": "the plane measured the upload as the same length as the audio it returned",
+      "ok": true,
+      "detail": "1.5 s spoken vs 1.5 s uploaded"
+    },
+    {
+      "name": "the plane counted the transcript in its own counter, not the speech one",
+      "ok": true,
+      "detail": "19 vs 19 characters"
+    },
+    {
+      "name": "the plane metered the upload's seconds under the same workspace",
+      "ok": true,
+      "detail": "3 s in the meter"
+    },
+    {
+      "name": "the stub transcript is exactly what the stub says it heard",
+      "ok": true,
+      "detail": "यह स्टब का जवाब है।"
+    },
+    {
+      "name": "the transcript downloads as .txt holding the text the page shows",
+      "ok": true,
+      "detail": "spoken.transcript.txt: यह स्टब का जवाब है।"
+    },
+    {
+      "name": "the transcript downloads as .srt with cues carrying the engine's own timings",
+      "ok": true,
+      "detail": "spoken.transcript.srt: 1 / 00:00:00,000 --> 00:00:01,500 / यह स्टब का जवाब है। / "
+    },
+    {
+      "name": "the transcript downloads as .json holding the engine's own payload",
+      "ok": true,
+      "detail": "spoken.transcript.json: {\n  \"task\": \"transcribe\",\n  \"language\": \"hi\",\n  \"duration\": "
+    },
+    {
+      "name": "an upload with no file is refused with a sentence that says so",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"detail\":\"Choose a recording first. A WAV from the Speak page is a good one.\"}}"
+    },
+    {
+      "name": "an upload past the plane's ceiling is refused with a sentence naming the limit",
+      "ok": true,
+      "detail": "{\"status\":413,\"body\":{\"detail\":\"That upload is larger than 25 MiB. An upload is at most 25 MiB.\"}}"
+    },
+    {
+      "name": "a minted key is shown once and looks like a key",
+      "ok": true,
+      "detail": "qbv_6c51c8cd2a555c12_h-hL7BawXaDQ66c4LyRcOg4Ji_zteVwCjEtaouTlKGM"
+    },
+    {
+      "name": "the key is not shown again after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the list shows the key's public id and never its secret",
+      "ok": true,
+      "detail": "6 cells, secret length 43"
+    },
+    {
+      "name": "revoking marks the key revoked in the list",
+      "ok": true,
+      "detail": "revoked"
+    },
+    {
+      "name": "a revoked key is refused on the next request",
+      "ok": true,
+      "detail": "status 401"
+    },
+    {
+      "name": "the same credentials log in straight to the plane",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the Usage page's request count matches the plane's meter",
+      "ok": true,
+      "detail": "4 vs 4"
+    },
+    {
+      "name": "the per-key breakdown the plane records is shown, one row per key",
+      "ok": true,
+      "detail": "per-key rows 1, plane keys 1"
+    },
+    {
+      "name": "the Usage page shows the transcribed-character counter the plane keeps",
+      "ok": true,
+      "detail": "19 vs 19"
+    },
+    {
+      "name": "a cancelled job reads as cancelled and was never spoken",
+      "ok": true,
+      "detail": "#1Cancelledhf_alpha55Nov 02, 2026, 05:04:03never spoken—"
+    },
+    {
+      "name": "cancelling a queued job did not move the meter",
+      "ok": true,
+      "detail": "4->4, 52->52"
+    },
+    {
+      "name": "the real worker drained the queue",
+      "ok": true,
+      "detail": "2864507: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.011, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-2864507\"}\n"
+    },
+    {
+      "name": "the plane records the spoken job as succeeded",
+      "ok": true,
+      "detail": "[\"succeeded\",\"cancelled\"]"
+    },
+    {
+      "name": "the job's stored audio comes back as a WAV",
+      "ok": true,
+      "detail": "{\"status\":200,\"header\":\"RIFF\",\"bytes\":72044}"
+    },
+    {
+      "name": "the downloaded audio is the bytes the plane stored",
+      "ok": true,
+      "detail": "72044 vs 72044"
+    },
+    {
+      "name": "the jobs table shows one Done row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "no uncaught JavaScript errors on any page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "engine_health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "engine-stub"
+  },
+  "plane_health": {
+    "upstream_base_url": "http://127.0.0.1:35573",
+    "reachable": true,
+    "status": "ok",
+    "device": "cpu",
+    "version": "engine-stub"
+  },
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Browser E2E",
+      "screenshot": "e2e/.evidence/screenshots/home.png",
+      "screenshot_bytes": 168805
+    },
+    {
+      "route": "/speak",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Speak",
+      "screenshot": "e2e/.evidence/screenshots/speak.png",
+      "screenshot_bytes": 134884
+    },
+    {
+      "route": "/transcribe",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Transcribe",
+      "screenshot": "e2e/.evidence/screenshots/transcribe.png",
+      "screenshot_bytes": 141374
+    },
+    {
+      "route": "/keys",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "API keys",
+      "screenshot": "e2e/.evidence/screenshots/keys.png",
+      "screenshot_bytes": 137091
+    },
+    {
+      "route": "/usage",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Usage",
+      "screenshot": "e2e/.evidence/screenshots/usage.png",
+      "screenshot_bytes": 189414
+    },
+    {
+      "route": "/jobs",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Jobs",
+      "screenshot": "e2e/.evidence/screenshots/jobs.png",
+      "screenshot_bytes": 152402
+    }
+  ],
+  "transcript": {
+    "engine_is_stub": true,
+    "spoken_text": "The dashboard speaks through the control plane.",
+    "transcript_text": "यह स्टब का जवाब है।",
+    "shared_words": [],
+    "spoken_words": [
+      "the",
+      "dashboard",
+      "speaks",
+      "through",
+      "the",
+      "control",
+      "plane"
+    ],
+    "spoken_seconds": 1.5,
+    "upload_seconds_measured": 1.5,
+    "transcript_characters_in_meter": 19,
+    "segments": 1,
+    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.009s · engine build engine-stub",
+    "downloads": {
+      "txt": {
+        "filename": "spoken.transcript.txt",
+        "bytes": 49
+      },
+      "srt": {
+        "filename": "spoken.transcript.srt",
+        "bytes": 83
+      },
+      "json": {
+        "filename": "spoken.transcript.json",
+        "bytes": 448
+      }
+    }
+  },
+  "usage": {
+    "plane_transcript_characters": 19,
+    "page_transcript_characters": 19,
+    "plane_requests": 4,
+    "page_requests": 4,
+    "plane_keys": 1,
+    "page_per_key_rows": 1,
+    "page_all_table_rows": 4
+  },
+  "audio": {
+    "engine_is_stub": true,
+    "sentence_bytes": 72044,
+    "paragraph_bytes": 72044,
+    "paragraph_seconds": 1.5
+  },
+  "passed": 56,
+  "failed": 0,
+  "ok": true,
+  "diagnostics": [
+    {
+      "process": "web",
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:43577\n- Network:       http://127.0.0.1:43577\n✓ Ready in 257ms\n✓ Running next.config.mjs took 28ms\n"
+    },
+    {
+      "process": "control-plane",
+      "tail": "INFO:     127.0.0.1:41634 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:41608 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:41634 - \"POST /v1/jobs HTTP/1.1\" 202 Accepted\nINFO:     127.0.0.1:41634 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:41634 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:41608 - \"GET /v1/jobs HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:41634 - \"GET /v1/jobs/2/audio HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [2864382]\n"
+    },
+    {
+      "process": "engine",
+      "tail": ""
+    }
+  ]
+}

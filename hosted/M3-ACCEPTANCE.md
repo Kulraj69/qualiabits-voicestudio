@@ -59,7 +59,11 @@ and what is not is exactly where a product page starts lying:
   `config.json`, `tokenizer.json` and `vocabulary.txt`, and the run fails unless
   `model.bin` is the hash `hosted/web/e2e/real-engine.sh` pins. The speech model is
   recorded the same way. A transcription result whose model is only named in prose is
-  not evidence a reader can check.
+  not evidence a reader can check. The directories in those two records are where
+  *this* machine keeps the weights, not something a reader must copy: `real-engine.sh`
+  downloads and hash-checks the speech model when a machine has none, and stops with
+  the exact command to fetch the transcription model rather than substituting one.
+  Which bytes are acceptable is decided in that one script, not in this page.
 
 ## What is not built, and is not stubbed
 

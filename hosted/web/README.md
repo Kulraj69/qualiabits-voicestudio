@@ -104,7 +104,9 @@ form, speaks, mints and revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. **Fifty-five checks** on this path, including the transcript's three
+next request. **Fifty-five checks** on this path — fifty-six with `--keep`, which
+adds the screenshot check because only then is there somewhere to keep them —
+including the transcript's three
 downloads (each one a real click and a real file read back off disk) and one byte
 past the plane's own 25 MiB upload ceiling, refused with the sentence that names
 the limit. `node e2e/dashboard.mjs
