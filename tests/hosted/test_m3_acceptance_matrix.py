@@ -1,0 +1,141 @@
+"""The acceptance table in `hosted/M3-ACCEPTANCE.md` has to stay true.
+
+The same reasoning as the M2 matrix, one milestone on: a table mapping "the plan
+asked for this" to "here is the code, the tests and the run" is what makes criteria
+fit checkable instead of assertable, and it rots the moment a file moves or a check
+is renamed. A rotted table is worse than no table, because it reads like evidence.
+
+This suite reads the table and checks it against the repository and against the
+browser run the page cites:
+
+  * every backticked repository path in it exists,
+  * every test file it names exists and is not empty,
+  * every end-to-end check it names is a check in that run,
+  * the run was taken over a clean working tree, at a commit that exists, and
+  * the code under the directories that run exercised has not changed since.
+
+The last one is the point of the whole exercise. A browser run is evidence about the
+revision it names and nothing else, so `git diff` between that revision and HEAD has
+to come back empty for the subjects it measured — otherwise a fresh run is owed, and
+this test says so instead of letting the page describe an older revision.
+"""
+from __future__ import annotations
+
+import json
+import re
+import subprocess
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+PAGE = REPO_ROOT / "hosted" / "M3-ACCEPTANCE.md"
+#: The browser suite's own evidence file, in the fork's hermes-reports/ directory.
+EVIDENCE_RE = re.compile(r"hermes-reports/(M3-slot\d+-web-e2e-r\d+)/result\.json")
+ROW_RE = re.compile(r"^\|\s*(?P<cells>.+?)\s*\|\s*$", re.MULTILINE)
+PATH_RE = re.compile(r"`([^`]+)`")
+#: A row may state outright that the run proves nothing for it, rather than point at
+#: some true-but-irrelevant check.
+NO_RUN_EVIDENCE = "no run evidence"
+#: What the browser run exercised. If one of these changes, its evidence is stale.
+MEASURED_SUBJECTS = (
+    "hosted/control_plane",
+    "hosted/worker",
+    "hosted/scripts",
+    "hosted/web/app",
+    "hosted/web/components",
+    "hosted/web/lib",
+)
+
+
+def page_text() -> str:
+    assert PAGE.is_file(), "the M3 acceptance page is gone"
+    return PAGE.read_text()
+
+
+def cited_run() -> Path:
+    matches = EVIDENCE_RE.findall(page_text())
+    assert len(set(matches)) == 1, (
+        f"the page must cite exactly one run, it cites {sorted(set(matches))}"
+    )
+    path = REPO_ROOT / "hermes-reports" / matches[0] / "result.json"
+    assert path.is_file(), f"the cited run does not exist: {path}"
+    return path
+
+
+def run_result() -> dict:
+    return json.loads(cited_run().read_text())
+
+
+def rows() -> list[list[str]]:
+    out = []
+    for match in ROW_RE.finditer(page_text()):
+        cells = [cell.strip() for cell in match.group("cells").split("|")]
+        if len(cells) < 4 or set(cells[0]) <= set("-: "):
+            continue  # the header separator, or prose that happens to start with |
+        out.append(cells)
+    return out
+
+
+def test_the_table_has_rows_and_each_names_code_tests_and_evidence():
+    table = rows()
+    assert len(table) >= 10, f"the table shrank to {len(table)} rows"
+    for cells in table:
+        assert "`" in cells[1], f"no code path in: {cells}"
+        assert "`" in cells[2], f"no test path in: {cells}"
+        assert cells[3], f"no evidence cell in: {cells}"
+
+
+def test_every_path_the_table_names_exists():
+    missing = []
+    for path_text in PATH_RE.findall(page_text()):
+        candidate = (REPO_ROOT / path_text).resolve()
+        if not candidate.exists():
+            missing.append(path_text)
+    assert missing == [], f"paths named by the table that do not exist: {missing}"
+
+
+def test_every_test_file_the_table_names_has_content():
+    empty = []
+    for cells in rows():
+        for path_text in PATH_RE.findall(cells[2]):
+            candidate = REPO_ROOT / path_text
+            if candidate.is_file() and candidate.stat().st_size == 0:
+                empty.append(path_text)
+    assert empty == [], f"test files named but empty: {empty}"
+
+
+def test_every_check_the_table_names_is_in_the_run_it_cites():
+    names = {check["name"] for check in run_result()["checks"]}
+    missing = []
+    for cells in rows():
+        evidence = cells[3]
+        if evidence.startswith(NO_RUN_EVIDENCE):
+            continue
+        # A row may wrap its check name in backticks or quote it plainly; both are
+        # read the same way, so a row cannot avoid the check by adding punctuation.
+        expected = evidence.split("`")[1] if "`" in evidence else evidence
+        if expected not in names:
+            missing.append(expected)
+    assert missing == [], f"checks named by the table that the run does not record: {missing}"
+
+
+def test_the_cited_run_passed_and_was_taken_over_a_clean_tree():
+    result = run_result()
+    assert result["passed"] == len(result["checks"]), "the cited run has failing checks"
+    assert result["revision"]["worktree_dirty"] is False, (
+        "the cited run was taken over a dirty tree, so it is not evidence about any "
+        "revision"
+    )
+    assert result["revision"]["tested_commit"], "the cited run names no commit"
+
+
+def test_the_code_the_cited_run_exercised_has_not_changed_since():
+    commit = run_result()["revision"]["tested_commit"]
+    changed = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "diff", "--name-only", commit, "HEAD", "--",
+         *MEASURED_SUBJECTS],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    assert changed == "", (
+        "the page cites a run taken before these files changed, so it describes a "
+        "revision that is no longer here; re-run the browser suite:\n" + changed
+    )

@@ -34,7 +34,7 @@ export default async function UsagePage() {
         <h1>Usage</h1>
         <p className="page-head__lede">
           These are the control plane's own records for this workspace, read via{" "}
-          <code className="mono">{readVia || "session"}</code>. The two counters mean
+          <code className="mono">{readVia || "session"}</code>. The three counters mean
           different things on purpose; each column says which.
         </p>
       </div>
@@ -51,14 +51,21 @@ export default async function UsagePage() {
           <p className="stat__note">{usage.characters_note}</p>
         </div>
         <div className="stat">
-          <p className="stat__label">Audio returned</p>
+          <p className="stat__label">Characters transcribed</p>
+          <p className="stat__value" data-testid="stat-transcript-characters">
+            {formatCount(usage.transcript_characters)}
+          </p>
+          <p className="stat__note">{usage.transcript_characters_note}</p>
+        </div>
+        <div className="stat">
+          <p className="stat__label">Audio returned or sent</p>
           <p className="stat__value">{formatSeconds(usage.audio_seconds)}</p>
           <p className="stat__note">{usage.audio_seconds_note}</p>
         </div>
         <div className="stat">
           <p className="stat__label">Audio bytes</p>
           <p className="stat__value">{formatBytes(usage.audio_bytes)}</p>
-          <p className="stat__note">what the plane handed back</p>
+          <p className="stat__note">what the plane handed back, or what you sent in</p>
         </div>
         <div className="stat">
           <p className="stat__label">Failed requests</p>
@@ -86,6 +93,7 @@ export default async function UsagePage() {
                   <th>Label</th>
                   <th className="num">Requests</th>
                   <th className="num">Characters</th>
+                  <th className="num">Transcribed</th>
                   <th className="num">Audio (s)</th>
                   <th className="num">Failed</th>
                   <th>Last used</th>
@@ -94,7 +102,7 @@ export default async function UsagePage() {
               <tbody>
                 {(usage.by_key || []).length === 0 ? (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <p className="empty">
                         No metered requests yet. Speaking on the Speak page mints a
                         dashboard key and this table fills in.
@@ -108,6 +116,7 @@ export default async function UsagePage() {
                       <td>{row.label || <span className="subtle">unlabelled</span>}</td>
                       <td className="num">{formatCount(row.requests)}</td>
                       <td className="num">{formatCount(row.characters)}</td>
+                      <td className="num">{formatCount(row.transcript_characters)}</td>
                       <td className="num">{formatSeconds(row.audio_seconds)}</td>
                       <td className="num">{formatCount(row.failed_requests)}</td>
                       <td className="mono">{formatDateTime(row.last_request_at)}</td>

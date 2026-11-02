@@ -36,7 +36,8 @@ from .db import Base, Database, Job
 #: Oldest first. A database is stamped with the last entry it has been brought to.
 #: m2a1 — slice A (workspaces, api_keys, session_tokens, usage_events).
 #: m2b1 — slice B (adds the jobs queue).
-KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1")
+#: m2c1 — slice C (adds usage_events.transcript_characters).
+KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1", "m2c1")
 
 MIGRATION_VERSION = KNOWN_VERSIONS[-1]
 
@@ -68,10 +69,38 @@ def _add_jobs_table(connection: Connection) -> None:
     Job.__table__.create(connection, checkfirst=True)
 
 
+#: The column m2c1 adds, with the table it belongs to.
+_TRANSCRIPT_CHARACTERS = ("usage_events", "transcript_characters")
+
+
+def _add_transcript_characters(connection: Connection) -> None:
+    """m2c1: a third counter on the ledger, for speech that came *in*.
+
+    SQLite can add a NOT NULL column with a constant default in place, so the
+    existing rows keep their meaning (zero transcribed characters) and no data
+    is rewritten. ``ADD COLUMN`` has no ``IF NOT EXISTS`` in the SQL SQLite and
+    older PostgreSQL both accept, so idempotence comes from asking the schema
+    first — the same "re-run changes nothing" property the step above gets from
+    ``checkfirst``. Nothing here drops or recreates a table: a crash between the
+    DDL and the stamp must leave the ledger exactly where it was.
+    """
+    table, column = _TRANSCRIPT_CHARACTERS
+    present = {col["name"] for col in inspect(connection).get_columns(table)}
+    if column in present:
+        return
+    connection.execute(
+        text(
+            f"ALTER TABLE {table} "
+            f"ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0"
+        )
+    )
+
+
 #: (version this step produces, work to do). Order matters; the stamp is written
 #: in the same transaction as the work.
 MIGRATIONS: tuple[tuple[str, Callable[[Connection], None]], ...] = (
     ("m2b1", _add_jobs_table),
+    ("m2c1", _add_transcript_characters),
 )
 
 

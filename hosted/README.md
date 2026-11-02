@@ -59,6 +59,7 @@ tests/hosted/                 its tests
 | `GET /v1/usage` | session or key | this workspace's meter, and its key-by-key breakdown |
 | `GET /v1/voices` | session or key | what the engine can speak, for a picker |
 | `POST /v1/audio/speech` | API key | metered passthrough to the engine, for one short request |
+| `POST /v1/audio/transcriptions` | session or key | a recording in, the engine's transcript out, metered in its own counters |
 | `POST /v1/jobs` | session or key | queue a longer piece of speech (up to 20,000 characters) |
 | `GET /v1/jobs` | session or key | your jobs, newest first, with a status filter |
 | `GET /v1/jobs/{id}` | session or key | one of your jobs, with its full text |
@@ -67,9 +68,19 @@ tests/hosted/                 its tests
 
 Not in yet, and named as the next slices: email verification, billing, deployment.
 
+Speech out and speech in are metered separately. `characters` is what a workspace
+asked the engine to *say*; `transcript_characters` is what came *back* when it sent
+a recording to transcribe; `audio_seconds` is the audio that moved, measured from
+the WAV header of the bytes themselves — the returned one for speech, the uploaded
+one for transcription. One recording's upload is bounded before it is parsed (25
+MiB by default, `QUALI_TRANSCRIBE_MAX_BYTES`), and a refusal never reaches the
+engine. A `srt` or `text` answer is not counted in characters, because counting a
+subtitle file would count timecodes as speech; its seconds are still recorded.
+
 ## The dashboard
 
-The browser front end that speaks through this plane lives in
+The dashboard has six pages now — home, Speak, Transcribe, Jobs, Keys, Usage. The
+browser front end that speaks through this plane lives in
 [`hosted/web/`](web/README.md) — its own Next.js package, importing nothing from
 `backend/`, this plane's own routes being its only contact with it. Run it, and
 the tests around it, from [`hosted/web/README.md`](web/README.md). It is local

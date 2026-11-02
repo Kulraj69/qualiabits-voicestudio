@@ -13,6 +13,12 @@ const TILES = [
     body: "Pick a voice from the engine's own catalogue and hear the audio come back through the control plane.",
   },
   {
+    href: "/transcribe",
+    kicker: "Speech to text",
+    title: "Transcribe",
+    body: "Send a recording and read the engine's transcript, with the plane's own numbers for the request.",
+  },
+  {
     href: "/jobs",
     kicker: "The queue",
     title: "Jobs",
@@ -51,8 +57,8 @@ export default async function HomePage() {
           </h1>
           <p className="hero__lede">
             Sign up for a workspace, then speak text with a voice taken from the
-            engine's own catalogue, queue longer pieces of audio, mint API keys and
-            read the meter the plane keeps. Every number on these pages comes from
+            engine's own catalogue, queue longer pieces of audio, transcribe a
+            recording, mint API keys and read the meter the plane keeps. Every number on these pages comes from
             the control plane's records, not from this page's own state.
           </p>
           <div className="hero__actions">

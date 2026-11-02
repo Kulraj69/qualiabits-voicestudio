@@ -1,14 +1,18 @@
 """Per-workspace usage metering.
 
-Two counters that mean different things, kept apart on purpose:
+Three counters that mean different things, kept apart on purpose:
 
 - ``characters`` — the text this workspace asked the engine to speak. Counted
   once a request passes input validation, whether or not the engine then answered.
-- ``audio_seconds`` — audio the customer actually received, computed from the
-  returned WAV's own header. A request that failed adds a failure, not seconds.
+- ``transcript_characters`` — text the engine handed *back* when this workspace
+  sent it a recording to transcribe. Counted only when the engine answered, so a
+  refused upload is a failure and not characters.
+- ``audio_seconds`` — audio the customer actually received or sent, computed from
+  the WAV header of the bytes themselves. A request that failed adds a failure,
+  not seconds.
 
-Anything billed later can pick either, and the summary says which is which so a
-customer reading it is not misled by a single blended number.
+Anything billed later can pick any of them, and the summary says which is which
+so a customer reading it is not misled by a single blended number.
 """
 from __future__ import annotations
 
@@ -55,6 +59,7 @@ class UsageSummary:
     workspace_id: int
     requests: int = 0
     characters: int = 0
+    transcript_characters: int = 0
     audio_seconds: float = 0.0
     audio_bytes: int = 0
     failed_requests: int = 0
@@ -69,6 +74,7 @@ class UsageSummary:
             "workspace_id": self.workspace_id,
             "requests": self.requests,
             "characters": self.characters,
+            "transcript_characters": self.transcript_characters,
             "audio_seconds": round(self.audio_seconds, 3),
             "audio_bytes": self.audio_bytes,
             "failed_requests": self.failed_requests,
@@ -78,7 +84,12 @@ class UsageSummary:
             "first_request_at": _iso(self.first_request_at),
             "last_request_at": _iso(self.last_request_at),
             "characters_note": "text sent to the engine, counted whether or not it answered",
-            "audio_seconds_note": "audio received, measured from the returned WAV header",
+            "transcript_characters_note": (
+                "text the engine returned for a recording this workspace sent in, "
+                "counted only when it answered; separate from characters, which is "
+                "speech we were asked to make"
+            ),
+            "audio_seconds_note": "audio received or sent, measured from the WAV header",
             "by_key_note": (
                 "spend per key, so a customer can tell which integration is talking. "
                 "Input the engine never saw appears here too, with zero characters."
@@ -98,20 +109,31 @@ def record(
     route: str,
     status_code: int,
     characters: int = 0,
+    transcript_characters: int = 0,
     body: bytes | None = None,
+    upload: bytes | None = None,
     engine_seconds: float | None = None,
     error: str = "",
 ) -> UsageEvent:
-    """Write one metered request. Caller commits."""
-    seconds = wav_seconds(body) if body else None
+    """Write one metered request. Caller commits.
+
+    ``body`` is audio on its way *out* to the customer and ``upload`` is audio on
+    its way *in*; exactly one of them is set by any real request. Both are
+    measured by the same reader — the WAV header of the bytes themselves — so a
+    transcription reports the length of the recording it was given, and neither
+    is a number the plane invented.
+    """
+    audio = body if body is not None else upload
+    seconds = wav_seconds(audio) if audio else None
     event = UsageEvent(
         workspace_id=workspace_id,
         api_key_id=api_key_id,
         route=route,
         status_code=status_code,
         characters=characters,
+        transcript_characters=transcript_characters,
         audio_seconds=seconds,
-        audio_bytes=len(body) if body else None,
+        audio_bytes=len(audio) if audio else None,
         engine_seconds=engine_seconds,
         error=error[:200],
         created_at=utcnow(),
@@ -135,6 +157,7 @@ def summary(session: Session, workspace_id: int) -> UsageSummary:
     for row in rows:
         out.requests += 1
         out.characters += row.characters or 0
+        out.transcript_characters += row.transcript_characters or 0
         out.audio_bytes += row.audio_bytes or 0
         if row.audio_seconds is not None:
             out.audio_seconds += row.audio_seconds
@@ -151,11 +174,13 @@ def summary(session: Session, workspace_id: int) -> UsageSummary:
         if row.api_key_id is not None:
             bucket = keys.setdefault(row.api_key_id, {
                 "api_key_id": row.api_key_id, "key_id": None, "label": "",
-                "requests": 0, "characters": 0, "audio_seconds": 0.0,
+                "requests": 0, "characters": 0, "transcript_characters": 0,
+                "audio_seconds": 0.0,
                 "failed_requests": 0, "last_request_at": None,
             })
             bucket["requests"] += 1
             bucket["characters"] += row.characters or 0
+            bucket["transcript_characters"] += row.transcript_characters or 0
             bucket["audio_seconds"] += row.audio_seconds or 0.0
             if row.status_code >= 400:
                 bucket["failed_requests"] += 1

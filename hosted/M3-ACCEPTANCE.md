@@ -1,0 +1,58 @@
+# What M3 asked for so far, and where each piece is
+
+The milestone plan for M3 is: *new web UI (Next.js): clean ElevenLabs-quality
+dashboard — Text to Speech, Voice Library, Voice Clone (with consent), Voice Design,
+Dubbing, Transcription, Audiobooks/Projects, API Keys, Usage. Responsive, fast,
+dark/light.*
+
+Two slices are built. **Slice A** is the four things a customer does first — sign up,
+speak, mint keys, see what was used. **Slice B** is transcription: a recording in, the
+engine's transcript out, metered in its own counters. Three of the pages M3 names —
+Voice Library, Voice Clone, Voice Design — and two more — Dubbing, Audiobooks — are
+**not built**, and the last section of this page says so in the place a reader would
+otherwise expect a link.
+
+Every row names the code, the tests and a check in the browser run a reader can look
+at: the checks come from `hermes-reports/M3-slot47-web-e2e-r1/result.json`, taken
+with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
+stops existing or a named check stops appearing in the run the page cites, so the
+table cannot quietly become a description of a previous version of the code.
+
+| The plan asks for | Code | Tests | A check in the browser run |
+| --- | --- | --- | --- |
+| A real Next.js dashboard, its own package, importing nothing from `backend/` | `hosted/web/app/layout.jsx` | `hosted/web/test/controlplane.test.mjs` | `the dashboard is up and rooted at /` |
+| Sign up and sign in, session held server-side only | `hosted/web/app/api/auth/login/route.js` | `tests/hosted/test_hosted_accounts.py` | `the session token is not readable by page JavaScript` |
+| Text to speech: pick a voice the engine has, hear the audio | `hosted/web/components/SpeakView.jsx` | `tests/hosted/test_hosted_metering.py` | `the Speak page returns real WAV bytes through the plane` |
+| The voice list comes from the plane, not the page | `hosted/control_plane/voices.py` | `tests/hosted/test_hosted_voices.py` | `the voice list is served by the plane, not hard-coded` |
+| The engine's own refusal, in its own words | `hosted/control_plane/upstream.py` | `tests/hosted/test_hosted_metering.py` | `an unknown voice is refused by the plane with the engine's own sentence` |
+| Transcription: a recording in, a transcript out | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_transcription.py` | `the Transcribe page shows a transcript` |
+| The upload is bounded before it is read | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_transcription.py` | `an upload with no file is refused with a sentence that says so` |
+| Speech in and speech out are separate counters | `hosted/control_plane/metering.py` | `tests/hosted/test_hosted_transcription.py` | `the plane counted the transcript in its own counter, not the speech one` |
+| An older database gains the new counter, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | no run evidence: the browser run creates a fresh database |
+| API keys: shown once, listed as prefixes, revocable | `hosted/web/components/KeysView.jsx` | `tests/hosted/test_hosted_accounts.py` | `the key is not shown again after a reload` |
+| A queued job, watched through the page, spoken by a real worker | `hosted/web/components/JobsView.jsx` | `tests/hosted/test_hosted_jobs.py` | `the real worker drained the queue` |
+| Usage: the workspace totals and the per-key breakdown | `hosted/web/app/usage/page.jsx` | `tests/hosted/test_hosted_metering.py` | `the Usage page's request count matches the plane's meter` |
+| The transcript can be taken away as text or subtitles | `hosted/web/lib/transcript.js` | `hosted/web/test/transcript.test.mjs` | `the Transcribe page shows a transcript` |
+| Every page one click from home, keyboard focus visible | `hosted/web/components/NavLinks.jsx` | `hosted/web/test/format.test.mjs` | `every page takes a keyboard Tab onto a focusable control` |
+| Dark, and the QualiaBits palette and spacing | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
+
+Two sentences that belong beside that table, because the gap between what is proven
+and what is not is exactly where a product page starts lying:
+
+- **Nothing here is deployed.** Every check above was taken against processes started
+  on this machine on loopback: no public URL, no domain, no HTTPS, no real object-store
+  bucket. The run file says so in its own fields rather than only in prose.
+- **The voice is machine-checked, never human-checked.** What the run proves about the
+  audio is that bytes came back, what the header says about their length, and — with
+  the real engine — that a second engine could hear words it had said. Two of the five
+  words of the Hindi sentence came back. Whether anybody should *pay* for that voice is
+  a listening judgement this repository has never made, and the WAVs are committed so
+  the owner can.
+
+## What is not built, and is not stubbed
+
+Voice Library (browsing and previewing the model's own voices one by one), Voice Clone
+with a consent checkbox, Voice Design, Dubbing, Audiobooks/Projects, the agents tab,
+a light theme, and the marketing landing page are all **later slices of M3**. None of
+them is a greyed-out button or a "coming soon" card: a page that is not built is not on
+the site, and the dashboard's navigation lists only pages that answer.

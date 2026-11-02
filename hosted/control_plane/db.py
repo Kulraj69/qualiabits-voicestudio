@@ -116,6 +116,12 @@ class UsageEvent(Base):
     every request that got past input validation. ``audio_seconds`` is
     delivery-based: measured from the audio bytes the engine actually returned,
     so a failed call adds a failure and no minutes.
+
+    ``transcript_characters`` is the third counter, added by slice C, and it is
+    deliberately not the first one. Speech out and speech in are different
+    products; a workspace that transcribes 40,000 characters of its own
+    recordings has not asked us to speak 40,000 characters, and a single blended
+    number would let a customer's own invoice read as if it had.
     """
 
     __tablename__ = "usage_events"
@@ -130,6 +136,12 @@ class UsageEvent(Base):
     route: Mapped[str] = mapped_column(String(80))
     status_code: Mapped[int] = mapped_column(Integer)
     characters: Mapped[int] = mapped_column(Integer, default=0)
+    #: Added by m2c1. ``server_default="0"`` on purpose: an existing row has no
+    #: transcript, and a migration that left the column NULL would make every
+    #: older request indistinguishable from a request we failed to measure.
+    transcript_characters: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
     audio_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     audio_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     engine_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)

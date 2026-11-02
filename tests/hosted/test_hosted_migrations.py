@@ -107,8 +107,11 @@ def write_slice_a_database(path: Path, *, email: str = "old@example.com") -> Non
 def test_a_fresh_database_is_created_at_the_current_version(tmp_path):
     db = Database(f"sqlite:///{tmp_path / 'fresh.db'}")
     assert migrate(db, expected_version=SCHEMA_VERSION) == "created"
-    assert db.schema_version() == SCHEMA_VERSION == "m2b1"
+    assert db.schema_version() == SCHEMA_VERSION == "m2c1"
     assert inspect(db.engine).has_table("jobs")
+    assert "transcript_characters" in {
+        column["name"] for column in inspect(db.engine).get_columns("usage_events")
+    }
 
 
 def test_a_slice_a_database_is_brought_forward_and_keeps_every_row(tmp_path):
@@ -117,8 +120,8 @@ def test_a_slice_a_database_is_brought_forward_and_keeps_every_row(tmp_path):
     db = Database(f"sqlite:///{path}")
 
     assert db.schema_version() == "m2a1"
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2b1"
-    assert db.schema_version() == "m2b1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2c1"
+    assert db.schema_version() == "m2c1"
     assert inspect(db.engine).has_table("jobs")
 
     with db.session() as session:
@@ -145,7 +148,7 @@ def test_upgrading_twice_changes_nothing_the_second_time(tmp_path):
     write_slice_a_database(path)
     db = Database(f"sqlite:///{path}")
 
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2b1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2c1"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     with db.session() as session:
@@ -156,13 +159,21 @@ def test_a_step_can_be_run_again_without_failing(tmp_path):
     """What makes a crash between the DDL and the stamp survivable."""
     db = Database(f"sqlite:///{tmp_path / 'again.db'}")
     migrate(db, expected_version=SCHEMA_VERSION)
-    step = dict(MIGRATIONS)["m2b1"]
-
+    steps = dict(MIGRATIONS)
     with db.engine.begin() as connection:
-        step(connection)  # the tables are already there
+        steps["m2b1"](connection)  # the table is already there
     with db.engine.begin() as connection:
-        step(connection)
+        steps["m2b1"](connection)
+    # The column step is the one that needs the check: ``ALTER TABLE ... ADD
+    # COLUMN`` has no ``IF NOT EXISTS``, so idempotence is the whole point.
+    with db.engine.begin() as connection:
+        steps["m2c1"](connection)
+    with db.engine.begin() as connection:
+        steps["m2c1"](connection)
     assert inspect(db.engine).has_table("jobs")
+    assert "transcript_characters" in {
+        column["name"] for column in inspect(db.engine).get_columns("usage_events")
+    }
 
 
 def test_a_database_from_an_unknown_schema_is_refused_with_both_versions_named(tmp_path):
@@ -183,7 +194,7 @@ def test_a_database_from_an_unknown_schema_is_refused_with_both_versions_named(t
 
 def test_a_newer_database_is_refused_by_an_older_build(tmp_path):
     db = Database(f"sqlite:///{tmp_path / 'newer.db'}")
-    migrate(db, expected_version="m2b1")
+    migrate(db, expected_version="m2c1")
 
     with pytest.raises(RuntimeError) as error:
         migrate(db, expected_version="m2a1")
@@ -217,7 +228,7 @@ def test_the_app_upgrades_a_slice_a_database_in_place_and_the_customer_still_log
     write_slice_a_database(tmp_path / "control-plane.db")
     with app_client(tmp_path, engine) as client:
         health = client.get("/healthz").json()
-        assert health["schema_state"] == "upgraded:m2a1->m2b1"
+        assert health["schema_state"] == "upgraded:m2a1->m2c1"
         assert health["schema_version"] == SCHEMA_VERSION
 
         # The customer who signed up under slice A signs in with the same password.
@@ -227,6 +238,9 @@ def test_the_app_upgrades_a_slice_a_database_in_place_and_the_customer_still_log
         assert ledger["characters"] == 42
         assert ledger["audio_seconds"] == 1.5
         assert ledger["by_key"][0]["label"] == "laptop"
+        # The counter this slice added reads zero for a row that predates it,
+        # which is what the migration's constant default is for.
+        assert ledger["transcript_characters"] == 0
 
         # And the new feature works on the old database.
         queued = client.post(

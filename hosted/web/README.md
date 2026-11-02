@@ -1,9 +1,9 @@
 # The QualiaBits Voice dashboard
 
-The browser front end for the hosted control plane in [`hosted/`](../). Four
-things a customer does first, in a real Next.js app: sign up and sign in; speak
-text and hear it; mint and revoke API keys; watch a queued job and download what
-it made, and read the meter the plane keeps.
+The browser front end for the hosted control plane in [`hosted/`](../). Six pages,
+each one a real thing a customer does: sign up and sign in; speak text and hear it;
+send a recording in and read the transcript back; mint and revoke API keys; watch a
+queued job and download what it made; read the meter the plane keeps.
 
 Not deployed. Not public. No public URL, no real S3 bucket, no GPU. Everything
 runs on this machine on loopback.
@@ -63,8 +63,18 @@ Now walk it, and each step says what you should see:
    audio, and the row moves to **Done** with **Play** and **Download**. Queue a
    second one and press **Cancel** before a worker runs: it reads **Cancelled**
    and the meter does not move.
-5. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
-   the plane's own notes about what each counter means.
+5. **Transcribe** at `/transcribe` — choose a recording (a WAV downloaded from the
+   Speak page works), pick a language and an answer format, press **Transcribe**.
+   The text comes back in a monospaced block with the engine's segments and their
+   timestamps below it, and above them the plane's own numbers for the request: the
+   duration it measured from your file's header, the characters it counted, the
+   bytes you sent and the seconds the engine spent. **Download .txt / .srt / .json**
+   take it away. A file the engine cannot read, or one over the size ceiling, is
+   refused with a sentence that names the limit.
+6. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
+   the plane's own notes about what each counter means. **Characters** and
+   **characters transcribed** are separate lines on purpose: one is text you asked
+   the engine to say, the other is text it handed back.
 
 Every page above is one click from home, every page is dark, and every control
 takes a visible keyboard focus.
@@ -81,7 +91,9 @@ npm run e2e     # the browser end-to-end (builds, starts everything, drives Chro
 `npm test` covers the pieces that can be wrong on their own: cookie
 serialising (and which cookie is httpOnly, and which is readable), the voice
 grouping and language filtering, the number and status formatting, and the plane
-client's URL joining and error-message handling. Twenty-nine checks, no browser.
+client's URL joining and error-message handling, and the transcript helpers that
+turn an answer into a `.srt` (including the case where the engine returned no
+segments). Thirty-nine checks, no browser.
 
 `npm run e2e` is the honest one. It builds the app, then starts **the real
 control plane** (its own SQLite file and object store), **the real web server**
@@ -90,9 +102,9 @@ form, speaks, mints and revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. **Forty-two checks** on this path. `node e2e/dashboard.mjs
+next request. **Fifty-two checks** on this path. `node e2e/dashboard.mjs
 --no-build` reuses an existing build; `--keep` writes `result.json`, the process
-logs and a full-page screenshot of each of the five pages to `e2e/.evidence/`.
+logs and a full-page screenshot of each of the six pages to `e2e/.evidence/`.
 
 **The one substitution** is the engine: `e2e/engine_stub.py`, the same shape as
 the stub the Python suite uses, so the browser run needs no model download. The
@@ -118,12 +130,22 @@ That run carries five things a constant-size stub cannot produce, every one of
 them the engine's own answer about itself: its identity from `/health`, the
 backend it reports active with its voice count, the sha256 of `model.int8.onnx`,
 `tokens.txt` and `voices.bin`, a paragraph that produced more audio than the
-one-liner, and **forty-six checks** rather than forty-two — the four extra are the
-engine's own claims above. On CPU it takes minutes rather than seconds, because
-synthesis runs at about a seventh of real time. Two knobs, if your box is slower
-than this one: `QB_E2E_SPEAK_TIMEOUT_MS` (default 20000; the script raises it to
-300000) and `QB_E2E_UPSTREAM_TIMEOUT_SECONDS` (default 60; the script raises it
-to 300).
+one-liner, and the words that come back out of a **closed loop**: the sentence the
+speech engine said is uploaded back through the Transcribe page and read by the
+engine's own speech-to-text route, and the run records both strings — what was said
+and what was heard — beside the words they share. That model is supplied by the
+operator as a directory too (CTranslate2 Whisper small, `Systran/faster-whisper-small`,
+pinned by sha256 in the script), so nothing is downloaded behind a licence gate and
+nothing is accepted on anybody's behalf. The script stops rather than substitutes if
+it is missing.
+
+On CPU it takes minutes rather than seconds: synthesis runs at about a seventh of
+real time and transcription is slower still. Four knobs, if your box is slower than
+this one: `QB_E2E_SPEAK_TIMEOUT_MS` (default 20000; the script raises it to 300000),
+`QB_E2E_TRANSCRIBE_TIMEOUT_MS` (default 30000 for the stub, ten minutes for the real
+engine), `QB_E2E_UPSTREAM_TIMEOUT_SECONDS` (default 60; the script raises it to 900),
+and `QB_E2E_SPEAK_TEXT` / `QB_E2E_SPEAK_LANGUAGE`, which the script sets to a Hindi
+sentence because that is the loop worth proving.
 
 `result.json` also records the revision the run was taken over and whether that
 working tree was clean, so a run and a commit can be named together.
@@ -146,14 +168,20 @@ key appears in your key list like any other — and if you revoke it, the Speak
 page stops working until you mint a fresh one, which is the milestone's
 "revocation takes effect on the next request" made visible.
 
+Transcribing does not need a key, and that is deliberate rather than an oversight.
+The plane's rule about keys exists so every byte of audio *produced* is attributable;
+a recording being handed in is not that, and requiring a customer to mint a
+credential to send their own file is friction with no safety gain. It still needs a
+session, it is still metered, and it is still the plane — not this app — that bounds
+the upload and attributes the seconds.
+
 Nothing here imports from `backend/` or `hosted/control_plane`; the app's only
 contact with either is HTTP.
 
 ## What is not here, and is not stubbed
 
-Voice cloning, voice design, dubbing, transcription, audiobooks, the agents tab,
-the marketing landing page, email verification, billing and deployment are all
-later slices. None of them exists as a greyed-out button here — a page that is
+Voice cloning, voice design, dubbing, audiobooks, the agents tab, the marketing
+landing page, email verification, billing and deployment are all later slices. None of them exists as a greyed-out button here — a page that is
 not built is not on the site.
 
 ## Licence

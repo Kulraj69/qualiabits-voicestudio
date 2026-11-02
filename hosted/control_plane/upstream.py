@@ -20,9 +20,13 @@ from typing import Any
 import httpx
 
 
-#: Response headers from the engine that a customer is allowed to see. The
-#: engine marks every response with its backend name; hiding it would make a
-#: customer's bug report unanswerable ("which engine spoke?").
+#: Response headers from the engine that a customer is allowed to see. The engine
+#: stamps ``x-omnivoice-backend`` on every response, and what it carries is the
+#: engine's *version* (``0.5.7`` today) rather than a backend name — the name of
+#: the backend that spoke is the engine's own answer to ``/engines/tts``, which
+#: this plane reads for the voice catalogue. The marker is passed through anyway:
+#: it tells a customer which build answered, which is what makes a bug report
+#: answerable at all.
 FORWARDED_HEADER_PREFIX = "x-omnivoice-"
 
 
@@ -98,10 +102,36 @@ class UpstreamClient:
         return response.status_code, payload if isinstance(payload, dict) else None
 
     async def speech(self, payload: dict) -> UpstreamResult:
+        return await self._post_json("/v1/audio/speech", payload)
+
+    async def transcribe(
+        self,
+        *,
+        filename: str,
+        content: bytes,
+        content_type: str,
+        fields: dict[str, str],
+        timeout: float | None = None,
+    ) -> UpstreamResult:
+        """Send a customer's recording on to the engine's own STT route.
+
+        The engine speaks OpenAI's shape here (``POST /v1/audio/transcriptions``,
+        multipart, ``file`` plus options), so the plane proxies that shape rather
+        than inventing a second one: a customer's existing client works against
+        the plane unchanged, and what they read in our docs matches what the
+        engine accepts.
+
+        The timeout is longer than speech's by default because a file is bigger
+        than a sentence and CPU transcription is slower than playback; the caller
+        passes the engine's own budget through unchanged.
+        """
         started = time.monotonic()
         try:
             response = await self._client.post(
-                "/v1/audio/speech", json=payload, timeout=self.timeout_seconds
+                "/v1/audio/transcriptions",
+                files={"file": (filename, content, content_type)},
+                data=fields,
+                timeout=timeout if timeout is not None else self.timeout_seconds,
             )
         except httpx.TimeoutException:
             return UpstreamResult(
@@ -112,6 +142,25 @@ class UpstreamClient:
                 502, None, None, round(time.monotonic() - started, 3),
                 "upstream_unreachable",
             )
+        return self._result(response, started)
+
+    async def _post_json(self, path: str, payload: dict) -> UpstreamResult:
+        started = time.monotonic()
+        try:
+            response = await self._client.post(path, json=payload, timeout=self.timeout_seconds)
+        except httpx.TimeoutException:
+            return UpstreamResult(
+                504, None, None, round(time.monotonic() - started, 3), "upstream_timeout"
+            )
+        except httpx.HTTPError:
+            return UpstreamResult(
+                502, None, None, round(time.monotonic() - started, 3),
+                "upstream_unreachable",
+            )
+        return self._result(response, started)
+
+    @staticmethod
+    def _result(response: httpx.Response, started: float) -> UpstreamResult:
         elapsed = round(time.monotonic() - started, 3)
         marker = {
             key.lower(): value

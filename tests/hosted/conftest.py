@@ -23,8 +23,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import httpx  # noqa: E402
-from fastapi import FastAPI, Response  # noqa: E402
+from fastapi import FastAPI, Request, Response  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
+from starlette.datastructures import UploadFile  # noqa: E402
 from starlette.testclient import TestClient  # noqa: E402
 
 from hosted.control_plane.app import create_app  # noqa: E402
@@ -60,6 +61,18 @@ class StubEngine:
         self.audio_seconds = 1.25
         self.refusal = {"detail": "engine says no", "param": "voice", "code": "unknown_voice"}
         self.wav = make_wav(self.audio_seconds)
+        # ── the STT half of the same stub ─────────────────────────────────────
+        #: What the engine "heard". The real engine's transcript of the same
+        #: audio is a real ASR output; this is a fixed string, and tests assert
+        #: on what came back rather than pretending it is recognition quality.
+        self.transcript = "यह एक हिन्दी वाक्य है।"
+        #: Every transcription the stub was asked for, in order.
+        self.transcriptions: list[dict] = []
+        self.stt_refusal = {
+            "error": {"message": "No ASR model is loaded on the engine.",
+                      "type": "invalid_request_error", "code": "asr_model_missing"},
+            "detail": "No ASR model is loaded on the engine.",
+        }
         self.app = self._build_app()
 
     def _build_app(self) -> FastAPI:
@@ -111,10 +124,61 @@ class StubEngine:
                 headers={"x-omnivoice-backend": "sherpa-onnx"},
             )
 
+        @stub.post("/v1/audio/transcriptions")
+        async def transcribe(request: Request) -> Response:
+            """The engine's OpenAI-compatible STT route, in the shape it answers.
+
+            Parsed with the same multipart reader the real engine uses (Starlette),
+            so a test can assert what actually crossed the wire: the filename, the
+            content type, the option fields the plane forwarded, and the bytes.
+            """
+            form = await request.form()
+            upload = form.get("file")
+            raw, filename, content_type = b"", None, None
+            if isinstance(upload, UploadFile):
+                raw = await upload.read()
+                filename, content_type = upload.filename, upload.content_type
+            state.transcriptions.append({
+                "filename": filename,
+                "content_type": content_type,
+                "bytes": len(raw),
+                "body": raw,
+                "fields": {k: v for k, v in form.multi_items() if k != "file"},
+            })
+            if state.mode == "refuse":
+                return JSONResponse(status_code=409, content=state.stt_refusal)
+            if state.mode == "boom":
+                raise RuntimeError("stub engine exploded")
+            requested = str(form.get("response_format") or "json")
+            language = str(form.get("language") or "hi")
+            if requested == "text":
+                return Response(content=state.transcript, media_type="text/plain")
+            if requested == "srt":
+                return Response(
+                    content=f"1\n00:00:00,000 --> 00:00:02,000\n{state.transcript}\n",
+                    media_type="text/plain",
+                )
+            payload = {
+                "task": "transcribe",
+                "language": language,
+                "duration": state.audio_seconds,
+                "text": state.transcript,
+                "segments": [
+                    {"id": 0, "seek": 0, "start": 0.0, "end": state.audio_seconds,
+                     "text": f" {state.transcript}", "tokens": [],
+                     "temperature": 0.0, "avg_logprob": 0.0, "compression_ratio": 0.0,
+                     "no_speech_prob": 0.0},
+                ],
+            }
+            return JSONResponse(
+                content=payload, headers={"x-omnivoice-backend": "faster-whisper"}
+            )
+
         return stub
 
     def reset(self) -> None:
         self.payloads.clear()
+        self.transcriptions.clear()
         self.mode = "ok"
 
     def set_audio_seconds(self, seconds: float) -> None:
@@ -251,6 +315,32 @@ def queue_job(client: TestClient, credential: str, text: str, **extra):
     body = {"input": text, "voice": "hf_alpha", "response_format": "wav", **extra}
     return client.post(
         "/v1/jobs", json=body, headers={"Authorization": f"Bearer {credential}"}
+    )
+
+
+def transcribe(
+    client: TestClient,
+    credential: str,
+    content: bytes | None = None,
+    *,
+    filename: str = "clip.wav",
+    content_type: str = "audio/wav",
+    **fields,
+):
+    """One call to the plane's metered transcription route.
+
+    ``content=None`` sends a real WAV of the stub engine's duration, because a
+    test that measures seconds needs bytes with a header to measure. Passing
+    ``b""`` sends an empty part on purpose — that is a case worth testing, so it
+    is not swallowed by the default.
+    """
+    payload = make_wav(1.25) if content is None else content
+    data = {key: str(value) for key, value in fields.items()}
+    return client.post(
+        "/v1/audio/transcriptions",
+        files={"file": (filename, payload, content_type)},
+        data=data,
+        headers={"Authorization": f"Bearer {credential}"},
     )
 
 

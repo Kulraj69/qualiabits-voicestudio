@@ -121,9 +121,9 @@ so.
 ## Migrations
 
 
-The plane's database is its own (the engine has a separate one), and it now has two
-versions: `m2a1` (slice A: workspaces, keys, sessions, usage) and `m2b1` (slice B:
-the jobs table). `hosted/control_plane/migrations.py` applies ordered steps, each
+The plane's database is its own (the engine has a separate one), and it now has three
+versions: `m2a1` (slice A: workspaces, keys, sessions, usage), `m2b1` (slice B: the
+jobs table) and `m2c1` (slice C: `usage_events.transcript_characters`). `hosted/control_plane/migrations.py` applies ordered steps, each
 stamping its version in the same transaction as its DDL, so a crash halfway leaves
 the stamp alone and the next start retries — which is why every step is idempotent.
 
@@ -139,3 +139,43 @@ one schema, applied linearly, with no branches and one consumer. When a step nee
 data from a table a later step drops, or two people ship steps at once, that is the
 moment to convert these functions into an alembic baseline revision — not before.
 
+
+## Speech in, and the third counter
+
+Slice C adds transcription, and with it the first genuinely new decision since
+slice A: what a counter *means*.
+
+Speech out and speech in are different products. `characters` is text a workspace
+asked the engine to say; `transcript_characters` is text the engine handed back for
+a recording it was sent. Adding them would let a workspace that transcribes its own
+call archive read as if it had asked us to speak all of it, so they are two columns,
+two tiles on the Usage page and two notes beside them explaining which is which.
+`audio_seconds` stays one counter because it means one thing — seconds of audio the
+customer got or gave — but which way it moved is visible in the row's own content:
+speech measures the WAV the engine returned, transcription measures the WAV the
+customer uploaded, and both are read from the bytes' own header rather than from a
+duration anybody reported. An MP3 has no WAV header, so it records no seconds and
+the meter counts it under "requests without audio seconds" instead of inventing a
+bitrate.
+
+The upload is bounded before it is parsed: a declared `Content-Length` over the
+ceiling is refused with no body read at all, and a chunked upload (which declares
+nothing) is refused right after Starlette spooled the part — the part goes to a
+temporary file, so that refusal is not a memory event either. Both refusals are metered
+as failures and neither reaches the engine. The ceiling is a setting,
+`QUALI_TRANSCRIBE_MAX_BYTES`, 25 MiB by default: about 25 minutes of 16-bit 44.1 kHz
+mono.
+
+Authentication on this route is a session *or* a key, unlike speech, which needs a
+key. The key rule exists so that every byte of audio produced is attributable to a
+credential; a recording handed *to* us is not that, and forcing a customer to mint a
+credential before they can send their own file is friction with no safety gain. It is
+still metered, still attributed to the workspace, and the per-key section of the meter
+shows only what a key did.
+
+The transcription model is the operator's, like the speech model: a plain directory
+path (`ASR_MODEL_FASTER`), which the engine's own licence machinery treats as a
+user-provided asset rather than a catalogue entry, so no terms are accepted on
+anybody's behalf. `hosted/web/e2e/real-engine.sh` pins the bytes it uses by sha256
+and stops rather than substituting anything. Nothing in this repository has ever
+downloaded a model behind a licence gate.

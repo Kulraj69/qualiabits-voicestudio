@@ -15,10 +15,12 @@ Routes and who may call them:
     POST   /v1/api-keys             session — mint a key (returned once)
     GET    /v1/api-keys             session — list keys, no key material
     DELETE /v1/api-keys/{id}        session — revoke one of your own keys
-    GET    /v1/usage                session or key — this workspace's meter
-    GET    /v1/voices               session or key — what the engine can speak
-    POST   /v1/audio/speech         API key — metered passthrough to the engine
-    POST   /v1/jobs                 session or key — queue a longer piece of audio
+    GET    /v1/usage                 session or key — this workspace's meter
+    GET    /v1/voices                session or key — what the engine can speak
+    POST   /v1/audio/speech          API key — metered passthrough to the engine
+    POST   /v1/audio/transcriptions  session or key — a recording in, text out,
+                                     metered in characters and in its own length
+    POST   /v1/jobs                  session or key — queue a longer piece of audio
     GET    /v1/jobs                 session or key — your jobs, newest first
     GET    /v1/jobs/{id}            session or key — one of your jobs
     DELETE /v1/jobs/{id}            session or key — cancel a queued job
@@ -32,23 +34,39 @@ customer cannot even ask for somebody else's numbers, let alone read them.
 """
 from __future__ import annotations
 
+import json
 import re
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import Annotated, Iterator
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    status,
+)
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from starlette.datastructures import UploadFile
 
 from . import jobs, metering, security, storage, voices as voice_catalogue
 from .auth import Principal, principal
 from .config import Settings
 from .db import ApiKey, Database, Job, SessionToken, Workspace, utcnow
-from .upstream import UpstreamClient
+from .upstream import UpstreamClient, UpstreamResult
+
+#: ``starlette.datastructures.UploadFile``, not ``fastapi.UploadFile``: the latter
+#: is a *subclass* that lives in FastAPI's route-signature machinery, and a part
+#: that Starlette's form parser hands back is not an instance of it. Checking
+#: against the wrong one silently refuses every real upload — which is exactly
+#: what the first run of this route's tests did.
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$")
 PASSWORD_MIN = 12
@@ -59,6 +77,11 @@ INPUT_MAX_CHARS = 5000
 #: body far past any real request is refused before it is parsed into memory.
 JOB_BODY_MAX_CHARS = 100_000
 SPEECH_ROUTE = "/v1/audio/speech"
+TRANSCRIBE_ROUTE = "/v1/audio/transcriptions"
+#: The engine's own option names on its OpenAI-shaped STT route. A client that
+#: sends something else has that field dropped rather than forwarded: the plane
+#: proxies this shape, it does not invent parameters for it.
+TRANSCRIBE_FIELDS = ("model", "language", "prompt", "response_format", "temperature")
 JOB_STATUSES = frozenset(
     (jobs.QUEUED, jobs.RUNNING, *jobs.TERMINAL_STATUSES)
 )
@@ -179,6 +202,46 @@ def _own_job_row(session: Session, job_id: int, workspace_id: int) -> Job:
             status_code=status.HTTP_404_NOT_FOUND, detail="No such job."
         )
     return job
+
+
+def _key_id(who: Principal) -> int | None:
+    """The key row a metered request belongs to, or ``None`` for a session caller.
+
+    A dashboard request is attributed to the workspace and says so — the meter's
+    per-key section counts only what a key did — which is the same rule the jobs
+    route already follows.
+    """
+    return who.api_key.id if who.api_key is not None else None
+
+
+def _window_of(byte_count: int) -> str:
+    """A human-readable byte ceiling, for the sentence a refusal carries."""
+    mebibyte = 1024 * 1024
+    if byte_count >= mebibyte:
+        return f"{int(byte_count // mebibyte)} MiB"
+    return f"{int(byte_count)} bytes"
+
+
+def transcript_characters(result: UpstreamResult) -> int:
+    """How much text the engine handed back, or 0 when that is not knowable.
+
+    Only a JSON answer has a transcript field to count. A caller who asked for
+    ``srt`` or ``text`` gets those bytes, and counting the characters of a
+    subtitle file would count cue numbers and timecodes as if they were speech —
+    so this returns 0 there rather than a number nobody can defend. The meter's
+    ``audio_seconds`` still records the upload, which is measured either way.
+    """
+    if not result.delivered:
+        return 0
+    content_type = (result.media_type or "").split(";")[0].strip().lower()
+    if content_type != "application/json":
+        return 0
+    try:
+        payload = json.loads(result.body or b"")
+    except (ValueError, UnicodeDecodeError):
+        return 0
+    text = payload.get("text") if isinstance(payload, dict) else None
+    return len(text) if isinstance(text, str) else 0
 
 
 def create_app(
@@ -587,6 +650,151 @@ def create_app(
             content=result.body or b"",
             status_code=result.status,
             media_type=result.media_type or "application/json",
+        )
+
+    # ── speech in: the metered transcription proxy ────────────────────────────
+    @app.post(TRANSCRIBE_ROUTE)
+    async def transcribe(request: Request, session: DbSession) -> Response:
+        """A customer's recording in, the engine's transcript out, metered.
+
+        Auth is ``any`` — a session from the dashboard or a key from a server
+        integration — because the reason speech needs a key (every byte of audio
+        produced must be attributable) does not apply to audio being handed to
+        us. What does still apply is that the upload is bounded before it is
+        parsed, and that nothing reaches the engine when it is refused.
+        """
+        who = principal(session, request, allow="any")
+        ceiling = state.settings.transcribe_max_bytes
+        allowance = f"An upload is at most {_window_of(ceiling)}."
+
+        # A declared length over the ceiling is refused before a byte is read.
+        declared = request.headers.get("content-length", "").strip()
+        if declared.isdigit() and int(declared) > ceiling:
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=_key_id(who),
+                route=TRANSCRIBE_ROUTE, status_code=413, error="declared upload too large",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=f"That upload is larger than {_window_of(ceiling)}. {allowance}",
+            )
+
+        try:
+            form = await request.form()
+        except Exception:  # noqa: BLE001 — a malformed body is the caller's, not ours
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=_key_id(who),
+                route=TRANSCRIBE_ROUTE, status_code=400, error="unreadable multipart body",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Send the recording as multipart/form-data, with the audio in a "
+                       "'file' part and the options as plain fields.",
+            ) from None
+
+        part = form.get("file")
+        if not isinstance(part, UploadFile):
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=_key_id(who),
+                route=TRANSCRIBE_ROUTE, status_code=400, error="no file part",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="There is no 'file' part in this request. The recording goes in a "
+                       "'file' part.",
+            )
+        content = await part.read()
+        # Checked again after reading: a chunked upload declares no length, so the
+        # ceiling cannot be enforced from a header alone. Starlette spools a large
+        # part to a temporary file, so this is a refusal, not a memory event.
+        if len(content) > ceiling:
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=_key_id(who),
+                route=TRANSCRIBE_ROUTE, status_code=413, error="upload over the ceiling",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=f"That upload is {len(content)} bytes and the limit is "
+                       f"{_window_of(ceiling)}. {allowance}",
+            )
+        if not content:
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=_key_id(who),
+                route=TRANSCRIBE_ROUTE, status_code=400, error="empty upload",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The 'file' part was empty, so there is nothing to transcribe.",
+            )
+
+        # Only the engine's own option names travel on; anything else the caller
+        # sent is dropped here rather than forwarded to be interpreted twice.
+        fields: dict[str, str] = {}
+        for name in TRANSCRIBE_FIELDS:
+            value = form.get(name)
+            if isinstance(value, str) and value.strip():
+                fields[name] = value.strip()
+
+        result = await state.upstream.transcribe(
+            filename=part.filename or "recording",
+            content=content,
+            content_type=part.content_type or "application/octet-stream",
+            fields=fields,
+        )
+        if who.api_key is not None:
+            metering.touch_key(session, who.api_key)
+        counted = transcript_characters(result)
+        metering.record(
+            session,
+            workspace_id=who.workspace_id,
+            api_key_id=_key_id(who),
+            route=TRANSCRIBE_ROUTE,
+            status_code=result.status,
+            transcript_characters=counted,
+            upload=content,
+            engine_seconds=result.elapsed_seconds,
+            error=result.error,
+        )
+        session.commit()
+
+        # The length of the upload is known whether or not the engine answered —
+        # we measured the bytes we were sent — so these headers ride on refusals
+        # too, and the sentence about them says so.
+        headers = {
+            "X-Qualiabits-Workspace": str(who.workspace_id),
+            "X-Qualiabits-Engine-Seconds": str(result.elapsed_seconds),
+            "X-Qualiabits-Transcript-Characters": str(counted),
+            "X-Qualiabits-Upload-Bytes": str(len(content)),
+            **result.engine_headers,
+        }
+        seconds = metering.wav_seconds(content)
+        if seconds is not None:
+            headers["X-Qualiabits-Audio-Seconds"] = str(seconds)
+
+        if result.delivered:
+            return Response(
+                content=result.body,
+                media_type=result.media_type or "application/json",
+                headers=headers,
+            )
+        if result.status in (502, 504):
+            return JSONResponse(
+                status_code=result.status,
+                content={"detail": "The transcription engine did not answer.",
+                         "reason": result.error},
+                headers=headers,
+            )
+        # The engine's own refusal, in its own words.
+        return Response(
+            content=result.body or b"",
+            status_code=result.status,
+            media_type=result.media_type or "application/json",
+            headers=headers,
         )
 
     return app

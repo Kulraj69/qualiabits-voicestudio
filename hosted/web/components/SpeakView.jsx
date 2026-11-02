@@ -61,7 +61,7 @@ export default function SpeakView({ catalogue }) {
         bytes: blob.size,
         seconds: response.headers.get("x-qualiabits-audio-seconds"),
         engineSeconds: response.headers.get("x-qualiabits-engine-seconds"),
-        backend: response.headers.get("x-omnivoice-backend"),
+        engineBuild: response.headers.get("x-omnivoice-backend"),
         voice,
       });
       requestAnimationFrame(() => playerRef.current?.play?.().catch(() => {}));
@@ -195,7 +195,7 @@ export default function SpeakView({ catalogue }) {
               {result.seconds ? `${result.seconds} s of audio` : "duration not measured"} ·{" "}
               {result.bytes.toLocaleString("en-US")} bytes
               {result.engineSeconds ? ` · engine took ${result.engineSeconds}s` : ""}
-              {result.backend ? ` · ${result.backend}` : ""}
+              {result.engineBuild ? ` · engine build ${result.engineBuild}` : ""}
             </p>
           </div>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption */}

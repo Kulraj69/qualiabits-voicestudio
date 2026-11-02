@@ -26,21 +26,33 @@ export function cpUrl(path, env = process.env) {
 /**
  * One request to the plane.
  *
- * `token` becomes `Authorization: Bearer <token>` when given. This is the only
+ * `token` becomes `Authorization: Bearer *** when given. This is the only
  * place a credential is attached, so a route cannot forget to and accidentally
  * call the plane unauthenticated — the caller either passes a token or gets the
  * plane's own 401 back.
+ *
+ * A `FormData` or `Blob` body is passed through untouched rather than
+ * stringified: the transcript upload is multipart, and letting `fetch` set that
+ * body's own `content-type` is the only way the boundary matches the bytes.
  */
 export async function cpFetch(path, { method = "GET", token, body, headers = {}, signal } = {}) {
   const init = { method, cache: "no-store", headers: { ...headers }, signal };
   if (token) init.headers.Authorization = `Bearer ${token}`;
   if (body !== undefined && body !== null) {
-    init.body = typeof body === "string" ? body : JSON.stringify(body);
-    if (!init.headers["content-type"] && !init.headers["Content-Type"]) {
+    const opaque = isOpaqueBody(body);
+    init.body = opaque ? body : (typeof body === "string" ? body : JSON.stringify(body));
+    if (!opaque && !init.headers["content-type"] && !init.headers["Content-Type"]) {
       init.headers["Content-Type"] = "application/json";
     }
   }
   return fetch(cpUrl(path), init);
+}
+
+/** A body that carries its own content type: multipart form data, or raw bytes. */
+export function isOpaqueBody(body) {
+  if (typeof FormData !== "undefined" && body instanceof FormData) return true;
+  if (typeof Blob !== "undefined" && body instanceof Blob) return true;
+  return false;
 }
 
 /** Read a plane response as `{ status, ok, data }` without throwing on bad JSON. */

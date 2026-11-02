@@ -698,3 +698,19 @@ th.num {
   font-size: 0.82rem;
   color: var(--fg-subtle);
 }
+/* ── transcript ────────────────────────────────────────────────────────── */
+
+.transcript {
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elev-2);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 24rem;
+  overflow: auto;
+}

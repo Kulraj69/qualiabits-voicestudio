@@ -39,7 +39,7 @@ def test_the_engine_answers_and_the_meter_records_what_was_delivered(client, eng
     assert meter["failed_requests"] == 0
     assert meter["by_status"] == {"200": 2}
     assert meter["first_request_at"] and meter["last_request_at"]
-    assert "measured from the returned WAV header" in meter["audio_seconds_note"]
+    assert "measured from the WAV header" in meter["audio_seconds_note"]
 
 
 def test_the_seconds_come_from_the_audio_not_from_a_guess(client, engine):

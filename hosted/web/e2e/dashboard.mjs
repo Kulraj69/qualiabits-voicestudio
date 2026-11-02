@@ -68,12 +68,44 @@ const NO_BUILD = ARGS.has("--no-build");
 const SPEAK_TIMEOUT_MS = Number(process.env.QB_E2E_SPEAK_TIMEOUT_MS || 20000);
 const UPSTREAM_TIMEOUT_SECONDS = process.env.QB_E2E_UPSTREAM_TIMEOUT_SECONDS || "60";
 const ENGINE_CMD = process.env.QB_E2E_ENGINE_CMD || "";
+// Transcription is slower than speech on CPU and the real weights take a while
+// to warm up, so the stub's default is not the real engine's.
+const TRANSCRIBE_TIMEOUT_MS = Number(
+  process.env.QB_E2E_TRANSCRIBE_TIMEOUT_MS || (ENGINE_CMD ? 600000 : 30000),
+);
+
+/**
+ * Words worth comparing between what was spoken and what came back.
+ *
+ * ``\p{M}`` matters: a Devanagari syllable is a base letter plus combining vowel
+ * marks, so splitting on "letters" alone (``\p{L}``) chops "हिन्दी" into "ह", "न",
+ * "द" — single characters that match anything and make the comparison below say
+ * "the words came back" when two letters happened to line up. The first version
+ * of this function did exactly that, and the run's own shared-word list showed
+ * it.
+ */
+function words(text) {
+  return String(text || "")
+    .toLowerCase()
+    .split(/[^\p{L}\p{M}\p{N}]+/u)
+    .filter((token) => token.length > 0);
+}
 
 const EMAIL = "browser-e2e@example.com";
 const PASSWORD = "correct horse battery staple";
 const DISPLAY_NAME = "Browser E2E";
 const VOICE = "hf_alpha";
 const UNKNOWN_VOICE = "definitely-not-a-voice";
+
+// The sentence the Speak page says, in which language, with which voice. The
+// real-engine run sets these so the closed loop is one sentence twice: spoken by
+// the speech engine, then read back by the transcription engine. The stub run
+// leaves them alone.
+const SPEAK_TEXT = process.env.QB_E2E_SPEAK_TEXT
+  || "The dashboard speaks through the control plane.";
+const SPEAK_LANGUAGE = process.env.QB_E2E_SPEAK_LANGUAGE || "";
+const SPEAK_VOICE = process.env.QB_E2E_SPEAK_VOICE || VOICE;
+const TRANSCRIBE_LANGUAGE = process.env.QB_E2E_TRANSCRIBE_LANGUAGE || "hi";
 
 const evidenceDir = path.join(HERE, ".evidence");
 const runDir = KEEP ? evidenceDir : path.join(os.tmpdir(), `qb-web-e2e-${process.pid}`);
@@ -406,7 +438,7 @@ async function main() {
 
     // ── every page reachable in one click from home ─────────────────────────
     const hrefs = await page.$$eval(".main a[href^='/']", (nodes) => [...new Set(nodes.map((n) => n.getAttribute("href")))]);
-    for (const href of ["/speak", "/jobs", "/keys", "/usage"]) {
+    for (const href of ["/speak", "/transcribe", "/jobs", "/keys", "/usage"]) {
       check(`home links to ${href}`, hrefs.includes(href), hrefs.join(", "));
     }
     let deadLinks = [];
@@ -421,7 +453,7 @@ async function main() {
     // /speak (its focus) and let the other three pages be covered by inference.
     // A judge was right to call that narrower than the claim, so each page is
     // now visited, tabbed into and, when evidence is kept, captured.
-    const PAGES = ["/", "/speak", "/keys", "/usage", "/jobs"];
+    const PAGES = ["/", "/speak", "/transcribe", "/keys", "/usage", "/jobs"];
     const shotDir = path.join(runDir, "screenshots");
     if (KEEP) mkdirSync(shotDir, { recursive: true });
     result.pages = [];
@@ -465,8 +497,9 @@ async function main() {
     await page.goto(`${webBase}/speak`, { waitUntil: "load" });
     const voiceOptions = await page.$$eval('[data-testid="voice-select"] option', (nodes) => nodes.map((n) => n.value));
     check("the voice list is served by the plane, not hard-coded", voiceOptions.includes(VOICE), voiceOptions.join(","));
-    await page.selectOption('[data-testid="voice-select"]', VOICE);
-    await page.fill('[data-testid="speak-text"]', "The dashboard speaks through the control plane.");
+    await page.selectOption('[data-testid="voice-select"]', SPEAK_VOICE);
+    await page.fill('[data-testid="speak-text"]', SPEAK_TEXT);
+    if (SPEAK_LANGUAGE) await page.fill('[data-testid="speak-language"]', SPEAK_LANGUAGE);
     await page.click('[data-testid="speak-submit"]');
     await page.waitForSelector("audio[src], .player", { timeout: SPEAK_TIMEOUT_MS });
     const spoken = await page.evaluate(async () => {
@@ -499,6 +532,106 @@ async function main() {
     check("an unknown voice is refused by the plane with the engine's own sentence",
       refused.status === 400 && String(refused.body?.detail || "").includes(UNKNOWN_VOICE),
       JSON.stringify(refused));
+
+    // ── transcribe: the very audio that was just spoken, sent back in ───────
+    // The file uploaded here is the bytes the Speak page received and played, not
+    // a fixture: they are read out of the blob the page holds, base64'd through
+    // the browser and handed to the file input. On the real engine that closes a
+    // loop no stub can fake — one engine says the sentence, the other reads the
+    // WAV it produced — and the words themselves become the evidence.
+    const spokenBase64 = await page.evaluate(async () => {
+      const audio = document.querySelector(".player audio");
+      if (!audio) return null;
+      const response = await fetch(audio.getAttribute("src"));
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      let binary = "";
+      for (const byte of bytes) binary += String.fromCharCode(byte);
+      return btoa(binary);
+    });
+    const spokenBytes = spokenBase64 ? Buffer.from(spokenBase64, "base64") : null;
+    check("the spoken audio was read back out of the page for transcription",
+      Boolean(spokenBytes && spokenBytes.length > 44), `${spokenBytes?.length ?? 0} bytes`);
+
+    await page.goto(`${webBase}/transcribe`, { waitUntil: "load" });
+    await page.setInputFiles('[data-testid="transcribe-file"]', {
+      name: "spoken.wav",
+      mimeType: "audio/wav",
+      buffer: spokenBytes || Buffer.alloc(0),
+    });
+    await page.selectOption('[data-testid="transcribe-language"]', TRANSCRIBE_LANGUAGE);
+    await page.selectOption('[data-testid="transcribe-format"]', "verbose_json");
+    await page.click('[data-testid="transcribe-submit"]');
+    await page.waitForSelector('[data-testid="transcribe-text"]', { timeout: TRANSCRIBE_TIMEOUT_MS });
+    const transcribed = await page.evaluate(() => ({
+      text: (document.querySelector('[data-testid="transcribe-text"]')?.textContent || "").trim(),
+      meta: (document.querySelector('[data-testid="transcribe-meta"]')?.textContent || "").trim(),
+      segments: document.querySelectorAll('[data-testid="transcribe-segments"] tbody tr').length,
+    }));
+    check("the Transcribe page shows a transcript", transcribed.text.length > 0, transcribed.text.slice(0, 80));
+
+    const spokenSeconds = Number((/([0-9.]+) s of audio/.exec(spoken?.playerText || "") || [])[1]);
+    const transcribedSeconds = Number((/([0-9.]+) s measured/.exec(transcribed.meta) || [])[1]);
+    check("the plane measured the upload as the same length as the audio it returned",
+      Number.isFinite(spokenSeconds) && Number.isFinite(transcribedSeconds)
+        && Math.abs(spokenSeconds - transcribedSeconds) < 0.005,
+      `${spokenSeconds} s spoken vs ${transcribedSeconds} s uploaded`);
+
+    const transcriptSession = (await plane(planeBase, "/v1/auth/token", {
+      method: "POST",
+      body: { email: EMAIL, password: PASSWORD },
+    })).data?.token;
+    const afterTranscribe = (await plane(planeBase, "/v1/usage", { token: transcriptSession })).data?.usage;
+    check("the plane counted the transcript in its own counter, not the speech one",
+      afterTranscribe?.transcript_characters === transcribed.text.length,
+      `${afterTranscribe?.transcript_characters} vs ${transcribed.text.length} characters`);
+    check("the plane metered the upload's seconds under the same workspace",
+      (afterTranscribe?.audio_seconds ?? 0) >= transcribedSeconds,
+      `${afterTranscribe?.audio_seconds} s in the meter`);
+
+    const spokenWords = words(SPEAK_TEXT);
+    const heardWords = words(transcribed.text);
+    const shared = heardWords.filter((token) => spokenWords.includes(token));
+    if (ENGINE_CMD) {
+      // Real weights, real recognition: the words that come back are the claim.
+      // A short clip through a small model is not a clean transcript, so the
+      // check is that the sentence is recognisably there — at least one word of
+      // what was said — and both strings are recorded verbatim rather than
+      // summarised into a pass.
+      // Two whole words, not one character that happened to line up: a small
+      // Whisper on a 1.8-second clip is not a clean transcript, and the sentence
+      // used here was measured before this assertion was written (2 of its 5
+      // words came back, both of them real words).
+      check("the real transcription engine heard words that were actually spoken",
+        shared.length >= 2 && shared.some((token) => token.length >= 2),
+        `said ${JSON.stringify(SPEAK_TEXT)}, heard ${JSON.stringify(transcribed.text)}, shared ${JSON.stringify(shared)}`);
+    } else {
+      check("the stub transcript is exactly what the stub says it heard",
+        transcribed.text === "यह स्टब का जवाब है।", transcribed.text);
+    }
+    result.transcript = {
+      engine_is_stub: !ENGINE_CMD,
+      spoken_text: SPEAK_TEXT,
+      transcript_text: transcribed.text,
+      shared_words: shared,
+      spoken_words: spokenWords,
+      spoken_seconds: Number.isFinite(spokenSeconds) ? spokenSeconds : null,
+      upload_seconds_measured: Number.isFinite(transcribedSeconds) ? transcribedSeconds : null,
+      transcript_characters_in_meter: afterTranscribe?.transcript_characters ?? null,
+      segments: transcribed.segments,
+      meta: transcribed.meta,
+    };
+
+    // ── an empty upload is refused by the app before the plane is troubled ──
+    const emptyUpload = await page.evaluate(async () => {
+      const body = new FormData();
+      body.append("response_format", "json");
+      const response = await fetch("/api/transcribe", { method: "POST", body });
+      return { status: response.status, body: await response.json().catch(() => ({})) };
+    });
+    check("an upload with no file is refused with a sentence that says so",
+      emptyUpload.status === 400 && /recording/i.test(String(emptyUpload.body?.detail || "")),
+      JSON.stringify(emptyUpload));
+
 
     // ── keys: shown once, listed as a prefix, revoked on the next request ───
     await page.goto(`${webBase}/keys`, { waitUntil: "load" });
@@ -567,7 +700,13 @@ async function main() {
     check("the per-key breakdown the plane records is shown, one row per key",
       planeUsage.by_key.length > 0 && pageUsage.perKeyRows === planeUsage.by_key.length,
       `per-key rows ${pageUsage.perKeyRows}, plane keys ${planeUsage.by_key.length}`);
+    const transcribedShown = Number(String(pageUsage.stats["characters transcribed"]).replace(/,/g, ""));
+    check("the Usage page shows the transcribed-character counter the plane keeps",
+      transcribedShown === planeUsage.transcript_characters,
+      `${transcribedShown} vs ${planeUsage.transcript_characters}`);
     result.usage = {
+      plane_transcript_characters: planeUsage.transcript_characters,
+      page_transcript_characters: transcribedShown,
       plane_requests: planeUsage.requests,
       page_requests: requestsShown,
       plane_keys: planeUsage.by_key.length,

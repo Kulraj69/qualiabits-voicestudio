@@ -17,12 +17,19 @@ from pathlib import Path
 #:
 #: m2a1 — slice A: workspaces, api_keys, session_tokens, usage_events.
 #: m2b1 — slice B: adds ``jobs`` (the queue) and the storage keys on a job.
-SCHEMA_VERSION = "m2b1"
+#: m2c1 — slice C: adds ``usage_events.transcript_characters``, so what a
+#:        customer sent us to transcribe is never added to what they asked us
+#:        to speak.
+SCHEMA_VERSION = "m2c1"
 
 DEFAULT_UPSTREAM = "http://127.0.0.1:3900"
 DEFAULT_SESSION_TTL_SECONDS = 12 * 60 * 60
 DEFAULT_JOB_LEASE_SECONDS = 900
 DEFAULT_JOB_MAX_ATTEMPTS = 3
+#: The ceiling on one uploaded recording. 25 MiB is roughly 25 minutes of
+#: 16-bit 44.1 kHz mono audio, which is far more than a support-ticket voice
+#: note and far less than a customer's whole call archive.
+DEFAULT_TRANSCRIBE_MAX_BYTES = 25 * 1024 * 1024
 
 
 def _env_int(name: str, default: int) -> int:
@@ -74,6 +81,9 @@ class Settings:
     job_lease_seconds: int = DEFAULT_JOB_LEASE_SECONDS
     job_max_attempts: int = DEFAULT_JOB_MAX_ATTEMPTS
     job_poll_seconds: float = 1.0
+    # ── slice C ───────────────────────────────────────────────────────────────
+    #: Bytes of one uploaded recording the plane will accept before it refuses.
+    transcribe_max_bytes: int = DEFAULT_TRANSCRIBE_MAX_BYTES
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -106,4 +116,7 @@ class Settings:
             job_lease_seconds=_env_int("QUALI_JOB_LEASE_SECONDS", DEFAULT_JOB_LEASE_SECONDS),
             job_max_attempts=_env_int("QUALI_JOB_MAX_ATTEMPTS", DEFAULT_JOB_MAX_ATTEMPTS),
             job_poll_seconds=_env_float("QUALI_JOB_POLL_SECONDS", 1.0),
+            transcribe_max_bytes=_env_int(
+                "QUALI_TRANSCRIBE_MAX_BYTES", DEFAULT_TRANSCRIBE_MAX_BYTES
+            ),
         )

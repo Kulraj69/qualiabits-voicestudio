@@ -21,14 +21,31 @@
 # the run rather than speaking with unpinned bytes. Nothing here falls back to
 # the stub, because a run that quietly did would be the opposite of evidence.
 #
+# It also resolves a transcription model, because the suite now closes a loop the
+# stub cannot: the sentence the speech engine says is uploaded back in and read by
+# the engine's own speech-to-text route. That model is CTranslate2 Whisper small
+# (Systran/faster-whisper-small), supplied by the operator the same way the speech
+# model is — a directory — so the app's own licence gate has no catalogue entry to
+# ask about and nothing is accepted on anybody's behalf. Resolution order:
+# QUALI_ASR_MODEL_DIR, hosted/web/<name>, the repository root, the repository's
+# parent, /workspace/m1-models/<name>, then the Hugging Face cache. If none has
+# it, this script stops and says how to get it; it does not download half a
+# gigabyte on its own, and it never falls back to a stub transcription.
+#
 # On CPU this takes several minutes: synthesis runs at roughly a seventh of real
-# time and the suite speaks a sentence, cancels a job and speaks a paragraph.
-# The download, when it happens, is about 132 MB.
+# time, transcription is slower still, and the suite speaks a sentence, cancels a
+# job, speaks a paragraph and transcribes the sentence. The speech download, when
+# it happens, is about 132 MB.
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/../../.." && pwd)
 WEB="$REPO/hosted/web"
 MODEL_NAME=${QUALI_MODEL_NAME:-kokoro-int8-multi-lang-v1_0}
+ASR_MODEL_NAME=${QUALI_ASR_MODEL_NAME:-faster-whisper-small}
+#: The Whisper small CTranslate2 weights this machine already has, measured with
+#: ``sha256sum`` on 2026-11-02. Pinned for the same reason the speech model is: a
+#: run that used different bytes would be evidence about something else.
+SHA_ASR_MODEL=3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671
 TARBALL="$MODEL_NAME.tar.bz2"
 URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/$TARBALL"
 # The same three values hosted/scripts/hosted_demo.sh pins, from the M1 run.
@@ -82,6 +99,49 @@ if [ -z "$MODEL" ]; then
   check "$MODEL/voices.bin" "$SHA_VOICES"
 fi
 
+ASR=""
+for candidate in "${QUALI_ASR_MODEL_DIR:-}" "$WEB/$ASR_MODEL_NAME" "$REPO/$ASR_MODEL_NAME" \
+                 "$(dirname "$REPO")/$ASR_MODEL_NAME" "/workspace/m1-models/$ASR_MODEL_NAME"; do
+  if [ -n "$candidate" ] && [ -f "$candidate/model.bin" ]; then
+    ASR="$candidate"; break
+  fi
+done
+if [ -z "$ASR" ]; then
+  # The Hugging Face cache stores a snapshot as symlinks into blobs/, so the
+  # snapshot directory is resolved rather than guessed — the path changes with
+  # every revision downloaded.
+  ASR=$("$PY" - <<'PYEOF' 2>/dev/null || true
+import glob, os
+for path in glob.glob(
+    os.path.expanduser(
+        "~/.cache/huggingface/hub/models--Systran--faster-whisper-small/snapshots/*"
+    )
+):
+    if os.path.isfile(os.path.join(path, "model.bin")):
+        print(path)
+        break
+PYEOF
+)
+fi
+if [ -z "$ASR" ]; then
+  echo "no Whisper small (CTranslate2) model found. One of these:" >&2
+  echo "  set QUALI_ASR_MODEL_DIR=/path/to/faster-whisper-small, or" >&2
+  echo "  put it at /workspace/m1-models/faster-whisper-small, or" >&2
+  echo "  download it once with:" >&2
+  echo "    \$PY -c \"from huggingface_hub import snapshot_download as d; \" \"print(d('Systran/faster-whisper-small'))\"" >&2
+  echo "Stop: a run without a transcription model would not be the loop this proves." >&2
+  exit 4
+fi
+ASR_ACTUAL=$(sha256sum "$ASR/model.bin" | cut -d' ' -f1)
+if [ "$ASR_ACTUAL" != "$SHA_ASR_MODEL" ]; then
+  echo "HASH MISMATCH for $ASR/model.bin" >&2
+  echo "  expected $SHA_ASR_MODEL" >&2
+  echo "  actual   $ASR_ACTUAL" >&2
+  echo "Stop: do not run weights whose bytes are not the ones this script pins." >&2
+  exit 3
+fi
+echo "==> engine speech-to-text: faster-whisper on $ASR (model.bin pinned)"
+
 STATE=${QUALI_E2E_ENGINE_STATE:-${TMPDIR:-/tmp}/qb-real-engine-state}
 mkdir -p "$STATE"
 
@@ -95,10 +155,16 @@ OMNIVOICE_SHERPA_MODEL="$MODEL" \
 OMNIVOICE_DATA_DIR="$STATE/data" \
 OMNIVOICE_ENV_FILE="$STATE/user-env" \
 OMNIVOICE_CACHE_DIR="$STATE/cache" \
+OMNIVOICE_ASR_BACKEND=faster-whisper \
+ASR_MODEL_FASTER="$ASR" \
 HF_HUB_OFFLINE=1 \
 QB_E2E_ENGINE_CMD="$PY -m uvicorn backend.main:app --host 127.0.0.1 --port {port}" \
 QB_E2E_SPEAK_TIMEOUT_MS="${QB_E2E_SPEAK_TIMEOUT_MS:-300000}" \
-QB_E2E_UPSTREAM_TIMEOUT_SECONDS="${QB_E2E_UPSTREAM_TIMEOUT_SECONDS:-300}" \
+QB_E2E_TRANSCRIBE_TIMEOUT_MS="${QB_E2E_TRANSCRIBE_TIMEOUT_MS:-900000}" \
+QB_E2E_UPSTREAM_TIMEOUT_SECONDS="${QB_E2E_UPSTREAM_TIMEOUT_SECONDS:-900}" \
+QB_E2E_SPEAK_TEXT="${QB_E2E_SPEAK_TEXT:-यह एक हिन्दी वाक्य है।}" \
+QB_E2E_SPEAK_LANGUAGE="${QB_E2E_SPEAK_LANGUAGE:-hi}" \
+QB_E2E_TRANSCRIBE_LANGUAGE="${QB_E2E_TRANSCRIBE_LANGUAGE:-hi}" \
 QB_E2E_ENGINE_LABEL="sherpa-onnx on $MODEL_NAME (QB_E2E_ENGINE_CMD)" \
 QB_E2E_MODEL_SOURCE="$MODEL_SOURCE" \
   node e2e/dashboard.mjs "$@"
