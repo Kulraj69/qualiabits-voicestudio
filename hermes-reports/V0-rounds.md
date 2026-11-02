@@ -1533,3 +1533,8 @@ originality 3, both owner items (no official rules file; a differentiator and a 
 Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless`, `014cdaa93..ecf1017ec`, remote SHA read
 back and equal. No deployment, no publication, no message, no submission, no provider call, no terms
 acceptance, no spend, no pricing anywhere. Not marked done: originality and criteria fit are Kulraj's.
+
+Round 4 (same slot, devpost lane): a cold `git clone --branch work/m1-headless --single-branch` of the
+pushed fork, at 709b5ea79, contains both committed result files the pages cite, and the three
+provenance guards pass there (22 passed in 2.54 s) with no local state. The web unit suite (78/78) was
+run in the working tree, not the clone, for want of `node_modules`; stated, not implied.
