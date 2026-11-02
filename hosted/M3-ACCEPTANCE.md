@@ -74,13 +74,13 @@ and what is not is exactly where a product page starts lying:
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
   the real engine — that a second engine could hear words it had said. In the run this
-  page cites, two of the five words of the Hindi sentence came back — एक and
+  page cites, three of the five words of the Hindi sentence came back — यह, एक and
   है — and a guard below reads that number back out of the run's own
   `transcript.shared_words` rather than trusting this sentence. The count moves
-  between runs of the *same code*: this run heard हिन्दी as *हिंदी*, यह as *यहा* and
-  वाक्य as *वाग के*, while the run taken minutes earlier recorded three shared words
-  because it heard हिन्दी correctly. It is not a transcription-quality claim, and the
-  page does not make one; what is stable is the loop: the wiring, the metering
+  between runs of the *same code*: this run heard हिन्दी as *हिंदी* and वाक्य as
+  *वाग के*, and a run taken minutes earlier recorded two shared words instead of
+  three for the same reason. It is not a transcription-quality claim, and the page
+  does not make one; what is stable is the loop: the wiring, the metering
   and which bytes spoke,
   not transcription quality, and this page will not pretend otherwise. Whether anybody
   should *pay* for that voice is a listening judgement this repository has never made,

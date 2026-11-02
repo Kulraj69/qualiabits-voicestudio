@@ -9,9 +9,9 @@
   "transcription_model_source": null,
   "transcription_model_pinned": null,
   "revision": {
-    "tested_commit": "44d78285651b4933ca5760eb90c7c5393cca420d",
+    "tested_commit": "71d1d19146e227bf8f80fc50921447eed07e6179",
     "worktree_dirty": false,
-    "generated_at_utc": "2026-11-02T20:36:57.876Z"
+    "generated_at_utc": "2026-11-02T21:03:48.380Z"
   },
   "browser": "156.0.8078.4",
   "deployed": false,
@@ -32,7 +32,7 @@
     {
       "name": "the control plane can see the engine",
       "ok": true,
-      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:38579\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:45385\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
     },
     {
       "name": "the dashboard builds",
@@ -242,7 +242,7 @@
     {
       "name": "a minted key is shown once and looks like a key",
       "ok": true,
-      "detail": "qbv_e453ce238b088818_sEWqZen3vUDWxZT-6uBQ-L9Rcqxr5xdrew_XcDrIK3w"
+      "detail": "qbv_0fe6db1b6a6d0bdd_USMU4uIwhNXqv1-iJhkjKpCQ13zqCq3IGt3UpiHXLrU"
     },
     {
       "name": "the key is not shown again after a reload",
@@ -332,7 +332,7 @@
     {
       "name": "the preview player reports the measured duration and size",
       "ok": true,
-      "detail": "Previewing: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.004sDownload W / preview-hf_alpha.wav"
+      "detail": "Previewing: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.006sDownload W / preview-hf_alpha.wav"
     },
     {
       "name": "the preview was metered as exactly one more speech request under this workspace",
@@ -377,7 +377,7 @@
     {
       "name": "a cancelled job reads as cancelled and was never spoken",
       "ok": true,
-      "detail": "#1Cancelledhf_alpha55Nov 02, 2026, 20:37:24never spoken—"
+      "detail": "#1Cancelledhf_alpha55Nov 02, 2026, 21:04:17never spoken—"
     },
     {
       "name": "cancelling a queued job did not move the meter",
@@ -387,7 +387,7 @@
     {
       "name": "the real worker drained the queue",
       "ok": true,
-      "detail": "3571603: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.012, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-3571603\"}\n"
+      "detail": "3625330: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.012, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-3625330\"}\n"
     },
     {
       "name": "the plane records the spoken job as succeeded",
@@ -421,7 +421,7 @@
     "version": "engine-stub"
   },
   "plane_health": {
-    "upstream_base_url": "http://127.0.0.1:38579",
+    "upstream_base_url": "http://127.0.0.1:45385",
     "reachable": true,
     "status": "ok",
     "device": "cpu",
@@ -517,7 +517,7 @@
     "upload_seconds_measured": 1.5,
     "transcript_characters_in_meter": 19,
     "segments": 1,
-    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.006s · engine build engine-stub",
+    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.01s · engine build engine-stub",
     "downloads": {
       "txt": {
         "filename": "spoken.transcript.txt",
@@ -565,11 +565,11 @@
   "diagnostics": [
     {
       "process": "web",
-      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:40945\n- Network:       http://127.0.0.1:40945\n✓ Ready in 232ms\n✓ Running next.config.mjs took 26ms\n"
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:35353\n- Network:       http://127.0.0.1:35353\n✓ Ready in 244ms\n✓ Running next.config.mjs took 27ms\n"
     },
     {
       "process": "control-plane",
-      "tail": "INFO:     127.0.0.1:35320 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:35304 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:35320 - \"POST /v1/jobs HTTP/1.1\" 202 Accepted\nINFO:     127.0.0.1:35320 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:35320 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:35304 - \"GET /v1/jobs HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:35320 - \"GET /v1/jobs/2/audio HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [3571459]\n"
+      "tail": "INFO:     127.0.0.1:38130 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:38120 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:38130 - \"POST /v1/jobs HTTP/1.1\" 202 Accepted\nINFO:     127.0.0.1:38130 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:38130 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:38120 - \"GET /v1/jobs HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:38130 - \"GET /v1/jobs/2/audio HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [3625175]\n"
     },
     {
       "process": "engine",
