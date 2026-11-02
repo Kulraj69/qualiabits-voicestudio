@@ -1,0 +1,104 @@
+Independent review of M3 slice A
+
+Overall: Does not pass the rubric.
+
+The dashboard has a credible implementation and unusually explicit boundaries, but the slice is not yet judge-ready. Originality is knowingly below the pass threshold, D8 is incomplete, the committed browser evidence is stale and failing, and the claimed real-engine browser proof is substituted by a stub.
+
+Scores
+
+1. Originality: 1/5
+
+This is a conventional hosted text-to-speech dashboard: signup, speak, API keys, jobs, usage, and downloads. The slot definition itself admits that “a dashboard is not a novel idea” and expects originality below 4 (V0-rounds.md:1309-1312). There is no surprising or memorable product moment.
+
+2. Taste: 4/5
+
+The implementation shows intentional visual decisions: dark palette, one accent, spacing tokens, restrained cards, visible focus states, and a relatively small navigation surface (hosted/web/app/globals.css:1-108; hosted/web/README.md:65-66). The copy is generally specific and avoids feature-grid excess. I could not independently verify visual polish from a screenshot or live browser session, so 4 is conditional rather than generous.
+
+3. Human feel: 4/5
+
+The README and UI copy consistently explain concrete behavior: “a key is what speaks through POST /v1/audio/speech,” “the two counters mean different things,” and “a page that is not built is not on the site” (hosted/web/README.md:44-63, 120-125). It reads more like a person describing a real system than generic AI marketing. Some language remains product-generic, such as “what it made” and “something a business can buy,” but there is no major AI-copy failure.
+
+4. Technical depth: 3/5
+
+The proxy boundary, httpOnly session handling, key lifecycle, metering, queued jobs, cancellation, stored audio, and browser assertions are meaningful engineering. The 29 unit tests passed in the actual run performed here. However, the browser proof uses engine_stub.py by default (hosted/web/e2e/dashboard.mjs:13-23; hosted/web/e2e/engine_stub.py:59-106), and the committed browser evidence does not pass. The hardest product dependency—real synthesis through a real model—is therefore unverified in the M3 browser path.
+
+5. Criteria fit: 3/5
+
+The code maps well to the stated M3 slice: authentication, speaking, keys, usage, jobs, and downloads. D1-D4 are substantially represented. D6 and D7 are partly represented. D5 is not satisfied as written because it requires a committed browser E2E against the real engine, while the available run uses a stub and fails. D8 is explicitly incomplete. No independent hackathon-specific judging criteria or sponsor-prize requirements were found beyond JUDGE-RUBRIC.md, so that portion is unverified rather than satisfied.
+
+6. Reviewer path: 2/5
+
+The README has a useful do-X-see-Y walkthrough (hosted/web/README.md:11-97), but a fresh reviewer still needs to supply or configure an engine, start multiple services, install browser dependencies, and understand the model setup. The short path is not actually a self-contained fresh-clone dashboard demo. The only stored browser result is a failed partial run, and the implementation is uncommitted in the current worktree (V0-rounds.md:1324-1328; current git status shows the web app untracked).
+
+7. Honesty: 3/5
+
+The documentation is candid about no deployment, no public URL, no GPU, no real S3, and the stub substitution (hosted/web/README.md:8-9, 93-97; e2e/result.json:2-7). That is good. But the slot evidence calls D1-D7 “DONE” while D5’s real-engine requirement is not met, cites “36/36 checks passed” even though the available e2e/result.json records 12 passed, 2 failed, and ok=false, and calls D8 “IN PROGRESS” (V0-rounds.md:1357-1378). The evidence set is therefore internally inconsistent.
+
+Most damaging flaws
+
+1. The browser evidence is a failing partial run, not the claimed 36/36 proof.
+
+Evidence: hosted/web/e2e/.evidence/result.json:71-85.
+
+The stored result says:
+
+- voice-list check: false
+- passed: 12
+- failed: 2
+- ok: false
+- the run stopped before keys, usage, jobs, and focus checks
+
+The slot log nevertheless reports “npm run e2e -> 36/36 checks passed” (V0-rounds.md:1383-1385). This is the most serious evidence problem.
+
+Fix: rerun the exact current code with --keep, commit the resulting evidence, verify result.json has all checks and ok=true, and make the README and slot log cite that exact artifact. If it cannot pass, report the failure instead of citing 36/36.
+
+2. The browser test defaults to a fake engine, so the core audio path is not proven with the real model.
+
+Evidence: hosted/web/README.md:82-97; hosted/web/e2e/dashboard.mjs:13-23, 226-241; hosted/web/e2e/engine_stub.py:59-106.
+
+The stub returns a deterministic known WAV and synthetic catalogue. This proves proxy plumbing, not actual engine compatibility, voice availability, synthesis behavior, or model-backed playback.
+
+Fix: run the browser suite with QB_E2E_ENGINE_CMD pointing to the real engine and a pinned model directory, preserve model hashes and the command in evidence, and distinguish “stub browser test” from “real-engine acceptance test.” Alternatively downgrade D5 and the technical-depth claim.
+
+3. D8 is knowingly unfinished: only one self-review exists and no second cheap+ judge round was run.
+
+Evidence: V0-rounds.md:1374-1378.
+
+The definition requires two judge rounds and requires every fixable flaw to be fixed or documented. The report explicitly says “No second-judge round has been run yet.”
+
+Fix: run and preserve a second independent review against the actual current artifact, fix its findings, and update the report with the exact evidence path. Until then, D8 cannot be marked complete.
+
+4. The slice is not in a committed reviewer-consumable state.
+
+Evidence: V0-rounds.md:1324-1328; current repository status shows hosted/web/, hosted/control_plane/voices.py, tests/hosted/test_hosted_voices.py, and the M3 review artifact as untracked, with other relevant files modified.
+
+A fresh clone of the pushed revision cannot reproduce the dashboard described by the current working tree. This directly contradicts D5’s clean-clone requirement and weakens every source-file citation.
+
+Fix: commit the complete M3 slice, including the web package, tests, evidence, and README updates; then test from a fresh clone at that commit. Do not use a working-tree report as acceptance evidence.
+
+5. The reviewer path depends on unspecified engine setup and does not provide a reliable fast demo.
+
+Evidence: hosted/web/README.md:13-40 and 82-97.
+
+The instructions say “any engine the plane can reach,” but do not provide a concrete ready-to-run engine command for a fresh reviewer. The documented real path requires a model and several processes; the fast browser path silently defaults to a stub. A reviewer cannot quickly see genuine speech without reconstructing the environment.
+
+Fix: provide two explicit paths:
+
+- a zero-download, clearly labelled stub smoke test that is guaranteed to pass;
+- a real-engine path with exact model acquisition, hashes, startup commands, expected voices, runtime, and a committed passing result.
+
+What is genuinely unverified or substituted
+
+- Real model-backed browser E2E: substituted by e2e/engine_stub.py.
+- Real voice catalogue in the browser run: substituted by the stub catalogue; the stored result did not even pass the catalogue check.
+- Real audio quality or human listening experience: no human listening evidence was provided.
+- Real S3/bucket behavior: explicitly not tested; e2e/result.json:5-7 says real_s3=false.
+- GPU behavior and deployment: explicitly not tested.
+- Clean-clone reproducibility of the M3 slice: unverified because the work is uncommitted.
+- Visual taste across the actual rendered pages: only source/CSS was inspected; no screenshot or independent live visual review was available.
+- D8’s required second judge round: not performed.
+- The claimed 36/36 browser result: contradicted by the available result artifact and therefore not accepted.
+
+One sentence on what would make it win
+
+Add a genuinely distinctive product interaction, commit the complete slice, produce a passing real-engine browser run plus a clean zero-setup reviewer path, and complete the second independent judge round without overstating substituted evidence.

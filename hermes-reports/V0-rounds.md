@@ -1128,3 +1128,80 @@ Needs-Kulraj (unchanged where it was, smaller where it can be):
    publisher, CPU, Hindi thinner than its English), plus the further M3 slices
    (voice library, cloning with consent, design, dubbing, transcription,
    audiobooks) when he wants them.
+
+## Rotation slot 47 — V0-build — 2026-11-02 — M3 slice B: transcription
+
+PLAN written before any code, as the self-loop requires.
+
+Where this slot sits. `lane-rotation.txt`'s last line is `46|46|V0-growth`, so the
+next slot in [V0-build, hackathon, V0-build, V0-growth] is V0-build (slot 47). Slot
+45 was recorded as blocked and produced nothing; slot 44 finished M3 slice A and
+pushed `6072d56ae` on `work/m1-headless`, remote SHA read back and equal. Host time
+at planning: `2026-11-02T04:05:00+05:30`.
+
+What is open and what this slot does not touch. M1 is unchanged: the approved g5/g6
+scoped GPU run and a human listening check are still the owner's. M2 is built and
+its remaining items (deployment, a real bucket, a differentiator) are also the
+owner's. Neither is re-opened here, and nothing in this slot claims to clear them.
+
+Why transcription is the right next slice. M3 slice A named the later slices rather
+than stubbing them: voice cloning, voice design, dubbing, transcription, audiobooks,
+agents, landing page. Of those, transcription is the one that (a) needs no GPU, no
+deployment, no credential, no model terms and no spend, (b) is a headline feature of
+the product this fork competes with, and (c) is proved to work on this box before a
+line of product code is written: `POST /v1/audio/transcriptions` on the unchanged
+engine answered `200` on a real WAV with the local CTranslate2 Whisper model, on
+CPU, in about 4 s for 1.8 s of audio. The engine, not the plane, owns models — the
+plane's job is to meter the request and attribute it to a customer.
+
+SCOPE. M3 slice B: transcribe a customer's own audio file in the browser, through
+the metered control plane, and give them back text, timestamped segments and a file
+they can keep. Explicitly NOT in this slice, and named as later slices rather than
+stubbed: live/streaming dictation, translation, diarisation, subtitles burned into
+video, dubbing, cloning, voice design, audiobooks, agents, the marketing site.
+
+Definition of done, each item needing evidence in this log:
+
+D1. `POST /v1/audio/transcriptions` on the plane: multipart upload, session token or
+    API key, the request proxied to the engine's own OpenAI-compatible route, and the
+    engine's status, body and error sentences passed through unrewritten. A caller
+    cannot reach another workspace's anything.
+D2. The upload is bounded before it is read into memory (a byte ceiling and a
+    declared-length check), and a body past that ceiling or a missing file is refused
+    with a sentence naming the limit. No engine call happens for a refused upload.
+D3. Metering distinguishes this from speech: `audio_seconds` is measured from the
+    uploaded audio's own WAV header (and stays `None` for a container the plane
+    cannot measure rather than inventing a duration), and transcribed characters are
+    recorded in their own counter, not folded into the text-to-speech one. A refused
+    upload moves no counter. A schema migration brings every existing database
+    forward, in the same transaction as its DDL, with a test.
+D4. The dashboard has a Transcribe page: choose a file, send it, read the text and
+    the segments with their timestamps, copy it, and download `.txt`/`.srt`/`.json`.
+    The page states the same boundary the rest of the app does and shows the plane's
+    own numbers for the request (duration measured, characters transcribed, engine
+    seconds).
+D5. It is tested at two levels: Python tests in `tests/hosted/` against a stub engine
+    that is a real ASGI app (including the refusals, the ceiling, the meter, and the
+    migration), and the committed browser end-to-end drives real headless Chromium
+    against the real engine with the real Whisper weights, in the closed loop that
+    matters: speak a Hindi sentence with the Kokoro engine, then transcribe the WAV
+    it produced and check the text that comes back is the text that was spoken.
+D6. It looks designed: the same palette and spacing as the rest of the dashboard,
+    reachable in one click from home, keyboard-focusable, no dead links.
+D7. `hosted/README.md`, `hosted/web/README.md` and the acceptance page stay do-X-see-Y
+    for a stranger, with the honest boundary kept: local only, not deployed, no bucket,
+    no GPU, M1 and M2 unchanged, and the transcription model named with its own
+    licence, which the plane's own licence gate does not cover because the operator
+    supplies it — said plainly, not glossed.
+D8. Two cheap+ judge rounds on the real artifacts, every fixable flaw fixed, the rest
+    written down with its reason. Originality and criteria fit are expected to stay
+    where they were, for the reasons slot 44 recorded, so no pass claim is made if
+    they do.
+
+Judging criteria targeted (JUDGE-RUBRIC.md): technical depth (D1-D5), honesty (D3's
+non-invented durations, D7's boundary and licence sentence), taste and human feel
+(D4, D6), reviewer path (D7), originality (not claimable here).
+
+Cost intent: mid tier for the build and the tests, cheap+ for the judge rounds, no
+hard tier, no GPU, no provider call. The repo is AGPL and stays public with
+attribution.

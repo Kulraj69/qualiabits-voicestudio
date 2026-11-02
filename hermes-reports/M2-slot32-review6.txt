@@ -1,0 +1,71 @@
+1. Originality: 3/5  
+Useful hosted speech control plane, but the core concept is familiar: auth, API keys, metering, object storage, and a worker queue. The strongest memorable detail is the integrity-focused evidence chain: content-addressed audio, signed local S3-emulator tests, and a manifest tied back to Git.
+
+2. Taste: 4/5  
+The work has clear naming, explicit boundaries, purposeful route design, and a coherent README structure. The README is still 325 lines and mixes onboarding, architecture, operational instructions, evidence, and limitations. `hosted/DESIGN.md` helps, but the reviewer-facing page remains dense rather than sharply curated.
+
+3. Human feel: 4/5  
+The writing is specific and technically opinionated. It avoids most generic hackathon language and openly discloses “Written by Hermes for QualiaBits” in `hosted/control_plane/storage.py`. Minor deductions for repeated rhetorical constructions such as “the honest answer,” “the point of a queue,” and “what this proves / does not prove,” which feel deliberately judge-facing. No authorship deception is present.
+
+4. Technical depth: 5/5  
+Strong evidence of real implementation depth:
+
+- Queue claiming uses compare-and-swap, leases, heartbeats, bounded retries, cancellation, and stale-worker protection in `hosted/control_plane/jobs.py` and `hosted/worker/runner.py`.
+- Storage verifies content-addressed objects on write and read in `hosted/control_plane/storage.py`.
+- S3 logic is tested through stubs and a local HTTP emulator rather than merely mocked.
+- Migration logic preserves slice-A data and refuses unknown/newer schemas in `hosted/control_plane/migrations.py`.
+- The supplied test run reports `182 passed, 1 warning in 30.39s` in Artifact 3.
+- The real E2E run reports a separate worker producing and retrieving a 16.472-second WAV, with matching object and receipt hashes in Artifact 4.
+
+The main limitation is scope: no production S3 bucket, deployment, GPU, HTTPS, or real customer load is demonstrated. Those omissions are explicitly acknowledged rather than hidden.
+
+5. Criteria fit: 4/5  
+Against the supplied M2 Slice B product plan, the artifacts cover:
+
+- Object storage: local backend exercised; S3 logic exercised against moto and stubs.
+- Per-workspace job queue: queued, claimed, retried, failed, cancelled, leased, and isolated jobs are tested.
+- Worker process: real separate worker process in the E2E run.
+- Migration path: slice-A-to-slice-B migration and preservation of existing rows are tested.
+- Existing slice-A integration: auth, workspaces, API keys, metering, and passthrough are exercised.
+
+No evidence is supplied for deployment, billing, email verification, GPU execution, production S3, or customer operation. Those are explicitly outside this slice, so they should not count as failures for M2B. However, no actual hackathon rules file or sponsor-prize requirements are included, so official external criteria cannot be independently mapped. That missing artifact prevents a full 5.
+
+6. Reviewer path: 4/5  
+The README gives exact commands, expected runtime, environment variables, manual curl steps, test coverage, and limitations. The clean-clone log confirms the named test command passed: `182 passed, 1 warning in 39.27s`.
+
+Deduction: the strongest real-engine proof requires downloading a 132 MB model, unpacking roughly 190 MB, and waiting about four minutes on CPU. The supplied artifacts do not include a clean-clone log of the full `hosted_demo.sh` path itself, only the resulting E2E record and the clean-clone test suite. A stranger can likely reproduce it, but the fastest path is not fully demonstrated end to end in the supplied logs.
+
+7. Honesty: 5/5  
+This is the strongest category. The artifacts repeatedly distinguish:
+
+- local filesystem storage from production S3;
+- moto/local HTTP testing from a real bucket;
+- CPU from GPU;
+- generated audio from human listening;
+- tested code from untested deployment;
+- existing functionality from future slices.
+
+The README’s measured section is generated from the named `result.json`, and `tests/test_readme_measured_is_generated.py` checks the citation, manifest, Git revision, and changed measured subjects. Artifact 7 independently ties committed WAVs to receipts and hashes. Artifact 4 explicitly says `deployed: false`, `public_url: null`, `gpu_verified: false`, `listening_verified: false`, and `m1_complete: false`.
+
+No honesty flaw is evident in the supplied artifacts.
+
+Five most damaging flaws
+
+1. No production deployment or public URL  
+   `hermes-reports/M2-slot32-e2e-r6/result.json` records `deployed: false` and `public_url: null`. The milestone is credible locally, but not yet demonstrated as a hosted product.
+
+2. S3 production path is not proven  
+   `hosted/control_plane/storage.py`, in the `S3ObjectStore` class docstring, states that no real bucket or credentials have been used. Moto and stub coverage is valuable, but IAM, permissions, lifecycle behavior, and provider-specific compatibility remain unverified.
+
+3. No GPU or customer-grade performance evidence  
+   `hosted/README.md`, Measured section, reports 121.3 seconds of engine time for 16.472 seconds of queued audio, approximately 7.4 seconds of compute per second of speech. The artifact itself says no GPU was tested. This weakens the “business can buy” implication.
+
+4. The reviewer’s full path is expensive and incompletely logged  
+   `hosted/README.md` promises a fresh-clone `hosted/scripts/hosted_demo.sh` flow, but Artifact 6 only logs the clean-clone test suite. There is no supplied clean-clone log showing the model download, demo script, process lifecycle, and final E2E output together.
+
+5. Official hackathon criteria and sponsor requirements are absent  
+   No rules file is included in the artifacts. The product-plan mapping is strong, but a strict judge cannot verify official judging criteria or sponsor-prize compliance. This is a criteria-fit evidence gap, not an implementation failure.
+
+What would make it win: ship a small public deployment using real S3, include a reproducible fresh-clone demo log against that deployment, and show one credible GPU or measured throughput result while preserving the current evidence discipline.
+
+Overall: technically strong and unusually honest, but not yet a winning hosted-product milestone because it proves a careful local system rather than a deployed service.

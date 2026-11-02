@@ -1,0 +1,27 @@
+Verdict: FAIL — the slice is technically substantial, but it does not clear a strict 4/5 bar on originality, taste, and reviewer proof.
+
+Scores
+
+| Criterion | Score | Judgment |
+|---|---:|---|
+| Originality | 3/5 | A competent hosted speech control plane with durable jobs, leases, metering, and content-addressed storage. The integrity/evidence machinery is memorable, but the product idea itself is familiar infrastructure. |
+| Taste | 3/5 | The architecture is focused, but `hosted/README.md` is 269 lines and duplicates the acceptance matrix, design rationale, test inventory, run instructions, and evidence report. It reads more like an audit dossier than a product entry. The README itself admits the front page previously did too many jobs; the current version still does. |
+| Human feel | 4/5 | Specific language, real failure history, and explicit Hermes authorship make it less generic. There is still repeated “honest,” “proof,” “refuses,” and “what this proves” language, plus frequent em-dash constructions. It feels authored, but also heavily optimized for skeptical judges. |
+| Technical depth | 4/5 | Strong implementation and regression coverage: leases, compare-and-swap claims, retry boundaries, migration upgrades, storage integrity, workspace isolation, and a real worker process. The evidence is still mostly SQLite/local filesystem plus moto; no real S3 bucket, deployment, HTTPS, or production database behavior is proven. |
+| Criteria fit | 4/5 | `hosted/M2-ACCEPTANCE.md:15-29` maps the M2 plan to code and tests. The S3 row is weakly evidenced: its run column points to `"backend": "local"` (`hosted/M2-ACCEPTANCE.md:18`), while S3 is only tested against moto. That is acceptable for the stated boundary, but not proof of real S3 operation. |
+| Reviewer path | 4/5 | The fresh-clone test command is concrete and backed by `186 passed` in Artifact 6. The real demo requires model download, external GitHub access, roughly five minutes, and a suitable CPU. The supplied artifacts do not include the referenced `M2-slot32-demo-r7.log`, so the exact fresh-clone demo path is not independently inspectable here. |
+| Honesty | 4/5 | The project clearly labels what is not proven: no deployment, GPU, public URL, customer, sale, or real S3 bucket. The manifest and citation checks are unusually good. However, several claims rely on self-authored JSON and referenced logs not included in the supplied evidence; the S3 acceptance row also presents local-backend run evidence for an S3 requirement. That is an evidence weakness, not a demonstrated falsehood. |
+
+Five most damaging flaws
+
+1. Weak originality — the core deliverable is a conventional hosted API/queue/storage layer. The memorable work is evidence validation, not a surprising product concept. `hosted/README.md:3-5`.
+
+2. The reviewer-facing page is overloaded — README sections repeat material that already exists in `hosted/DESIGN.md` and `hosted/M2-ACCEPTANCE.md`. This damages clarity and makes the work feel defensive rather than designed. `hosted/README.md:82-183`.
+
+3. S3 evidence is not aligned with the stated criterion — the acceptance matrix maps the S3 requirement to a run whose backend is explicitly local. Moto tests are useful, but they do not prove credentials, IAM, bucket configuration, lifecycle behavior, or a real S3 deployment. `hosted/M2-ACCEPTANCE.md:17-19, 34-38`.
+
+4. The headline end-to-end proof is not fully present in the supplied artifacts — `hosted/README.md:170-175` references `hermes-reports/M2-slot32-demo-r7.log`, but the supplied clean-clone evidence only shows the test-suite log. Artifact 4 is a result JSON, not an independently captured execution transcript. The claimed run timestamp is `2026-11-01T08:33:30` in Artifact 4; the clean test log is `2026-11-01T14:09:50+05:30` in Artifact 6.
+
+5. Product readiness is explicitly unproven — the run reports `gpu_verified: false`, `deployed: false`, `public_url: null`, `listening_verified: false`, and uses local storage. Those boundaries are honestly disclosed, but they leave the most commercially important claims—usable production performance, deployment, and voice quality—untested. Artifact 4.
+
+What would make it win: present a much shorter, sharper reviewer path and add one independently captured run showing the hosted service on a real S3-compatible production target with a GPU-backed deployment and a human-verified audio result.

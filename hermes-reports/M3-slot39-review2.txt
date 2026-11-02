@@ -1,0 +1,101 @@
+M3 slice A review
+
+Verdict: FAIL
+
+Scores
+
+Originality: 1/5
+Taste: 4/5
+Human feel: 4/5
+Technical depth: 3/5
+Criteria fit: 3/5
+Reviewer path: 3/5
+Honesty: 3/5
+
+Pass requires every score >=4 and no honesty flaw. This does not pass.
+
+D1-D8 assessment
+
+D1: Mostly demonstrated. Next.js app, HTTP-only session cookie, and real control-plane routes are implemented. The complete slice is uncommitted, so clean-clone acceptance is not proven.
+
+D2: Demonstrated against the stub engine. Voice discovery, speech proxying, WAV playback/download, and refusal propagation work. Real model compatibility is not proven.
+
+D3: Demonstrated. Key reveal/reload/revoke behavior and usage/per-key display passed the browser run.
+
+D4: Demonstrated against the stub engine. Queue, cancellation, worker execution, stored audio, and metering passed.
+
+D5: Not satisfied as written. The browser E2E uses engine_stub.py by default, while D5 requires the real engine. The Python suite passes: 123 passed, 1 warning. The current browser E2E also passes: 36/36, 0 failed, but it proves the stub-backed path.
+
+D6: Substantially demonstrated from source and E2E assertions. The CSS has a coherent dark palette, one accent, spacing tokens, and visible focus. No independent visual inspection was available.
+
+D7: Partly demonstrated. The README is concrete and candid, but requires three manually started processes and leaves the engine command underspecified.
+
+D8: Not complete in the artifact log. The slot report explicitly says only one self-review was run and that no second judge round had occurred. This review is an independent second judgment, but the repository evidence and round log have not been updated to reflect it.
+
+Current E2E verification
+
+The earlier stale result was failing, but I reran the actual current command:
+
+npm run e2e -- --keep
+
+Result: 36/36 checks passed, exit 0.
+
+The kept result now records:
+
+- passed: 36
+- failed: 0
+- ok: true
+- engine: engine_stub.py
+- deployed: false
+- real_s3: false
+- GPU: false
+
+The logs show the web server and control plane started and shut down cleanly. The worker completed one queued job, cancellation did not change usage, key revocation returned 401, and the page usage matched the plane.
+
+Python verification:
+
+- .venv/bin/python -m pytest tests/hosted -q
+- 123 passed, 1 warning in 29.11s
+
+The separate web unit tests also pass:
+
+- npm test
+- 29 passed, 0 failed
+
+Five damaging flaws
+
+1. The core browser proof is stub-backed.
+   Evidence: hosted/web/e2e/.evidence/result.json:3; hosted/web/e2e/dashboard.mjs:13-16, 232-244; hosted/web/README.md:93-97.
+   The passing 36/36 run does not prove the real model, real catalogue, real synthesis behavior, or real engine integration.
+   Status: owner-gated for a meaningful acceptance run because it requires the chosen model, terms, resources, and likely the owner’s production-engine decision. The test/documentation distinction can be fixed now.
+
+2. D5 is claimed as DONE despite its real-engine requirement not being met.
+   Evidence: V0-rounds.md:1357-1363 versus the stub engine named in result.json.
+   The report calls D5 done while simultaneously documenting the substitution. That is an honesty and criteria-fit defect, even though the substitution itself is disclosed.
+   Status: fixable now by marking D5 partial/not met and separating “stub browser smoke test” from “real-engine acceptance.”
+
+3. The slice is not in a committed reviewer-consumable state.
+   Evidence: git status shows hosted/web/, hosted/control_plane/voices.py, tests/hosted/test_hosted_voices.py, evidence review files, and related changes untracked or modified.
+   A fresh clone of the pushed revision cannot reproduce this dashboard.
+   Status: fixable now: commit the complete slice, evidence, tests, and documentation, then rerun from that revision.
+
+4. The reviewer path is not a dependable fresh-clone path.
+   Evidence: hosted/web/README.md:11-40.
+   It requires three terminals, an unspecified engine, existing Python setup, npm installation, and browser dependencies. The only easy browser path uses the stub, while the real path has no exact startup command, model hash, expected runtime, or committed result.
+   Status: partly fixable now with explicit stub and real-engine paths, pinned setup, and a committed evidence run. The actual production model path remains owner-gated.
+
+5. D8 and the evidence history are incomplete.
+   Evidence: V0-rounds.md:1374-1378; hermes-reports/M3-slot39-review2.txt is empty; only review1 contains substantive prior review material.
+   The current result was regenerated after the prior review, but the report still says no second judge round occurred and does not record this current artifact’s review/fixes.
+   Status: fixable now by preserving this independent review, updating the round log, and rerunning any required final review after changes.
+
+Owner-gated or currently unfixable
+
+- Originality remains 1/5. This is a conventional TTS dashboard, and the project itself acknowledges that. A differentiating product interaction requires an owner product decision; adding arbitrary novelty would be dishonest.
+- Real production-engine acceptance requires the owner’s engine/model, cleared terms, resource approval, and possibly GPU access.
+- Real S3, deployment, public URL, production throughput, and customer validation are outside the current local slice and require owner credentials, spending, and deployment decisions.
+- Human audio-quality validation remains absent.
+
+What would make it pass
+
+Commit the complete slice, correct the D5/D8 status claims, provide a reproducible reviewer path, preserve this second review, and produce a real-engine browser run. The rubric will still fail unless the owner supplies a genuine differentiator or changes the product scope; the current implementation’s originality is not sufficient.
