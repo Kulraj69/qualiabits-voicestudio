@@ -1506,3 +1506,30 @@ No deployment, no publication, no message, no submission, no provider call, no
 terms acceptance, no spend, no pricing anywhere. Fork pushed to
 `Kulraj69/qualiabits-voicestudio` `work/m1-headless`,
 `82fc6dded..1aa2ea1ca`, remote SHA read back and equal.
+
+## Rotation slot 58 (devpost lane) — 2026-11-03 — M3 slice C, round 3: the provenance gap closed
+
+The lane-rotation slot was **V0-build**, resuming the interrupted slot-56 run of M3 slice C. That
+run's third cheap+ judge pass (`/workspace/devpost/hermes-reports/V0-slot56-review3.md`, 3/4/4/5/2/4/4)
+found one flaw this lane could act on: the two committed browser runs did not both record one
+revision (stub `44d782856`, real `f19f8303d`, HEAD `71d1d1914`).
+
+Closed here. Both paths were re-taken at ONE revision, `71d1d1914`, over a clean tree, and committed
+as `ecf1017ec`:
+
+- `hermes-reports/M3-slot56-web-e2e-r1/result.json` — real engine, `engine_is_stub` false,
+  85 checks, 85 `ok: true`, passed 85, failed 0, `worktree_dirty` false, `tested_commit 71d1d1914`.
+- `hermes-reports/M3-slot56-web-e2e-stub-r1/result.json` — stub, `engine_is_stub` true,
+  79 checks, 79 `ok: true`, passed 79, failed 0, `worktree_dirty` false, `tested_commit 71d1d1914`.
+
+The re-run heard three of the five Hindi words, so `hosted/M3-ACCEPTANCE.md` was corrected from two
+to three (यह, एक, है) with the earlier two-word result disclosed. Suites at the pushed revision:
+`tests/hosted` 162 passed; `npm --prefix hosted/web test` 78 pass, 0 fail; the three focused
+provenance guards 22 passed. A fourth cheap+ pass
+(`/workspace/devpost/hermes-reports/V0-slot58-review4.md`) scored **3/4/4/5/2/4/5 — FAIL**, marked
+all six earlier flaws fixed, and found **no new flaw**; the only sub-4 rows are criteria fit 2 and
+originality 3, both owner items (no official rules file; a differentiator and a public URL).
+
+Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless`, `014cdaa93..ecf1017ec`, remote SHA read
+back and equal. No deployment, no publication, no message, no submission, no provider call, no terms
+acceptance, no spend, no pricing anywhere. Not marked done: originality and criteria fit are Kulraj's.
