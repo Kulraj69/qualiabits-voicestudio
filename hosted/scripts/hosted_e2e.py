@@ -119,19 +119,35 @@ def start(command: list[str], env: dict, log: Path, listener: socket.socket,
     return process
 
 
+#: How long a process gets to shut itself down before it is killed.
+#:
+#: The fork's own lifespan teardown is bounded by several internal waits -- a 20 s
+#: cancellation of its background tasks, the watermark pool drain, and the model
+#: unload -- so a tighter budget measures the box's load rather than the app's
+#: behaviour. This is not hypothetical: the first run of slot 55 was force-killed
+#: at 30 s, and a second run of the same code on the same box shut down cleanly.
+#: A budget that fails under load produces *no* evidence about shutdown, which is
+#: the opposite of what this number is for. What was actually waited is recorded
+#: beside the verdict, so a forced kill is visible rather than folded into a
+#: boolean.
+TERMINATION_GRACE_SECONDS = 60.0
+
+
 def stop(process: subprocess.Popen | None, log: Path, handles: dict) -> dict:
     """Terminate, wait, and report whether the app shut itself down cleanly."""
     if process is None:
         return {"started": False}
     alive_before = process.poll() is None
+    started = time.monotonic()
     process.terminate()
     forced = False
     try:
-        process.wait(timeout=30)
+        process.wait(timeout=TERMINATION_GRACE_SECONDS)
     except subprocess.TimeoutExpired:
         process.kill()
         process.wait(timeout=5)
         forced = True
+    waited = time.monotonic() - started
     handle = handles.pop(process.pid, None)
     if handle is not None:
         handle.close()
@@ -140,6 +156,8 @@ def stop(process: subprocess.Popen | None, log: Path, handles: dict) -> dict:
         "started": True,
         "exit_code": process.returncode,
         "forced": forced,
+        "waited_seconds": round(waited, 3),
+        "grace_seconds": TERMINATION_GRACE_SECONDS,
         "clean": bool(
             alive_before and not forced
             and process.returncode in (0, -signal.SIGTERM)

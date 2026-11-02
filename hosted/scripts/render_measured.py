@@ -43,6 +43,39 @@ def cited_evidence_path(readme_text: str) -> Path:
     return REPO_ROOT / match.group(1)
 
 
+def shutdown_lines(result: dict) -> str:
+    """What the run recorded about stopping the two processes it started.
+
+    This used to be a hardcoded sentence — "every process it started: clean
+    shutdown" — which made the page's strongest claim about the harness the one
+    part of it that did not come from the run file. Slot 55 found the difference
+    the hard way: the first run of that slot was force-killed after the engine's
+    own teardown outran its (then 30 s) budget, so the sentence was printing a
+    clean shutdown the run had not observed. It is rendered from the run now,
+    including what was actually waited.
+    """
+    lines = []
+    for label, key in (("engine", "engine_shutdown"), ("control plane", "control_plane_shutdown")):
+        record = result.get(key) or {}
+        if not record.get("started"):
+            lines.append(f"  {label:<14} the run recorded no shutdown for this process")
+            continue
+        verdict = "clean, the app said so" if record.get("clean") else (
+            "killed after the budget" if record.get("forced") else "not a clean exit"
+        )
+        waited = record.get("waited_seconds")
+        budget = record.get("grace_seconds")
+        timing = (
+            f"after {waited:.3f} s of a {budget:.1f} s budget"
+            if isinstance(waited, (int, float)) and isinstance(budget, (int, float))
+            else "timing not recorded by this run"
+        )
+        lines.append(
+            f"  {label:<14} signal {record.get('signal', 'SIGTERM')}, exit {record.get('exit_code')} {timing} ({verdict})"
+        )
+    return "\n".join(lines)
+
+
 def render_section(result: dict, evidence_rel: str) -> str:
     """The whole section, heading included, from a result.json."""
     direct = result["direct_vs_proxied"]
@@ -92,7 +125,8 @@ itself dirty and its numbers would be worth less than these.
 
 ```
 engine ready {result['engine_ready_seconds']:.1f} s   control plane ready {result['plane_ready_seconds']:.1f} s   whole run {result['elapsed_seconds']:.1f} s
-every process it started: clean shutdown
+process shutdown, as the run recorded it:
+{shutdown_lines(result)}
 
 three direct requests through the control plane, workspace A:
 {speech_lines}
