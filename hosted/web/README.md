@@ -148,7 +148,16 @@ engine's own speech-to-text route, and the run records both strings — what was
 and what was heard — beside the words they share. That model is supplied by the
 operator as a directory too (CTranslate2 Whisper small, `Systran/faster-whisper-small`),
 so nothing is downloaded behind a licence gate and nothing is accepted on anybody's
-behalf; the script stops rather than substitutes if it is missing. **Its bytes are
+behalf; the script stops rather than substitutes if it is missing, and it prints
+this line when it does. One command fills the gap, and the script still checks the
+`model.bin` it lands against the sha256 it pins:
+
+```sh
+cd ../..        # the repository root
+.venv/bin/python -c "from huggingface_hub import snapshot_download as d; print(d('Systran/faster-whisper-small'))"
+```
+
+**Its bytes are
 recorded as well**: `result.json` names the transcription model's directory and the
 sha256 of `model.bin`, `config.json`, `tokenizer.json` and `vocabulary.txt`, and one
 check fails the run unless `model.bin` is the exact hash `real-engine.sh` pins — the

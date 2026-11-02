@@ -17,6 +17,9 @@ at: the checks come from `hermes-reports/M3-slot47-web-e2e-r2/result.json`, take
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
+Documentation and tests keep moving after a run; the directories a run measured do
+not, and the same guard runs the `git diff` that decides it — so the evidence here
+is a command a reader can re-run, not a policy to take on trust.
 
 | The plan asks for | Code | Tests | A check in the browser run |
 | --- | --- | --- | --- |
@@ -51,7 +54,9 @@ and what is not is exactly where a product page starts lying:
   the real engine — that a second engine could hear words it had said. In the run this
   page cites, three of the five words of the Hindi sentence came back — एक, हिन्दी
   and है — and a guard below reads that number back out of the run's own
-  `transcript.shared_words` rather than trusting this sentence. Whether anybody
+  `transcript.shared_words` rather than trusting this sentence. The engine heard
+  वाक्य as *वाग के*: the loop proves the wiring, the metering and which bytes spoke,
+  not transcription quality, and this page will not pretend otherwise. Whether anybody
   should *pay* for that voice is a listening judgement this repository has never made,
   and the WAVs are committed so the owner can.
 - **Which model heard the words is recorded, not asserted.** `result.json` carries the
