@@ -19,7 +19,7 @@ Dubbing and Audiobooks — are **not built**, and the last section of this page 
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot55-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot55-web-e2e-r2/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -64,10 +64,10 @@ and what is not is exactly where a product page starts lying:
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
   the real engine — that a second engine could hear words it had said. In the run this
-  page cites, three of the five words of the Hindi sentence came back — यह, एक
+  page cites, two of the five words of the Hindi sentence came back — एक
   and है — and a guard below reads that number back out of the run's own
   `transcript.shared_words` rather than trusting this sentence. The engine heard
-  वाक्य as *वाग के*, and हिन्दी as हिंदी: the loop proves the wiring, the metering
+  यह as *यहा*, वाक्य as *वाग के*, and हिन्दी as हिंदी: the loop proves the wiring, the metering
   and which bytes spoke,
   not transcription quality, and this page will not pretend otherwise. Whether anybody
   should *pay* for that voice is a listening judgement this repository has never made,

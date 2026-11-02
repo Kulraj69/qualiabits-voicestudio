@@ -126,8 +126,8 @@ The real path adds seven checks a constant-size stub cannot pass — the engine'
 own answers about itself, from its identity and active backend to the sha256 of
 its model files — and drops the one check that only a stub can satisfy, so the
 two totals differ by six. They come from
-`hermes-reports/M3-slot55-web-e2e-stub-r1/result.json` and
-`hermes-reports/M3-slot55-web-e2e-r1/result.json`, and a test reads the counts and
+`hermes-reports/M3-slot55-web-e2e-stub-r2/result.json` and
+`hermes-reports/M3-slot55-web-e2e-r2/result.json`, and a test reads the counts and
 that seven-and-one difference back out of those two files rather than trusting
 this paragraph. This path also checks the transcript's three
 downloads (each one a real click and a real file read back off disk) and sends one byte
