@@ -118,10 +118,19 @@ revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. **Sixty-eight checks** on this path — sixty-nine with `--keep`, which
-adds the screenshot check because only then is there somewhere to keep them —
-including the transcript's three
-downloads (each one a real click and a real file read back off disk) and one byte
+next request. The counts, for both paths, from the runs committed in this
+repository: **sixty-eight checks on the stub path** (sixty-nine with `--keep`,
+which adds the screenshot check because only then is there somewhere to keep
+them) and **seventy-four against the real engine** (seventy-five with `--keep`).
+The real path adds seven checks a constant-size stub cannot pass — the engine's
+own answers about itself, from its identity and active backend to the sha256 of
+its model files — and drops the one check that only a stub can satisfy, so the
+two totals differ by six. They come from
+`hermes-reports/M3-slot55-web-e2e-stub-r1/result.json` and
+`hermes-reports/M3-slot55-web-e2e-r1/result.json`, and a test reads the counts and
+that seven-and-one difference back out of those two files rather than trusting
+this paragraph. This path also checks the transcript's three
+downloads (each one a real click and a real file read back off disk) and sends one byte
 past the plane's own 25 MiB upload ceiling, refused with the sentence that names
 the limit. `node e2e/dashboard.mjs
 --no-build` reuses an existing build; `--keep` writes `result.json`, the process

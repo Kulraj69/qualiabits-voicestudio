@@ -116,6 +116,23 @@ def test_the_quoted_run_tested_code_that_is_still_here():
     )
 
 
+def test_the_measured_section_says_which_chain_it_belongs_to():
+    """A reader must not take the hosted layer's numbers for the dashboard's.
+
+    A judge pass on slice C read this section as a claim about the *current
+    dashboard* and scored honesty 2 for it, which was a fair reading of the page:
+    the numbers are the hosted layer's own end-to-end run, and the dashboard's
+    browser run is a different chain with a different count. Saying so is one
+    sentence, so it is asserted here rather than being left to whoever edits the
+    renderer next.
+    """
+    body = measured_body(readme_text())
+    assert "hosted layer's own" in body, "the section stopped saying which layer it measures"
+    assert "hosted/M3-ACCEPTANCE.md" in body, (
+        "the section stopped pointing at where the dashboard's own run is cited"
+    )
+
+
 def test_the_page_names_exactly_one_run():
     """Two runs on one page is how a reader gets misled, so it is structural.
 

@@ -107,7 +107,9 @@ def render_section(result: dict, evidence_rel: str) -> str:
 
 From `{evidence_rel}` — engine, plane and worker processes all started fresh by the
 harness on one CPU box ({result['host']['machine']}, {result['host']['cpu_count']} CPUs, Python {result['host']['python']}, no
-GPU). The section is rendered from that file by
+GPU). This is the **hosted layer's own** end-to-end run, not browser evidence about
+the dashboard: the dashboard's own run, with its own checks and its own engine, is
+the one `hosted/M3-ACCEPTANCE.md` cites. The section is rendered from that file by
 `hosted/scripts/render_measured.py`, and a test fails if the page and the file
 disagree. The run records the commit it tested
 ({revision['tested_commit'][:9]}, worktree {"dirty" if revision["worktree_dirty"] else "clean"}), the model hashes below, and the

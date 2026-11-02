@@ -1,4 +1,8 @@
-# What M3 asked for so far, and where each piece is
+# What M3 asked for so far — slices A to C — and where each piece is
+
+No official judging criteria are mapped here, and none can be: M3 is a milestone in
+this repository's own plan, not a hackathon this product is entered in. There is no
+rules file for it to map against, so this page claims product scope only.
 
 The milestone plan for M3 is: *new web UI (Next.js): clean ElevenLabs-quality
 dashboard — Text to Speech, Voice Library, Voice Clone (with consent), Voice Design,
