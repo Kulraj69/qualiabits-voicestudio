@@ -1,0 +1,784 @@
+# Judge pass round1 on M3 slice B (transcription), cheap+ tier
+
+You are a strict hackathon judge. Score the seven criteria of the rubric below, 1 to 5 each, and pass only if every score is 4 or more with no honesty flaw. The artifacts are supplied; the builder's own round log is NOT supplied and must not be asked for — judge what is here.
+
+## Rubric
+
+# JUDGE RUBRIC (used in step 4 of the MANDATORY SELF-LOOP)
+Written Oct 28 2026 by Grok Bot for Kulraj. Priority order from Kulraj: 1) win and earn prize money, 2) act like a human, 3) be authentic, 4) have taste.
+
+## Hackathon work: score each 1 to 5, pass = every score 4 or more and no honesty flaw
+1. Originality: is the core idea one a judge has not seen ten times today? Is there one surprising, memorable moment?
+2. Taste: does it look and read designed (spacing, copy, naming, one clear thing on screen), not a template dump? Fewer features done well beats many features done thinly.
+3. Human feel: do README, UI copy, commit messages, demo narration and write-up read like one specific person wrote them? Flag any AI-generic phrase ("leverage", "seamless", "cutting-edge", "in today's fast-paced world", empty superlatives), em-dash spam, bullet walls and fluffy intros.
+4. Technical depth: does it really do the hard part, with tests that would fail if it broke? Is the sponsor technology used for something that matters?
+5. Criteria fit: map each official judging criterion and sponsor-prize requirement from the hackathon's own rules file to specific evidence in the project. Name any criterion with no evidence.
+6. Reviewer path: a stranger on a fresh clone can follow README "do X -> see Y" steps and see the claimed result in a few minutes, with no hidden setup. AI judges read the README first.
+7. Honesty: every claim (numbers, "works with", "tested on") is backed by code or a log. Mock or simulated data is labelled as such, in the demo too. No invented stats, users, prizes or session IDs. No pricing for QualiaBits.
+Output of the judge: score per criterion, the 5 most damaging flaws with file/line or timestamp, and one sentence on what would make it win.
+
+## Open-source work (PRs, fixes): score each 1 to 5, pass = all 4 or more
+1. Correct: bug reproduced before, fixed after, project tests run (command and result in the log). Regression test added where the project has tests.
+2. Minimal and in style: smallest diff that fixes the issue; matches the project's formatting, lint and naming; no drive-by changes.
+3. Process: issue was free (no assignee, no PR, no fresh claim), CONTRIBUTING and PR template followed exactly, AI policy respected, disclosure line added where the policy asks (AOSSIE requires one).
+4. Human text: PR and comment text is short, plain, specific, in own words, no boilerplate, no invented results.
+5. Safe: no secrets, no unrelated files, no CLA signing, within the daily limits (5 PRs, 8 comments).
+
+
+
+## The milestone this is measured against (criteria fit)
+
+There is no hackathon rules file for a product milestone, so criterion 5 is measured against the owner's own milestone below, quoted from the queue this work comes from. Score criteria fit against it, and say which of its items have no evidence here.
+
+
+## V0 TOP GOAL — QualiaBits Voice: a LIVE full-stack ElevenLabs competitor (Kulraj, Oct 28 23:42). Base it on https://github.com/debpalash/VoiceStudio architecture + ALL its features (TTS, voice cloning, voice design, dubbing, dictation, transcription, audiobooks, API, model manager), hosted as multi-tenant SaaS with fixed bugs + redesigned UI, PLUS Bolna/Sarvam-style voice agents and phone calls. This supersedes the earlier no-cloning note.
+
+V0 STEP-BY-STEP PLAN (Kulraj Oct 28 23:45) — do in order, one milestone per run, each tested + self-reviewed + pushed:
+M1 Run VoiceStudio as-is: clone Kulraj69/qualiabits-voicestudio, read its architecture (backend API, engines, model manager, Electron UI), run its server headless on a spot GPU (g5/g6, stop when idle). Generate speech in English + Hindi via its local API. Log what breaks. Write docs/ARCHITECTURE-NOTES.md.
+M2 Server mode: wrap its local API as a hosted service: auth (email login), workspaces, API keys, per-workspace job queue + storage (S3), usage metering. No desktop/Electron in the hosted path.
+M3 New web UI (Next.js): clean ElevenLabs-quality dashboard: Text to Speech, Voice Library, Voice Clone (with consent checkbox), Voice Design, Dubbing, Transcription, Audiobooks/Projects, API Keys, Usage. Responsive, fast, dark/light.
+M4 Fix bugs found in M1–M3; add tests (backend + Playwright E2E for every page).
+M5 Voice agents: plug qualiabits-voice LiveKit agent into the same dashboard (Agents tab: build, test in browser, phone via SIP/our dialer, call logs).
+M6 Go live: deploy on AWS (API + worker on GPU spot with autoscale-to-zero, web on Vercel or ECS), HTTPS public URL, health checks, signup working end to end. Record a 2-min demo video.
+M7 Growth slot: landing page, docs site, comparison page vs ElevenLabs/Sarvam/Bolna with REAL measured numbers, lead lists, drafted posts (approval only).
+Rules: AGPL — keep fork public with attribution. Never mention pricing. Stay under $32/day; GPU only when testing. Report each milestone in hermes-reports/V0-rounds.md with links + test evidence.
+
+
+## What the slice claims to be (D1-D8, written before any code)
+
+D1 POST /v1/audio/transcriptions on the plane: multipart upload, session token or API key, the request proxied to the engine's own OpenAI-compatible route, and the engine's status, body and error sentences passed through unrewritten; a caller cannot reach another workspace's anything.
+D2 the upload is bounded before it is read into memory (a byte ceiling and a declared-length check); a body past that ceiling or a missing file is refused with a sentence naming the limit; no engine call happens for a refused upload.
+D3 metering distinguishes this from speech: audio_seconds measured from the uploaded audio's own WAV header (and left unknown, never invented, for a container the plane cannot measure), transcribed characters in their own counter rather than folded into the text-to-speech one, a refused upload moving no counter, and a schema migration that brings every existing database forward in the same transaction as its DDL.
+D4 the dashboard has a Transcribe page: choose a file, send it, read the text and the timestamped segments, copy it, download .txt/.srt/.json, with the plane's own numbers for the request shown beside it and the honest boundary kept.
+D5 tested at two levels: Python tests against a stub engine that is a real ASGI app (refusals, ceiling, meter, migration), and the committed browser end-to-end driving real headless Chromium against the real engine with real Whisper weights, in a closed loop — speak a Hindi sentence with the speech engine, then transcribe the WAV it produced and check the words that come back were spoken.
+D6 it looks designed: the same palette and spacing as the rest of the dashboard, reachable in one click from home, keyboard-focusable, no dead links.
+D7 hosted/README.md, hosted/web/README.md and hosted/M3-ACCEPTANCE.md stay do-X-see-Y for a stranger with the honest boundary kept: local only, not deployed, no bucket, no GPU, M1 and M2 unchanged, and the transcription model named with its own provenance.
+D8 two cheap+ judge rounds on the real artifacts, every fixable flaw fixed, the rest written down with its reason. Originality and criteria fit are expected to stay where slice A left them (2), for the reasons that slice recorded, so no pass claim is made if they do.
+
+## The README a reviewer reads first (hosted/web/README.md, full)
+
+# The QualiaBits Voice dashboard
+
+The browser front end for the hosted control plane in [`hosted/`](../). Six pages,
+each one a real thing a customer does: sign up and sign in; speak text and hear it;
+send a recording in and read the transcript back; mint and revoke API keys; watch a
+queued job and download what it made; read the meter the plane keeps.
+
+Not deployed. Not public. No public URL, no real S3 bucket, no GPU. Everything
+runs on this machine on loopback.
+
+## Do this, see that
+
+You need three processes. The dashboard is one of them; the engine and the
+control plane are the other two, and running them is described in
+[`hosted/RUN-IT-BY-HAND.md`](../RUN-IT-BY-HAND.md). You do not need any of that
+for either test path below — `npm run e2e` and
+[`e2e/real-engine.sh`](e2e/real-engine.sh) start all three themselves, on their
+own ports and their own state directory, and stop them again. Start them by hand
+only when you want to poke at the app in a browser. The short version, from the
+repository root, in two terminals:
+
+```sh
+# terminal 1 — the engine (any engine the plane can reach; see RUN-IT-BY-HAND.md)
+QUALI_STATE_DIR=$PWD/.hosted .venv/bin/python -m uvicorn backend.main:app --port 3900
+
+# terminal 2 — the control plane, pointed at it
+QUALI_STATE_DIR=$PWD/.hosted \
+QUALI_DATABASE_URL=sqlite:///$PWD/.hosted/control-plane.db \
+QUALI_UPSTREAM_BASE_URL=http://127.0.0.1:3900 \
+.venv/bin/python -m uvicorn hosted.control_plane.app:app --port 8080
+```
+
+Then the dashboard itself:
+
+```sh
+cd hosted/web
+npm install                 # Next, React, and Playwright as a dev dependency
+npm run build
+QUALI_CP_BASE_URL=http://127.0.0.1:8080 npm start
+```
+
+Open <http://localhost:3000>. `QUALI_CP_BASE_URL` is the only setting the app
+has; it defaults to `http://127.0.0.1:8080`, so a plane on its usual port needs
+nothing. `npm run dev` runs the same app with hot reload while you work on it.
+
+Now walk it, and each step says what you should see:
+
+1. **Create a workspace** at `/signup` — email, a password of at least twelve
+   characters, an optional name. You land on `/`, which greets the workspace and
+   shows four zeroed usage tiles straight from the plane's meter.
+2. **Speak** at `/speak` — the voice list is whatever `GET /v1/voices` returned,
+   headed with a sentence saying how many voices came from where. Pick a voice,
+   type a sentence, press **Speak**. A player appears with the audio, the
+   duration the plane measured from the WAV header, and a **Download WAV** link.
+   Ask for a voice the engine does not have and you get *the engine's own
+   sentence*, passed through the plane.
+3. **Keys** at `/keys` — create a key. It is shown once, with a copy button;
+   reload the page and it is gone from view, because only a digest is stored.
+   The table shows each key's public id and label and nothing else. Press
+   **Revoke** and the very next request with that key is refused.
+4. **Jobs** at `/jobs` — queue a paragraph. It goes to **Queued**; a worker
+   process (`hosted/scripts/run_worker.py`) claims it, speaks it, stores the
+   audio, and the row moves to **Done** with **Play** and **Download**. Queue a
+   second one and press **Cancel** before a worker runs: it reads **Cancelled**
+   and the meter does not move.
+5. **Transcribe** at `/transcribe` — choose a recording (a WAV downloaded from the
+   Speak page works), pick a language and an answer format, press **Transcribe**.
+   The text comes back in a monospaced block with the engine's segments and their
+   timestamps below it, and above them the plane's own numbers for the request: the
+   duration it measured from your file's header, the characters it counted, the
+   bytes you sent and the seconds the engine spent. **Download .txt / .srt / .json**
+   take it away. A file the engine cannot read, or one over the size ceiling, is
+   refused with a sentence that names the limit.
+6. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
+   the plane's own notes about what each counter means. **Characters** and
+   **characters transcribed** are separate lines on purpose: one is text you asked
+   the engine to say, the other is text it handed back.
+
+Every page above is one click from home, every page is dark, and every control
+takes a visible keyboard focus.
+
+## Tests
+
+Two layers, both runnable here:
+
+```sh
+npm test        # node --test test/ — the pure logic, no server in the way
+npm run e2e     # the browser end-to-end (builds, starts everything, drives Chromium)
+```
+
+`npm test` covers the pieces that can be wrong on their own: cookie
+serialising (and which cookie is httpOnly, and which is readable), the voice
+grouping and language filtering, the number and status formatting, and the plane
+client's URL joining and error-message handling, and the transcript helpers that
+turn an answer into a `.srt` (including the case where the engine returned no
+segments). Thirty-nine checks, no browser.
+
+`npm run e2e` is the honest one. It builds the app, then starts **the real
+control plane** (its own SQLite file and object store), **the real web server**
+(the production Next build) and **real headless Chromium**, signs up through the
+form, speaks, mints and revokes a key, queues, cancels and speaks a job with the
+real `run_worker.py --once`, and checks all of it **against the plane's own
+records — the request count on the Usage page is compared with `GET /v1/usage`
+taken straight from the plane, and a revoked key is shown to be refused on the
+next request. **Fifty-two checks** on this path. `node e2e/dashboard.mjs
+--no-build` reuses an existing build; `--keep` writes `result.json`, the process
+logs and a full-page screenshot of each of the six pages to `e2e/.evidence/`.
+
+**The one substitution** is the engine: `e2e/engine_stub.py`, the same shape as
+the stub the Python suite uses, so the browser run needs no model download. The
+browser, the plane, the web server, the worker and the object store are real.
+
+To run that same browser suite against the **real engine**, there is one command:
+
+```sh
+hosted/web/e2e/real-engine.sh --keep
+```
+
+It takes the model from `QUALI_MODEL_DIR`, or from one of four other places it
+looks (`hosted/web/<name>`, the repository root, the repository's parent,
+`/workspace/m1-models/<name>`); if none of those has it, it **downloads** the
+release asset (about 132 MB) into `${TMPDIR:-/tmp}/qb-real-engine-model`, checks
+the three pinned sha256 values and starts nothing until they match — the same
+URL, the same pins and the same three files the hosted proof's script checks
+(`../scripts/hosted_demo.sh`). It never falls back to the stub, because a run
+that quietly did would be the opposite of evidence. So from a fresh clone this
+path needs one thing: the venv the sync above builds.
+
+That run carries five things a constant-size stub cannot produce, every one of
+them the engine's own answer about itself: its identity from `/health`, the
+backend it reports active with its voice count, the sha256 of `model.int8.onnx`,
+`tokens.txt` and `voices.bin`, a paragraph that produced more audio than the
+one-liner, and the words that come back out of a **closed loop**: the sentence the
+speech engine said is uploaded back through the Transcribe page and read by the
+engine's own speech-to-text route, and the run records both strings — what was said
+and what was heard — beside the words they share. That model is supplied by the
+operator as a directory too (CTranslate2 Whisper small, `Systran/faster-whisper-small`,
+pinned by sha256 in the script), so nothing is downloaded behind a licence gate and
+nothing is accepted on anybody's behalf. The script stops rather than substitutes if
+it is missing.
+
+On CPU it takes minutes rather than seconds: synthesis runs at about a seventh of
+real time and transcription is slower still. Four knobs, if your box is slower than
+this one: `QB_E2E_SPEAK_TIMEOUT_MS` (default 20000; the script raises it to 300000),
+`QB_E2E_TRANSCRIBE_TIMEOUT_MS` (default 30000 for the stub, ten minutes for the real
+engine), `QB_E2E_UPSTREAM_TIMEOUT_SECONDS` (default 60; the script raises it to 900),
+and `QB_E2E_SPEAK_TEXT` / `QB_E2E_SPEAK_LANGUAGE`, which the script sets to a Hindi
+sentence because that is the loop worth proving.
+
+`result.json` also records the revision the run was taken over and whether that
+working tree was clean, so a run and a commit can be named together.
+
+## How it is built
+
+The app **proxies**: the browser talks to the Next server, and the Next server
+talks to the control plane (`lib/controlplane.js`, `lib/proxy.js`). The session
+token is written into an **httpOnly cookie** by the app's own route handlers
+(`app/api/auth/*`), so page JavaScript never sees it — the end-to-end test
+asserts exactly that. The workspace's own name, id and email sit in a second,
+readable cookie so the header can render without a round-trip; nothing secret is
+in it.
+
+Speaking is the interesting one. The plane's rule is that speaking always needs
+an API key, so that every byte of audio is attributable to a credential. The
+dashboard honours it: the first time you speak, `app/api/speech/route.js` mints a
+key labelled `dashboard`, keeps its secret in an httpOnly cookie and uses it. The
+key appears in your key list like any other — and if you revoke it, the Speak
+page stops working until you mint a fresh one, which is the milestone's
+"revocation takes effect on the next request" made visible.
+
+Transcribing does not need a key, and that is deliberate rather than an oversight.
+The plane's rule about keys exists so every byte of audio *produced* is attributable;
+a recording being handed in is not that, and requiring a customer to mint a
+credential to send their own file is friction with no safety gain. It still needs a
+session, it is still metered, and it is still the plane — not this app — that bounds
+the upload and attributes the seconds.
+
+Nothing here imports from `backend/` or `hosted/control_plane`; the app's only
+contact with either is HTTP.
+
+## What is not here, and is not stubbed
+
+Voice cloning, voice design, dubbing, audiobooks, the agents tab, the marketing
+landing page, email verification, billing and deployment are all later slices. None of them exists as a greyed-out button here — a page that is
+not built is not on the site.
+
+## Licence
+
+AGPL-3.0, inherited from VoiceStudio. Run this for customers and you owe them
+the corresponding source; keep the fork public and keep the attribution in
+[`LICENSE`](../../LICENSE) and [`LICENSE-NOTICE.md`](../../LICENSE-NOTICE.md).
+
+
+## The hosted layer's README (hosted/README.md, first 120 lines)
+
+# The hosted control plane
+
+The product side of this fork: customers, logins, API keys, a usage meter, an object
+store and a job queue, in front of the engine. The engine stays what it is — a local
+speech server — and this layer is what turns it into something a business can buy.
+
+Not deployed. Not public. No GPU. Nothing here has been sold to anyone.
+
+**Start here.** From nothing, in a fresh clone:
+
+```sh
+git clone https://github.com/Kulraj69/qualiabits-voicestudio.git
+cd qualiabits-voicestudio
+uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
+
+# about half a minute (30-35 s on the box the numbers below came from), no model and
+# no download: the tests. Everything is real except the engine, which is a stub
+# answering with a WAV of a known duration.
+.venv/bin/python -m pytest tests/hosted -q
+
+# about 4 minutes on a small CPU box: the whole product, on the real engine. One
+# command — it finds or downloads the Kokoro bundle (132,353,410 bytes to download,
+# which is the release asset's own Content-Length; 189,881,734 bytes unpacked, both
+# recorded with the commands that measured them in
+# hermes-reports/M2-slot32-model-bytes.txt), hash-checks its files, starts the
+# engine, the plane and a worker, runs the proof, stops them, and prints what passed.
+hosted/scripts/hosted_demo.sh
+```
+
+The first needs no model and is the path for a reviewer on a timer; the second
+proves audio comes out. The run behind "Measured" is committed under `hermes-reports/`,
+with the WAVs it produced, and the reasoning behind the design is in
+[`hosted/DESIGN.md`](DESIGN.md).
+
+```
+hosted/control_plane/*.py     the plane: accounts, keys, the job queue, storage, migrations
+hosted/worker/runner.py       the worker: one job at a time, heartbeated
+hosted/web/                   the browser dashboard (its own Next.js package)
+hosted/scripts/hosted_e2e.py  the end-to-end proof: starts every process itself
+hosted/scripts/hosted_demo.sh one command around all of it, with the model handling
+hosted/DESIGN.md              why it is shaped this way, and what each choice cost
+hosted/M2-ACCEPTANCE.md       the milestone's requirements against code, tests and the run
+hosted/RUN-IT-BY-HAND.md      the same thing as long-lived processes, with curl steps
+tests/hosted/                 its tests
+```
+
+## What it does today
+
+
+| Route | Who may call it | What it does |
+| --- | --- | --- |
+| `GET /healthz` | anyone | is the plane up, on which schema, with how many jobs in each state |
+| `GET /healthz/upstream` | anyone | is the engine behind it up |
+| `POST /v1/workspaces` | anyone | signup: email + password, one workspace per customer |
+| `POST /v1/auth/token` | anyone | email + password → session token |
+| `POST /v1/api-keys` | session | mint a key; the key is returned once |
+| `GET /v1/api-keys` | session | list keys — never key material |
+| `DELETE /v1/api-keys/{id}` | session | revoke one of your own keys |
+| `GET /v1/usage` | session or key | this workspace's meter, and its key-by-key breakdown |
+| `GET /v1/voices` | session or key | what the engine can speak, for a picker |
+| `POST /v1/audio/speech` | API key | metered passthrough to the engine, for one short request |
+| `POST /v1/audio/transcriptions` | session or key | a recording in, the engine's transcript out, metered in its own counters |
+| `POST /v1/jobs` | session or key | queue a longer piece of speech (up to 20,000 characters) |
+| `GET /v1/jobs` | session or key | your jobs, newest first, with a status filter |
+| `GET /v1/jobs/{id}` | session or key | one of your jobs, with its full text |
+| `DELETE /v1/jobs/{id}` | session or key | cancel a job that has not been claimed |
+| `GET /v1/jobs/{id}/audio` | session or key | the stored audio of a finished job |
+
+Not in yet, and named as the next slices: email verification, billing, deployment.
+
+Speech out and speech in are metered separately. `characters` is what a workspace
+asked the engine to *say*; `transcript_characters` is what came *back* when it sent
+a recording to transcribe; `audio_seconds` is the audio that moved, measured from
+the WAV header of the bytes themselves — the returned one for speech, the uploaded
+one for transcription. One recording's upload is bounded before it is parsed (25
+MiB by default, `QUALI_TRANSCRIBE_MAX_BYTES`), and a refusal never reaches the
+engine. A `srt` or `text` answer is not counted in characters, because counting a
+subtitle file would count timecodes as speech; its seconds are still recorded.
+
+## The dashboard
+
+The dashboard has six pages now — home, Speak, Transcribe, Jobs, Keys, Usage. The
+browser front end that speaks through this plane lives in
+[`hosted/web/`](web/README.md) — its own Next.js package, importing nothing from
+`backend/`, this plane's own routes being its only contact with it. Run it, and
+the tests around it, from [`hosted/web/README.md`](web/README.md). It is local
+only, like everything here: no deployment, no public URL, no real bucket, no GPU.
+
+## Run it by hand
+
+The demo script is the short path. When you want the three processes as long-lived
+terminals — for working on it rather than checking it — the same thing is written
+out step by step with a curl walkthrough in
+[`hosted/RUN-IT-BY-HAND.md`](RUN-IT-BY-HAND.md).
+
+## How it is built
+
+Each decision below has its reason and its cost in [`hosted/DESIGN.md`](DESIGN.md).
+The plane is its own process and database and imports nothing from `backend/`, so an
+engine upgrade cannot change how a customer authenticates. Keys are stored as digests
+(`qbv_<key_id>_<secret>`; only the id and a SHA-256 digest are kept), so a leak of the
+database does not hand over working keys. A job is a row rather than a thread: claiming
+is compare-and-swap, a claim is a lease a dying worker stops renewing, and attempts are
+bounded — including the last one, which would otherwise sit `running` forever. And the
+two counters mean different things on purpose: `characters` is what was asked of the
+engine, `audio_seconds` is what arrived, measured from the WAV header of the audio that
+came back. Audio is content-addressed — the key *is* the SHA-256 of the bytes — and
+writes are read back and verified before they are called stored, on both backends.
+
+## Testing
+
+The same fast path as at the top: no model download, 30 to 35 seconds, nine test
+files and two substitutions. The engine is a real ASGI app answering with a WAV of a
+known duration, so the meter is checked against audio rather than against a number a
+test invented. The object store's S3 path runs against a local S3-compatible server on
+loopback (moto, started in process), so the client really signs requests and objects
+really cross a socket — still not S3, still not a bucket. Everything else is real:
+connection refusals against a closed port, a real SQLite file, real threads racing for
+the same job.
+
+
+
+## The milestone map for M3 so far (hosted/M3-ACCEPTANCE.md, full)
+
+# What M3 asked for so far, and where each piece is
+
+The milestone plan for M3 is: *new web UI (Next.js): clean ElevenLabs-quality
+dashboard — Text to Speech, Voice Library, Voice Clone (with consent), Voice Design,
+Dubbing, Transcription, Audiobooks/Projects, API Keys, Usage. Responsive, fast,
+dark/light.*
+
+Two slices are built. **Slice A** is the four things a customer does first — sign up,
+speak, mint keys, see what was used. **Slice B** is transcription: a recording in, the
+engine's transcript out, metered in its own counters. Three of the pages M3 names —
+Voice Library, Voice Clone, Voice Design — and two more — Dubbing, Audiobooks — are
+**not built**, and the last section of this page says so in the place a reader would
+otherwise expect a link.
+
+Every row names the code, the tests and a check in the browser run a reader can look
+at: the checks come from `hermes-reports/M3-slot47-web-e2e-r1/result.json`, taken
+with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
+stops existing or a named check stops appearing in the run the page cites, so the
+table cannot quietly become a description of a previous version of the code.
+
+| The plan asks for | Code | Tests | A check in the browser run |
+| --- | --- | --- | --- |
+| A real Next.js dashboard, its own package, importing nothing from `backend/` | `hosted/web/app/layout.jsx` | `hosted/web/test/controlplane.test.mjs` | `the dashboard is up and rooted at /` |
+| Sign up and sign in, session held server-side only | `hosted/web/app/api/auth/login/route.js` | `tests/hosted/test_hosted_accounts.py` | `the session token is not readable by page JavaScript` |
+| Text to speech: pick a voice the engine has, hear the audio | `hosted/web/components/SpeakView.jsx` | `tests/hosted/test_hosted_metering.py` | `the Speak page returns real WAV bytes through the plane` |
+| The voice list comes from the plane, not the page | `hosted/control_plane/voices.py` | `tests/hosted/test_hosted_voices.py` | `the voice list is served by the plane, not hard-coded` |
+| The engine's own refusal, in its own words | `hosted/control_plane/upstream.py` | `tests/hosted/test_hosted_metering.py` | `an unknown voice is refused by the plane with the engine's own sentence` |
+| Transcription: a recording in, a transcript out | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_transcription.py` | `the Transcribe page shows a transcript` |
+| The upload is bounded before it is read | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_transcription.py` | `an upload with no file is refused with a sentence that says so` |
+| Speech in and speech out are separate counters | `hosted/control_plane/metering.py` | `tests/hosted/test_hosted_transcription.py` | `the plane counted the transcript in its own counter, not the speech one` |
+| An older database gains the new counter, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | no run evidence: the browser run creates a fresh database |
+| API keys: shown once, listed as prefixes, revocable | `hosted/web/components/KeysView.jsx` | `tests/hosted/test_hosted_accounts.py` | `the key is not shown again after a reload` |
+| A queued job, watched through the page, spoken by a real worker | `hosted/web/components/JobsView.jsx` | `tests/hosted/test_hosted_jobs.py` | `the real worker drained the queue` |
+| Usage: the workspace totals and the per-key breakdown | `hosted/web/app/usage/page.jsx` | `tests/hosted/test_hosted_metering.py` | `the Usage page's request count matches the plane's meter` |
+| The transcript can be taken away as text or subtitles | `hosted/web/lib/transcript.js` | `hosted/web/test/transcript.test.mjs` | `the Transcribe page shows a transcript` |
+| Every page one click from home, keyboard focus visible | `hosted/web/components/NavLinks.jsx` | `hosted/web/test/format.test.mjs` | `every page takes a keyboard Tab onto a focusable control` |
+| Dark, and the QualiaBits palette and spacing | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
+
+Two sentences that belong beside that table, because the gap between what is proven
+and what is not is exactly where a product page starts lying:
+
+- **Nothing here is deployed.** Every check above was taken against processes started
+  on this machine on loopback: no public URL, no domain, no HTTPS, no real object-store
+  bucket. The run file says so in its own fields rather than only in prose.
+- **The voice is machine-checked, never human-checked.** What the run proves about the
+  audio is that bytes came back, what the header says about their length, and — with
+  the real engine — that a second engine could hear words it had said. Two of the five
+  words of the Hindi sentence came back. Whether anybody should *pay* for that voice is
+  a listening judgement this repository has never made, and the WAVs are committed so
+  the owner can.
+
+## What is not built, and is not stubbed
+
+Voice Library (browsing and previewing the model's own voices one by one), Voice Clone
+with a consent checkbox, Voice Design, Dubbing, Audiobooks/Projects, the agents tab,
+a light theme, and the marketing landing page are all **later slices of M3**. None of
+them is a greyed-out button or a "coming soon" card: a page that is not built is not on
+the site, and the dashboard's navigation lists only pages that answer.
+
+
+## The plane's transcription tests, run against the stub engine
+
+# the transcription slice's own tests, against the stub engine (a real ASGI app)
+# clone:    /workspace/qs-fresh  revision 2e560f51f98bc71b067f5e4c466b55dca50ea8a3
+# command:  .venv/bin/python -m pytest tests/hosted/test_hosted_transcription.py -q
+
+tests/hosted/conftest.py:29
+  /workspace/qs-fresh/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+16 passed, 1 warning in 5.42s
+
+
+
+## The app's files (excluding node_modules, .next, .evidence)
+
+.gitignore  (8 lines)
+README.md  (191 lines)
+app/api/auth/login/route.js  (40 lines)
+app/api/auth/logout/route.js  (23 lines)
+app/api/auth/signup/route.js  (61 lines)
+app/api/dashboard-key/route.js  (14 lines)
+app/api/jobs/[id]/audio/route.js  (13 lines)
+app/api/jobs/[id]/route.js  (14 lines)
+app/api/jobs/route.js  (37 lines)
+app/api/keys/[id]/route.js  (13 lines)
+app/api/keys/route.js  (16 lines)
+app/api/speech/route.js  (94 lines)
+app/api/transcribe/route.js  (75 lines)
+app/globals.css  (716 lines)
+app/jobs/page.jsx  (35 lines)
+app/keys/page.jsx  (30 lines)
+app/layout.jsx  (34 lines)
+app/login/page.jsx  (11 lines)
+app/page.jsx  (138 lines)
+app/signup/page.jsx  (11 lines)
+app/speak/page.jsx  (28 lines)
+app/transcribe/page.jsx  (32 lines)
+app/usage/page.jsx  (161 lines)
+components/AuthForm.jsx  (129 lines)
+components/JobsView.jsx  (246 lines)
+components/KeysView.jsx  (188 lines)
+components/NavLinks.jsx  (41 lines)
+components/SignOutButton.jsx  (27 lines)
+components/SiteHeader.jsx  (45 lines)
+components/SpeakView.jsx  (212 lines)
+components/TranscribeView.jsx  (284 lines)
+e2e/dashboard.mjs  (824 lines)
+e2e/engine_stub.py  (180 lines)
+e2e/real-engine.sh  (170 lines)
+jsconfig.json  (11 lines)
+lib/controlplane.js  (83 lines)
+lib/cookies.js  (77 lines)
+lib/format.js  (72 lines)
+lib/proxy.js  (79 lines)
+lib/session.js  (46 lines)
+lib/transcript.js  (89 lines)
+lib/voices.js  (78 lines)
+next.config.mjs  (9 lines)
+package-lock.json  (1001 lines)
+package.json  (23 lines)
+test/controlplane.test.mjs  (43 lines)
+test/cookies.test.mjs  (45 lines)
+test/format.test.mjs  (67 lines)
+test/transcript.test.mjs  (87 lines)
+test/voices.test.mjs  (80 lines)
+
+
+## The browser end-to-end, real speech and transcription engines, this revision (--keep)
+
+result.json (engine and run facts):
+{
+  "run": "qualiabits voice \u2014 browser dashboard end to end",
+  "revision": {
+    "tested_commit": "e43eb8494597bd5843ecd7897d454e64f0e7e208",
+    "worktree_dirty": false,
+    "generated_at_utc": "2026-11-02T00:08:00.985Z"
+  },
+  "engine": "sherpa-onnx on kokoro-int8-multi-lang-v1_0 (QB_E2E_ENGINE_CMD)",
+  "engine_command": "/workspace/qualiabits-voicestudio/.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port {port}",
+  "engine_is_stub": false,
+  "engine_health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Browser E2E",
+      "screenshot": "e2e/.evidence/screenshots/home.png",
+      "screenshot_bytes": 168805
+    },
+    {
+      "route": "/speak",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Speak",
+      "screenshot": "e2e/.evidence/screenshots/speak.png",
+      "screenshot_bytes": 141499
+    },
+    {
+      "route": "/transcribe",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Transcribe",
+      "screenshot": "e2e/.evidence/screenshots/transcribe.png",
+      "screenshot_bytes": 141374
+    },
+    {
+      "route": "/keys",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "API keys",
+      "screenshot": "e2e/.evidence/screenshots/keys.png",
+      "screenshot_bytes": 137091
+    },
+    {
+      "route": "/usage",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Usage",
+      "screenshot": "e2e/.evidence/screenshots/usage.png",
+      "screenshot_bytes": 189414
+    },
+    {
+      "route": "/jobs",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Jobs",
+      "screenshot": "e2e/.evidence/screenshots/jobs.png",
+      "screenshot_bytes": 152402
+    }
+  ],
+  "engine_active": "sherpa-onnx",
+  "engine_voice_count": 54,
+  "engine_model": {
+    "directory": "/workspace/m1-models/kokoro-int8-multi-lang-v1_0",
+    "files": {
+      "model.int8.onnx": "75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e",
+      "tokens.txt": "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425",
+      "voices.bin": "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29"
+    }
+  },
+  "engine_model_source": "found at /workspace/m1-models/kokoro-int8-multi-lang-v1_0",
+  "browser": "156.0.8078.4",
+  "deployed": false,
+  "public_url": null,
+  "gpu": false,
+  "real_s3": false,
+  "audio": {
+    "engine_is_stub": false,
+    "sentence_bytes": 87978,
+    "paragraph_bytes": 302212,
+    "paragraph_seconds": 6.295167
+  },
+  "usage": {
+    "plane_transcript_characters": 21,
+    "page_transcript_characters": 21,
+    "plane_requests": 3,
+    "page_requests": 3,
+    "plane_keys": 1,
+    "page_per_key_rows": 1,
+    "page_all_table_rows": 3
+  }
+}
+
+checks: 55 passed, 0 failed, ok=True
+  [PASS] engine is up and answers /health  ({"status":"ok","device":"cpu","version":"0.5.7"})
+  [PASS] the engine is a real backend, not the suite's stub  ({"status":"ok","device":"cpu","version":"0.5.7"})
+  [PASS] the engine reports a model directory that exists  ({"directory":"/workspace/m1-models/kokoro-int8-multi-lang-v1_0","files":{"model.int8.onnx":"75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e","t…)
+  [PASS] the engine declares the voices the picker can offer  (sherpa-onnx: 54 voices)
+  [PASS] the control plane is up on its own database
+  [PASS] the control plane can see the engine  ({"upstream_base_url":"http://127.0.0.1:41065","reachable":true,"status":"ok","device":"cpu","version":"0.5.7"})
+  [PASS] the dashboard is up and rooted at /
+  [PASS] signup lands on the dashboard and greets the workspace  (Browser E2E)
+  [PASS] the session token is not readable by page JavaScript  ({"localStorage":"[]","cookie":"qb_ws={\"id\":1,\"email\":\"browser-e2e@example.com\",\"display_name\":\"Browser E2E\"}","hasSecret":false})
+  [PASS] the workspace name cookie is the only cookie the page can see  (qb_ws={"id":1,"email":"browser-e2e@example.com","display_name":"Browser E2E"})
+  [PASS] home links to /speak  (/speak, /transcribe, /jobs, /keys, /usage)
+  [PASS] home links to /transcribe  (/speak, /transcribe, /jobs, /keys, /usage)
+  [PASS] home links to /jobs  (/speak, /transcribe, /jobs, /keys, /usage)
+  [PASS] home links to /keys  (/speak, /transcribe, /jobs, /keys, /usage)
+  [PASS] home links to /usage  (/speak, /transcribe, /jobs, /keys, /usage)
+  [PASS] no dead links on home
+  [PASS] / answers 200 and has a heading  (status 200, heading "Browser E2E")
+  [PASS] /speak answers 200 and has a heading  (status 200, heading "Speak")
+  [PASS] /transcribe answers 200 and has a heading  (status 200, heading "Transcribe")
+  [PASS] /keys answers 200 and has a heading  (status 200, heading "API keys")
+  [PASS] /usage answers 200 and has a heading  (status 200, heading "Usage")
+  [PASS] /jobs answers 200 and has a heading  (status 200, heading "Jobs")
+  [PASS] every page takes a keyboard Tab onto a focusable control  ([["/","A"],["/speak","A"],["/transcribe","A"],["/keys","A"],["/usage","A"],["/jobs","A"]])
+  [PASS] every page shows a visible focus outline  ([["/","solid 2px"],["/speak","solid 2px"],["/transcribe","solid 2px"],["/keys","solid 2px"],["/usage","solid 2px"],["/jobs","solid 2px"]])
+  [PASS] every page was captured as a screenshot  ([["/",168805],["/speak",141499],["/transcribe",141374],["/keys",137091],["/usage",189414],["/jobs",152402]])
+  [PASS] the voice list is served by the plane, not hard-coded  (af_alloy,af_aoede,af_bella,af_heart,af_jessica,af_kore,af_nicole,af_nova,af_river,af_sarah,af_sky,am_adam,am_echo,am_eric,am_fenrir,am_liam,am_michael,am_onyx,a…)
+  [PASS] the Speak page returns real WAV bytes through the plane  ({"secondsHeader":null,"header":"RIFF","bytes":87978,"download":"speech-hf_alpha.wav","playerText":"Spoken: hf_alpha1.831958 s of audio · 87,978 bytes · engine t…)
+  [PASS] the audio has a download link  (speech-hf_alpha.wav)
+  [PASS] the player reports the measured duration and size  (Spoken: hf_alpha1.831958 s of audio · 87,978 bytes · engine took 22.37s · engine build 0.5.7Download WAV)
+  [PASS] an unknown voice is refused by the plane with the engine's own sentence  ({"status":400,"body":{"error":{"message":"Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am …)
+  [PASS] the spoken audio was read back out of the page for transcription  (87978 bytes)
+  [PASS] the Transcribe page shows a transcript  (यह एक हिंदी वाग के है)
+  [PASS] the plane measured the upload as the same length as the audio it returned  (1.831958 s spoken vs 1.831958 s uploaded)
+  [PASS] the plane counted the transcript in its own counter, not the speech one  (21 vs 21 characters)
+  [PASS] the plane metered the upload's seconds under the same workspace  (3.664 s in the meter)
+  [PASS] the real transcription engine heard words that were actually spoken  (said "यह एक हिन्दी वाक्य है।", heard "यह एक हिंदी वाग के है", shared ["यह","एक","है"])
+  [PASS] an upload with no file is refused with a sentence that says so  ({"status":400,"body":{"detail":"Choose a recording first. A WAV from the Speak page is a good one."}})
+  [PASS] a minted key is shown once and looks like a key  (qbv_9e281cf1b529e430_jKx78PEwX-vcmydyJpd2Hybc1LrMRcf7eCXJak7QWtY)
+  [PASS] the key is not shown again after a reload
+  [PASS] the list shows the key's public id and never its secret  (6 cells, secret length 43)
+  [PASS] revoking marks the key revoked in the list  (revoked)
+  [PASS] a revoked key is refused on the next request  (status 401)
+  [PASS] the same credentials log in straight to the plane
+  [PASS] the Usage page's request count matches the plane's meter  (3 vs 3)
+  [PASS] the per-key breakdown the plane records is shown, one row per key  (per-key rows 1, plane keys 1)
+  [PASS] the Usage page shows the transcribed-character counter the plane keeps  (21 vs 21)
+  [PASS] a cancelled job reads as cancelled and was never spoken  (#1Cancelledhf_alpha55Nov 02, 2026, 00:10:24never spoken—)
+  [PASS] cancelling a queued job did not move the meter  (3->3, 27->27)
+  [PASS] the real worker drained the queue  (3: job 2 succeeded, 6.295167 s of audio (stored 57/c6/57c6eb25e8335c77932a2f881de14802744a5cf25d96a768cc69b871ec3cf475.wav)
+{"claimed": 1, "engine_seconds": 43.…)
+  [PASS] the plane records the spoken job as succeeded  (["succeeded","cancelled"])
+  [PASS] the job's stored audio comes back as a WAV  ({"status":200,"header":"RIFF","bytes":302212})
+  [PASS] the downloaded audio is the bytes the plane stored  (302212 vs 302212)
+  [PASS] the jobs table shows one Done row
+  [PASS] the real engine made more audio for the paragraph than for the one-liner  (87978 then 302212 bytes)
+  [PASS] no uncaught JavaScript errors on any page
+
+
+## The hosted proof (Python, real engine, its own evidence directory)
+
+{
+  "run": "hosted control plane end to end",
+  "revision": {
+    "tested_commit": "3aeff983c77259f7893ddc6917262f2fd3a64f45",
+    "tested_branch": "work/m1-headless",
+    "worktree_dirty": false,
+    "tracked_files_hashed": 5114,
+    "tracked_gitlinks": 1,
+    "tracked_entries": 5115
+  },
+  "engine": "sherpa-onnx",
+  "deployed": false,
+  "public_url": null,
+  "gpu": null,
+  "real_s3": null,
+  "model_hashes": null,
+  "timings": null
+}
+checks: ["control_plane_and_engine_both_up", "two_workspaces_signed_up_with_keys", "hindi_and_english_audio_through_the_control_plane", "engine_refusal_passed_through_as_400", "refusal_bytes_identical_to_the_real_engine", "key_refusals_are_401", "meter_matches_the_audio_and_is_per_workspace", "a_queued_job_is_spoken_by_a_real_worker_and_metered_once", "a_refused_job_fails_once_with_the_engine_s_own_message", "a_cancelled_job_is_never_spoken_or_metered", "revoked_key_refused_and_other_workspace_untouched"]
+passed: True of 11 checks
+
+
+## The end-to-end, stub engine (the default smoke path)
+
+result.json: 52 passed, 0 failed, ok=True, engine=engine_stub.py (engine_is_stub=True)
+revision: {"tested_commit": "e43eb8494597bd5843ecd7897d454e64f0e7e208", "worktree_dirty": false, "generated_at_utc": "2026-11-02T00:03:21.326Z"}
+pages: [{"route": "/", "status": 200, "focus_tag": "A", "focus_outline": "solid 2px", "heading": "Browser E2E", "screenshot": "e2e/.evidence/screenshots/home.png", "screenshot_bytes": 168805}, {"route": "/speak", "status": 200, "focus_tag": "A", "focus_outline": "solid 2px", "heading": "Speak", "screenshot": "e2e/.evidence/screenshots/speak.png", "screenshot_bytes": 134884}, {"route": "/transcribe", "status": 200, "focus_tag": "A", "focus_outline": "solid 2px", "heading": "Transcribe", "screenshot": "e2e/.evidence/screenshots/transcribe.png", "screenshot_bytes": 141374}, {"route": "/keys", "status": 200, "focus_tag": "A", "focus_outline": "solid 2px", "heading": "API keys", "screenshot": "e2e/.evidence/screenshots/keys.png", "screenshot_bytes": 137091}, {"route": "/usage", "status": 200, "focus_tag": "A", "focus_outline": "solid 2px", "heading": "Usage", "screenshot": "e2e/.evidence/screenshots/usage.png", "screenshot_bytes": 189414}, {"route": "/jobs", "status": 200, "focus_tag": "A", "focus_outline": "solid 2px", "heading": "Jobs", "screenshot": "e2e/.evidence/screenshots/jobs.png", "screenshot_bytes": 152402}]
+audio: {"engine_is_stub": true, "sentence_bytes": 72044, "paragraph_bytes": 72044, "paragraph_seconds": 1.5}
+usage: {"plane_transcript_characters": 19, "page_transcript_characters": 19, "plane_requests": 3, "page_requests": 3, "plane_keys": 1, "page_per_key_rows": 1, "page_all_table_rows": 3}
+
+
+## Suite results, from a clean clone of the pushed revision
+
+# clean-clone replay of the hosted suites and the fork's own guards
+# clone:    /workspace/qs-fresh (existing clone of Kulraj69/qualiabits-voicestudio work/m1-headless)
+# revision: 2e560f51f98bc71b067f5e4c466b55dca50ea8a3  (2e560f51f Re-take the quoted run, and fix what the new one moved)
+# worktree: 0 modified files
+# venv:     the clone's own .venv, built by the README command (uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12)
+# note:     uv.lock and pyproject.toml are byte-identical between the revision this venv was built at (d594cce07) and this one, so the venv is what that command produces here
+# command:  .venv/bin/python -m pytest tests/hosted tests/test_qualibits_voice_docs.py tests/test_sherpa_kokoro_and_speaker.py tests/test_headless_baseline.py -q
+
+.......                                                                  [100%]
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /workspace/qs-fresh/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+tests/test_sherpa_kokoro_and_speaker.py::test_a_configured_kokoro_model_publishes_its_voices_before_it_loads
+  /workspace/qs-fresh/.venv/lib/python3.12/site-packages/pydub/utils.py:14: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+223 passed, 2 warnings in 58.00s
+
+
+
+## Web unit tests (node --test)
+
+# web unit suite (node --test), the app the browser run drives
+# clone:    /workspace/qualiabits-voicestudio (working checkout)
+# revision: 2e560f51f98bc71b067f5e4c466b55dca50ea8a3
+# command:  cd hosted/web && npm test
+
+✔ an unreachable engine is described as unreachable, not as zero voices (0.248214ms)
+✔ a missing catalogue is described without inventing one (0.387906ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 718.690218
+
+
+
+## Commits in this slice
+
+2e560f51f Re-take the quoted run, and fix what the new one moved
+3aeff983c The M3 acceptance guard was reading its own header as a row
+ce3eea857 Round 1 of the slot-47 log: the three defects the runs found, and what the evidence says
+9428691fd The browser evidence for slice B: a real closed loop, taken clean
+803a60666 A judge bundle for slice B that reads the artifacts, not my summary of them
+e43eb8494 The slot-47 plan, and the review transcripts earlier slots left untracked
+b6ff44c5c Transcription: a recording in, the engine's transcript out, metered apart from speech
+6072d56ae Round 5 and the done gate: four judge passes, two criteria left, both the owner's
+
+
+## The judge passes already run on this slice (D8)
+
+These are the independent cheap+ passes on this slice, verbatim, so that D8's 'two rounds, every fixable flaw fixed' can be checked rather than believed.
+
+
+### M3-slot47-review1-prompt.txt
+
+
+
+## What changed after the pass above
+
+nothing: this is the first pass on the slice
+
+
+## What is NOT claimed
+
+Nothing is deployed and there is no public URL (deployed=false, public_url=null in the run). There is no real S3 bucket, only the local object store. There is no GPU. No human has listened to the audio. M1 (real GPU run and a listening check) and M2 (deployment, bucket, a product differentiator) stay open and are the owner's decisions. The engine on CPU runs at roughly a seventh of real time, transcription slower still (the run records both). The transcription model is the operator's own directory, CTranslate2 Whisper small, pinned by sha256 in hosted/web/e2e/real-engine.sh; no terms were accepted on anyone's behalf and nothing was downloaded behind a licence gate. Three of the pages M3 names (Voice Library, Voice Clone, Voice Design) and two more (Dubbing, Audiobooks) are not built and are named as such in hosted/M3-ACCEPTANCE.md rather than stubbed. This slice does not clear M1 or M2.
+
+## Output format
+
+For each of the seven criteria: score and two or three sentences of evidence from the artifacts. Then the five most damaging flaws with file or line references. Then one sentence on what would make it win. Say plainly which D items are demonstrated, partly demonstrated, or not.

@@ -1,0 +1,60 @@
+Verdict: FAIL. Scores: 25/35. Originality, criteria fit, and honesty are below the required 4.
+
+1. Originality — 2/5
+
+This is a competent hosted transcription slice, but the core idea is a familiar speech dashboard and transcription workflow. The artifacts contain no surprising product moment or differentiator; D8 explicitly says originality remains at 2.
+
+2. Taste — 4/5
+
+The README gives a focused six-page product path, avoids fake “coming soon” controls, and describes deliberate UI choices such as shared navigation, spacing, palette, and visible focus states. The screenshots and browser evidence support a coherent interface, although the milestone requires dark/light and the acceptance file admits that light mode is not built.
+
+3. Human feel — 4/5
+
+The writing is unusually specific about boundaries, engine refusals, counters, and what was not built. It still contains some product-generic phrasing such as “what turns it into something a business can buy,” but there is no major AI-boilerplate problem, bullet-wall problem, or excessive em-dash pattern.
+
+4. Technical depth — 4/5
+
+There is substantial implementation depth: authenticated workspace isolation, bounded uploads, separate transcription metering, migrations, a real ASGI stub suite, a worker, browser automation, and a real-engine run. The score is not 5 because the supplied evidence does not cleanly prove the claimed real Whisper closed loop, and the browser result identifies the active engine/model as sherpa-onnx/Kokoro rather than the README’s stated CTranslate2 Whisper-small transcription provenance.
+
+5. Criteria fit — 2/5
+
+The slice demonstrates transcription, API keys, usage, jobs, speech, and a usable Next.js dashboard, but the owner milestone is much larger: deployment, hosted auth and storage, voice library, cloning, voice design, dubbing, audiobooks, agents, phone calls, responsive light/dark UI, and go-live are absent. D8 itself says criteria fit remains at 2, so this cannot pass the rubric.
+
+6. Reviewer path — 4/5
+
+`hosted/web/README.md` provides concrete do-X/see-Y steps, test commands, ports, expected behavior, and an honest local-only boundary. The path is usable, but it depends on a nontrivial venv/model setup and contains conflicting engine descriptions, which could make a fresh reviewer unsure which transcription proof they are actually reproducing.
+
+7. Honesty — 3/5
+
+The artifacts correctly disclose that there is no deployment, public URL, GPU, real S3 bucket, human listening check, or completed later feature set. However, the evidence bundle has material provenance and completion inconsistencies: the README claims a real Whisper-based path, while `result.json` records a Kokoro/sherpa-onnx engine; the cited revisions differ; and D8’s required two judge rounds are asserted but not actually supplied.
+
+Five most damaging flaws
+
+1. Criteria fit is structurally below passing — `hosted/M3-ACCEPTANCE.md`, “What is not built, and is not stubbed”
+   Voice Library, Voice Clone, Voice Design, Dubbing, Audiobooks/Projects, agents, light theme, landing page, deployment, and phone functionality remain absent. This directly conflicts with the owner’s V0/M3 milestone and is acknowledged by the artifact itself.
+
+2. Real-engine provenance is inconsistent — `hosted/web/README.md`, “real engine” section; `result.json`, generated `2026-11-02T00:08:00.985Z`
+   The README describes a CTranslate2 Whisper-small model pinned by hashes for transcription, while the supplied result records `sherpa-onnx on kokoro-int8-multi-lang-v1_0`, Kokoro model hashes, and no transcription-model identity or hash. That weakens both the D5 technical claim and the D7 provenance claim.
+
+3. The required two-round D8 evidence is missing — “The judge passes already run on this slice (D8)”
+   The supplied section contains only `M3-slot47-review1-prompt.txt` and says this is the first pass; it does not provide two completed cheap+ judge outputs. D8 is therefore not demonstrated.
+
+4. The evidence is not tied to one revision — `result.json` (`e43eb849...`), `hosted/M3-ACCEPTANCE.md`, hosted proof (`3aeff983...`), and clean-clone suite (`2e560f51...`)
+   Different artifacts claim different tested commits and branches. Even though the worktrees are reported clean, a reviewer cannot confidently map every acceptance row to the same source state.
+
+5. Several D claims are documented more strongly than they are evidenced — `hosted/M3-ACCEPTANCE.md`, transcription rows; `result.json`
+   The supplied browser checks show a missing-file refusal and a successful real transcription, but do not visibly show an over-ceiling upload, declared-length rejection, or successful `.txt`/`.srt`/`.json` download assertions. The Python count of 16 passing tests is not enough by itself to establish each named D2 and D4 behavior without the individual test output or source mapping.
+
+D-item assessment
+
+- D1 — Demonstrated: authenticated transcription route, upstream proxying, engine error passage, and workspace-scoped behavior are supported by the hosted tests and browser run.
+- D2 — Partly demonstrated: missing-file refusal is shown, but the supplied evidence does not show the byte-ceiling and declared-length cases explicitly.
+- D3 — Demonstrated: separate transcript counters, WAV-derived duration, refused-upload behavior, and migration coverage are supported by the stated tests and acceptance matrix.
+- D4 — Partly demonstrated: the page displays transcript text, segments, and request numbers; successful `.txt`/`.srt`/`.json` download behavior is not explicitly present in the supplied browser results.
+- D5 — Partly demonstrated: real browser/Chromium and real speech-engine closed-loop evidence exists, but the claimed Whisper provenance conflicts with the recorded Kokoro/sherpa-onnx engine.
+- D6 — Demonstrated for the implemented pages: one-click navigation, focus visibility, screenshots, and no dead links are recorded. The broader dark/light requirement is only partly met because light mode is explicitly absent.
+- D7 — Partly demonstrated: the READMEs are generally honest and operational, but model provenance and tested-revision references are inconsistent.
+- D8 — Not demonstrated: the required two completed cheap+ judge rounds are not supplied.
+
+What would make it win: produce one reproducible revision with a correctly identified real transcription model, explicit ceiling/download evidence, two completed judge rounds, and the remaining M3/V0 differentiating features rather than another conventional dashboard slice.
+rc=0

@@ -13,7 +13,7 @@ Voice Library, Voice Clone, Voice Design — and two more — Dubbing, Audiobook
 otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot47-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot47-web-e2e-r2/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -32,7 +32,11 @@ table cannot quietly become a description of a previous version of the code.
 | API keys: shown once, listed as prefixes, revocable | `hosted/web/components/KeysView.jsx` | `tests/hosted/test_hosted_accounts.py` | `the key is not shown again after a reload` |
 | A queued job, watched through the page, spoken by a real worker | `hosted/web/components/JobsView.jsx` | `tests/hosted/test_hosted_jobs.py` | `the real worker drained the queue` |
 | Usage: the workspace totals and the per-key breakdown | `hosted/web/app/usage/page.jsx` | `tests/hosted/test_hosted_metering.py` | `the Usage page's request count matches the plane's meter` |
-| The transcript can be taken away as text or subtitles | `hosted/web/lib/transcript.js` | `hosted/web/test/transcript.test.mjs` | `the Transcribe page shows a transcript` |
+| The transcript can be taken away as text or subtitles | `hosted/web/lib/transcript.js` | `hosted/web/test/transcript.test.mjs` | `the transcript downloads as .txt holding the text the page shows` |
+| Subtitles built from the timings the engine itself reported | `hosted/web/lib/transcript.js` | `hosted/web/test/transcript.test.mjs` | `the transcript downloads as .srt with cues carrying the engine's own timings` |
+| The engine's own payload, kept as JSON | `hosted/web/app/transcribe/page.jsx` | `hosted/web/test/transcript.test.mjs` | `the transcript downloads as .json holding the engine's own payload` |
+| The model that read the words back, named by its own bytes | `hosted/web/e2e/real-engine.sh` | `hosted/web/test/harness.test.mjs` | `the transcription model on disk is the one this run pins` |
+| The upload limit is the plane's, refused before a byte is read | `hosted/control_plane/app.py` | `hosted/web/test/harness.test.mjs` | `an upload past the plane's ceiling is refused with a sentence naming the limit` |
 | Every page one click from home, keyboard focus visible | `hosted/web/components/NavLinks.jsx` | `hosted/web/test/format.test.mjs` | `every page takes a keyboard Tab onto a focusable control` |
 | Dark, and the QualiaBits palette and spacing | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
 
@@ -44,10 +48,16 @@ and what is not is exactly where a product page starts lying:
   bucket. The run file says so in its own fields rather than only in prose.
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
-  the real engine — that a second engine could hear words it had said. Two of the five
-  words of the Hindi sentence came back. Whether anybody should *pay* for that voice is
-  a listening judgement this repository has never made, and the WAVs are committed so
-  the owner can.
+  the real engine — that a second engine could hear words it had said. In the run this
+  page cites, two of the five words of the Hindi sentence came back. Whether anybody
+  should *pay* for that voice is a listening judgement this repository has never made,
+  and the WAVs are committed so the owner can.
+- **Which model heard the words is recorded, not asserted.** `result.json` carries the
+  transcription model's directory and the sha256 of its `model.bin`,
+  `config.json`, `tokenizer.json` and `vocabulary.txt`, and the run fails unless
+  `model.bin` is the hash `hosted/web/e2e/real-engine.sh` pins. The speech model is
+  recorded the same way. A transcription result whose model is only named in prose is
+  not evidence a reader can check.
 
 ## What is not built, and is not stubbed
 

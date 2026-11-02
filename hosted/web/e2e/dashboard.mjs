@@ -245,6 +245,33 @@ function modelFingerprint() {
   return { directory, files };
 }
 
+/** The model the transcription engine was pointed at, by its own bytes.
+ *
+ * The speech model's fingerprint alone leaves a reader unable to tell which
+ * weights read the words back, which is exactly the confusion a judge pass on
+ * this slice raised: the transcript is only evidence if the model that produced
+ * it is named and its bytes are recorded. Only the files that exist are hashed,
+ * so this works for a CTranslate2 Whisper directory and for anything else an
+ * operator supplies.
+ */
+function asrFingerprint() {
+  const directory = process.env.QB_E2E_ASR_MODEL;
+  if (!directory) return null;
+  const wanted = [
+    "model.bin",
+    "config.json",
+    "tokenizer.json",
+    "vocabulary.txt",
+    "preprocessor_config.json",
+  ];
+  const files = {};
+  for (const name of wanted) {
+    const file = path.join(directory, name);
+    if (existsSync(file)) files[name] = sha256(file);
+  }
+  return { directory, files };
+}
+
 // ── playwright, resolved from wherever it lives ───────────────────────────────
 function loadPlaywright() {
   const require = createRequire(import.meta.url);
@@ -314,6 +341,12 @@ async function main() {
     engine_command: ENGINE_CMD || null,
     engine_is_stub: !ENGINE_CMD,
     engine_model: modelFingerprint(),
+    // The transcription engine's own weights, by their bytes, and the hash the
+    // operator's script pinned them to: a reader can check that the model which
+    // read the words back is the model this run claims.
+    transcription_model: asrFingerprint(),
+    transcription_model_source: process.env.QB_E2E_ASR_MODEL_SOURCE || null,
+    transcription_model_pinned: process.env.QB_E2E_ASR_MODEL_PINNED || null,
     revision: repoRevision(),
     browser: "",
     deployed: false,
@@ -372,6 +405,22 @@ async function main() {
         "the engine declares the voices the picker can offer",
         declared.includes(VOICE),
         `${engineInfo.active}: ${declared.length} voices`,
+      );
+      // Which model read the words back is part of the claim, so it is recorded
+      // and checked by its bytes rather than described in prose.
+      const asr = result.transcription_model;
+      check(
+        "the engine reports a transcription model directory with weights in it",
+        Boolean(asr?.files?.["model.bin"]),
+        JSON.stringify(asr),
+      );
+      check(
+        "the transcription model on disk is the one this run pins",
+        Boolean(
+          asr?.files?.["model.bin"]
+            && asr.files["model.bin"] === result.transcription_model_pinned,
+        ),
+        `pinned ${result.transcription_model_pinned}, on disk ${asr?.files?.["model.bin"]}`,
       );
     }
 
@@ -621,6 +670,56 @@ async function main() {
       meta: transcribed.meta,
     };
 
+    // ── the three files the customer keeps, taken from the page itself ───────
+    // Each one is a real click on the page's own button and a real download; the
+    // bytes that land on disk are what is checked, not that a button exists.
+    const downloads = {};
+    for (const [extension, testId] of [
+      ["txt", "download-txt"],
+      ["srt", "download-srt"],
+      ["json", "download-json"],
+    ]) {
+      const button = await page.$(`[data-testid="${testId}"]`);
+      if (!button || (await button.isDisabled())) {
+        downloads[extension] = null;
+        continue;
+      }
+      const [download] = await Promise.all([page.waitForEvent("download"), button.click()]);
+      const downloadPath = await download.path();
+      downloads[extension] = {
+        filename: download.suggestedFilename(),
+        text: readFileSync(downloadPath, "utf8"),
+      };
+    }
+    const firstLine = (transcribed.text.split("\n")[0] || "").trim();
+    check(
+      "the transcript downloads as .txt holding the text the page shows",
+      Boolean(downloads.txt && firstLine && downloads.txt.text.includes(firstLine)),
+      `${downloads.txt?.filename ?? "no file"}: ${(downloads.txt?.text ?? "").slice(0, 60)}`,
+    );
+    check(
+      "the transcript downloads as .srt with cues carrying the engine's own timings",
+      Boolean(downloads.srt && downloads.srt.text.includes("-->")),
+      `${downloads.srt?.filename ?? "no file"}: ${(downloads.srt?.text ?? "").split("\n").slice(0, 4).join(" / ")}`,
+    );
+    let downloadedJson = null;
+    try {
+      downloadedJson = JSON.parse(downloads.json?.text ?? "null");
+    } catch {
+      downloadedJson = null;
+    }
+    check(
+      "the transcript downloads as .json holding the engine's own payload",
+      Boolean(downloadedJson && typeof downloadedJson === "object" && downloadedJson.text),
+      `${downloads.json?.filename ?? "no file"}: ${(downloads.json?.text ?? "").slice(0, 60)}`,
+    );
+    result.transcript.downloads = Object.fromEntries(
+      Object.entries(downloads).map(([key, value]) => [
+        key,
+        value ? { filename: value.filename, bytes: Buffer.byteLength(value.text) } : null,
+      ]),
+    );
+
     // ── an empty upload is refused by the app before the plane is troubled ──
     const emptyUpload = await page.evaluate(async () => {
       const body = new FormData();
@@ -631,6 +730,25 @@ async function main() {
     check("an upload with no file is refused with a sentence that says so",
       emptyUpload.status === 400 && /recording/i.test(String(emptyUpload.body?.detail || "")),
       JSON.stringify(emptyUpload));
+
+    // ── an upload past the plane's ceiling, refused before it is read ───────
+    // The ceiling is the plane's (25 MiB), not a test's: one byte past it, sent
+    // through the page's own route the way a customer's browser would. The plane
+    // refuses from the declared length, so no byte reaches the engine.
+    const overCeiling = await page.evaluate(async () => {
+      const body = new FormData();
+      const size = 25 * 1024 * 1024 + 1;
+      body.append(
+        "file",
+        new File([new Uint8Array(size)], "too-large.wav", { type: "audio/wav" }),
+      );
+      body.append("response_format", "json");
+      const response = await fetch("/api/transcribe", { method: "POST", body });
+      return { status: response.status, body: await response.json().catch(() => ({})) };
+    });
+    check("an upload past the plane's ceiling is refused with a sentence naming the limit",
+      overCeiling.status === 413 && /larger than|limit is/i.test(String(overCeiling.body?.detail || "")),
+      JSON.stringify(overCeiling));
 
 
     // ── keys: shown once, listed as a prefix, revoked on the next request ───

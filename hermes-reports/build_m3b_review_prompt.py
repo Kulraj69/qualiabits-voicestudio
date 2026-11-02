@@ -141,8 +141,14 @@ def since_text() -> str:
 
 
 def review_files(limit: int = 3) -> str:
-    """The judge passes already run on this slice, so D8 is checkable."""
-    found = sorted(REPORTS.glob("M3-slot47-review*.txt"))
+    """The judge passes already run on this slice, so D8 is checkable.
+
+    The prompt files are deliberately not included: they are the bundle's own
+    input, and a pass that mistook one for a completed review would score the
+    work on the question it was asked rather than the answer it got.
+    """
+    found = sorted(p for p in REPORTS.glob("M3-slot47-review*.txt")
+                   if not p.name.endswith("-prompt.txt"))
     if not found:
         return "no judge pass is committed yet; this is the first"
     return "\n\n".join(f"### {p.name}\n" + p.read_text(encoding="utf-8", errors="replace")
@@ -171,12 +177,12 @@ def stub_summary(path: Path) -> str:
 
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
-    evidence = REPORTS / "M3-slot47-web-e2e-r1" / "result.json"
-    stub = REPORTS / "M3-slot47-web-e2e-stub-r1" / "result.json"
-    tests = REPORTS / "M2-slot47-clean-tests-r1.log"
-    unit = REPORTS / "M3-slot47-web-unit-r1.log"
-    doubled = REPORTS / "M3-slot47-transcription-tests-r1.log"
-    hosted = REPORTS / "M2-slot47-e2e-r1" / "result.json"
+    evidence = REPORTS / "M3-slot47-web-e2e-r2" / "result.json"
+    stub = REPORTS / "M3-slot47-web-e2e-stub-r2" / "result.json"
+    tests = REPORTS / "M2-slot47-clean-tests-r2.log"
+    unit = REPORTS / "M3-slot47-web-unit-r2.log"
+    doubled = REPORTS / "M3-slot47-transcription-tests-r2.log"
+    hosted = REPORTS / "M2-slot47-e2e-r2" / "result.json"
 
     parts = [
         f"# Judge pass {label} on M3 slice B (transcription), cheap+ tier\n",

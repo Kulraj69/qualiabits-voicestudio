@@ -93,7 +93,9 @@ serialising (and which cookie is httpOnly, and which is readable), the voice
 grouping and language filtering, the number and status formatting, and the plane
 client's URL joining and error-message handling, and the transcript helpers that
 turn an answer into a `.srt` (including the case where the engine returned no
-segments). Thirty-nine checks, no browser.
+segments). Forty-four checks, no browser — the last five of them read
+`e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
+browser run is supposed to record cannot be deleted without a test failing.
 
 `npm run e2e` is the honest one. It builds the app, then starts **the real
 control plane** (its own SQLite file and object store), **the real web server**
@@ -102,7 +104,10 @@ form, speaks, mints and revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
-next request. **Fifty-two checks** on this path. `node e2e/dashboard.mjs
+next request. **Fifty-six checks** on this path, including the transcript's three
+downloads (each one a real click and a real file read back off disk) and one byte
+past the plane's own 25 MiB upload ceiling, refused with the sentence that names
+the limit. `node e2e/dashboard.mjs
 --no-build` reuses an existing build; `--keep` writes `result.json`, the process
 logs and a full-page screenshot of each of the six pages to `e2e/.evidence/`.
 
@@ -126,7 +131,7 @@ URL, the same pins and the same three files the hosted proof's script checks
 that quietly did would be the opposite of evidence. So from a fresh clone this
 path needs one thing: the venv the sync above builds.
 
-That run carries five things a constant-size stub cannot produce, every one of
+That run carries six things a constant-size stub cannot produce, every one of
 them the engine's own answer about itself: its identity from `/health`, the
 backend it reports active with its voice count, the sha256 of `model.int8.onnx`,
 `tokens.txt` and `voices.bin`, a paragraph that produced more audio than the
@@ -134,10 +139,14 @@ one-liner, and the words that come back out of a **closed loop**: the sentence t
 speech engine said is uploaded back through the Transcribe page and read by the
 engine's own speech-to-text route, and the run records both strings — what was said
 and what was heard — beside the words they share. That model is supplied by the
-operator as a directory too (CTranslate2 Whisper small, `Systran/faster-whisper-small`,
-pinned by sha256 in the script), so nothing is downloaded behind a licence gate and
-nothing is accepted on anybody's behalf. The script stops rather than substitutes if
-it is missing.
+operator as a directory too (CTranslate2 Whisper small, `Systran/faster-whisper-small`),
+so nothing is downloaded behind a licence gate and nothing is accepted on anybody's
+behalf; the script stops rather than substitutes if it is missing. **Its bytes are
+recorded as well**: `result.json` names the transcription model's directory and the
+sha256 of `model.bin`, `config.json`, `tokenizer.json` and `vocabulary.txt`, and one
+check fails the run unless `model.bin` is the exact hash `real-engine.sh` pins — the
+same treatment the speech model gets, because "which model read the words back" is
+part of the claim.
 
 On CPU it takes minutes rather than seconds: synthesis runs at about a seventh of
 real time and transcription is slower still. Four knobs, if your box is slower than
