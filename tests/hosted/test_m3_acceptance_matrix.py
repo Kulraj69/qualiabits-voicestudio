@@ -31,10 +31,15 @@ PAGE = REPO_ROOT / "hosted" / "M3-ACCEPTANCE.md"
 #: The browser suite's own evidence file, in the fork's hermes-reports/ directory.
 EVIDENCE_RE = re.compile(r"hermes-reports/(M3-slot\d+-web-e2e-r\d+)/result\.json")
 ROW_RE = re.compile(r"^\|\s*(?P<cells>.+?)\s*\|\s*$", re.MULTILINE)
-PATH_RE = re.compile(r"`([^`]+)`")
+#: A row's cells are read for backticked names individually. Scanning the whole page
+#: for backticks (as this suite first did) also picks up the checks named in the
+#: evidence column and mistakes them for repository paths, so the backticks are only
+#: read where they are supposed to name a file: the code and tests columns.
+CELL_NAME_RE = re.compile(r"`([^`]+)`")
 #: A row may state outright that the run proves nothing for it, rather than point at
 #: some true-but-irrelevant check.
 NO_RUN_EVIDENCE = "no run evidence"
+HEADER_FIRST_CELL = "The plan asks for"
 #: What the browser run exercised. If one of these changes, its evidence is stale.
 MEASURED_SUBJECTS = (
     "hosted/control_plane",
@@ -66,37 +71,48 @@ def run_result() -> dict:
 
 
 def rows() -> list[list[str]]:
+    """The table's body rows, header and separator dropped."""
+    text = page_text()
+    assert f"| {HEADER_FIRST_CELL} |" in text, "the acceptance table lost its header"
     out = []
-    for match in ROW_RE.finditer(page_text()):
+    for match in ROW_RE.finditer(text):
         cells = [cell.strip() for cell in match.group("cells").split("|")]
-        if len(cells) < 4 or set(cells[0]) <= set("-: "):
+        if len(cells) != 4 or set(cells[0]) <= set("-: "):
             continue  # the header separator, or prose that happens to start with |
+        if cells[0] == HEADER_FIRST_CELL:
+            continue  # the header itself, which names no code and no check
         out.append(cells)
     return out
+
+
+def backticked(cell: str) -> list[str]:
+    """The names a cell wraps in backticks."""
+    return CELL_NAME_RE.findall(cell)
 
 
 def test_the_table_has_rows_and_each_names_code_tests_and_evidence():
     table = rows()
     assert len(table) >= 10, f"the table shrank to {len(table)} rows"
     for cells in table:
-        assert "`" in cells[1], f"no code path in: {cells}"
-        assert "`" in cells[2], f"no test path in: {cells}"
+        assert backticked(cells[1]), f"no code path in: {cells}"
+        assert backticked(cells[2]), f"no test path in: {cells}"
         assert cells[3], f"no evidence cell in: {cells}"
 
 
 def test_every_path_the_table_names_exists():
     missing = []
-    for path_text in PATH_RE.findall(page_text()):
-        candidate = (REPO_ROOT / path_text).resolve()
-        if not candidate.exists():
-            missing.append(path_text)
-    assert missing == [], f"paths named by the table that do not exist: {missing}"
+    for cells in rows():
+        for cell in cells[1:3]:  # the code column and the tests column
+            for path_text in backticked(cell):
+                if not (REPO_ROOT / path_text).exists():
+                    missing.append(f"{cells[0]!r} names {path_text}")
+    assert missing == [], f"rows that name something which is not there: {missing}"
 
 
 def test_every_test_file_the_table_names_has_content():
     empty = []
     for cells in rows():
-        for path_text in PATH_RE.findall(cells[2]):
+        for path_text in backticked(cells[2]):
             candidate = REPO_ROOT / path_text
             if candidate.is_file() and candidate.stat().st_size == 0:
                 empty.append(path_text)
@@ -112,9 +128,10 @@ def test_every_check_the_table_names_is_in_the_run_it_cites():
             continue
         # A row may wrap its check name in backticks or quote it plainly; both are
         # read the same way, so a row cannot avoid the check by adding punctuation.
-        expected = evidence.split("`")[1] if "`" in evidence else evidence
-        if expected not in names:
-            missing.append(expected)
+        expected_names = backticked(evidence) or [evidence]
+        for expected in expected_names:
+            if expected not in names:
+                missing.append(expected)
     assert missing == [], f"checks named by the table that the run does not record: {missing}"
 
 
