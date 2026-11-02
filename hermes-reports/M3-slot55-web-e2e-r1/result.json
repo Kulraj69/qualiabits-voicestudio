@@ -1,0 +1,571 @@
+{
+  "run": "qualiabits voice — browser dashboard end to end",
+  "engine": "sherpa-onnx on kokoro-int8-multi-lang-v1_0 (QB_E2E_ENGINE_CMD)",
+  "engine_model_source": "found at /workspace/m1-models/kokoro-int8-multi-lang-v1_0",
+  "engine_command": "/workspace/qualiabits-voicestudio/.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port {port}",
+  "engine_is_stub": false,
+  "engine_model": {
+    "directory": "/workspace/m1-models/kokoro-int8-multi-lang-v1_0",
+    "files": {
+      "model.int8.onnx": "75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e",
+      "tokens.txt": "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425",
+      "voices.bin": "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29"
+    }
+  },
+  "transcription_model": {
+    "directory": "/workspace/m1-models/faster-whisper-small",
+    "files": {
+      "model.bin": "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671",
+      "config.json": "b55496ac7940a7ae47d2c01eab40edfd8701feec1229d9cce3b40014383fb828",
+      "tokenizer.json": "fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab",
+      "vocabulary.txt": "34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913"
+    }
+  },
+  "transcription_model_source": "found at /workspace/m1-models/faster-whisper-small",
+  "transcription_model_pinned": "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671",
+  "revision": {
+    "tested_commit": "1301a11627d838dd7d4ad2895504f89fc4d9b140",
+    "worktree_dirty": false,
+    "generated_at_utc": "2026-11-02T17:13:23.814Z"
+  },
+  "browser": "156.0.8078.4",
+  "deployed": false,
+  "public_url": null,
+  "gpu": false,
+  "real_s3": false,
+  "checks": [
+    {
+      "name": "engine is up and answers /health",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"0.5.7\"}"
+    },
+    {
+      "name": "the engine is a real backend, not the suite's stub",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"0.5.7\"}"
+    },
+    {
+      "name": "the engine reports a model directory that exists",
+      "ok": true,
+      "detail": "{\"directory\":\"/workspace/m1-models/kokoro-int8-multi-lang-v1_0\",\"files\":{\"model.int8.onnx\":\"75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e\",\"tokens.txt\":\"6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425\",\"voices.bin\":\"1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29\"}}"
+    },
+    {
+      "name": "the engine declares the voices the picker can offer",
+      "ok": true,
+      "detail": "sherpa-onnx: 54 voices"
+    },
+    {
+      "name": "the engine reports a transcription model directory with weights in it",
+      "ok": true,
+      "detail": "{\"directory\":\"/workspace/m1-models/faster-whisper-small\",\"files\":{\"model.bin\":\"3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671\",\"config.json\":\"b55496ac7940a7ae47d2c01eab40edfd8701feec1229d9cce3b40014383fb828\",\"tokenizer.json\":\"fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab\",\"vocabulary.txt\":\"34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913\"}}"
+    },
+    {
+      "name": "the transcription model on disk is the one this run pins",
+      "ok": true,
+      "detail": "pinned 3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671, on disk 3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671"
+    },
+    {
+      "name": "the control plane is up on its own database",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the control plane can see the engine",
+      "ok": true,
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:41265\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"0.5.7\"}"
+    },
+    {
+      "name": "the dashboard builds",
+      "ok": true,
+      "detail": "optimization ...\n\nRoute (app)\n┌ ƒ /\n├ ƒ /_not-found\n├ ƒ /api/auth/login\n├ ƒ /api/auth/logout\n├ ƒ /api/auth/signup\n├ ƒ /api/dashboard-key\n├ ƒ /api/jobs\n├ ƒ /api/jobs/[id]\n├ ƒ /api/jobs/[id]/audio\n├ ƒ /api/keys\n├ ƒ /api/keys/[id]\n├ ƒ /api/speech\n├ ƒ /api/transcribe\n├ ƒ /jobs\n├ ƒ /keys\n├ ƒ /login\n├ ƒ /signup\n├ ƒ /speak\n├ ƒ /transcribe\n├ ƒ /usage\n└ ƒ /voices\n\n\nƒ  (Dynamic)  server-rendered on demand\n\n"
+    },
+    {
+      "name": "the dashboard is up and rooted at /",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "signup lands on the dashboard and greets the workspace",
+      "ok": true,
+      "detail": "Browser E2E"
+    },
+    {
+      "name": "the session token is not readable by page JavaScript",
+      "ok": true,
+      "detail": "{\"localStorage\":\"[]\",\"cookie\":\"qb_ws={\\\"id\\\":1,\\\"email\\\":\\\"browser-e2e@example.com\\\",\\\"display_name\\\":\\\"Browser E2E\\\"}\",\"hasSecret\":false}"
+    },
+    {
+      "name": "the workspace name cookie is the only cookie the page can see",
+      "ok": true,
+      "detail": "qb_ws={\"id\":1,\"email\":\"browser-e2e@example.com\",\"display_name\":\"Browser E2E\"}"
+    },
+    {
+      "name": "home links to /speak",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /voices",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /transcribe",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /jobs",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /keys",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "home links to /usage",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /keys, /usage"
+    },
+    {
+      "name": "no dead links on home",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "/ answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Browser E2E\""
+    },
+    {
+      "name": "/speak answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Speak\""
+    },
+    {
+      "name": "/voices answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Voice library\""
+    },
+    {
+      "name": "/transcribe answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Transcribe\""
+    },
+    {
+      "name": "/keys answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"API keys\""
+    },
+    {
+      "name": "/usage answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Usage\""
+    },
+    {
+      "name": "/jobs answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Jobs\""
+    },
+    {
+      "name": "every page takes a keyboard Tab onto a focusable control",
+      "ok": true,
+      "detail": "[[\"/\",\"A\"],[\"/speak\",\"A\"],[\"/voices\",\"A\"],[\"/transcribe\",\"A\"],[\"/keys\",\"A\"],[\"/usage\",\"A\"],[\"/jobs\",\"A\"]]"
+    },
+    {
+      "name": "every page shows a visible focus outline",
+      "ok": true,
+      "detail": "[[\"/\",\"solid 2px\"],[\"/speak\",\"solid 2px\"],[\"/voices\",\"solid 2px\"],[\"/transcribe\",\"solid 2px\"],[\"/keys\",\"solid 2px\"],[\"/usage\",\"solid 2px\"],[\"/jobs\",\"solid 2px\"]]"
+    },
+    {
+      "name": "every page was captured as a screenshot",
+      "ok": true,
+      "detail": "[[\"/\",179874],[\"/speak\",142307],[\"/voices\",657676],[\"/transcribe\",142322],[\"/keys\",137900],[\"/usage\",190322],[\"/jobs\",153231]]"
+    },
+    {
+      "name": "the voice list is served by the plane, not hard-coded",
+      "ok": true,
+      "detail": "af_alloy,af_aoede,af_bella,af_heart,af_jessica,af_kore,af_nicole,af_nova,af_river,af_sarah,af_sky,am_adam,am_echo,am_eric,am_fenrir,am_liam,am_michael,am_onyx,am_puck,am_santa,bf_alice,bf_emma,bf_isabella,bf_lily,bm_daniel,bm_fable,bm_george,bm_lewis,ef_dora,em_alex,ff_siwis,hf_alpha,hf_beta,hm_omega,hm_psi,if_sara,im_nicola,jf_alpha,jf_gongitsune,jf_nezumi,jf_tebukuro,jm_kumo,pf_dora,pm_alex,pm_santa,zf_xiaobei,zf_xiaoni,zf_xiaoxiao,zf_xiaoyi,zm_yunjian,zm_yunxi,zm_yunxia,zm_yunyang,em_santa,alloy,ash,ballad,cedar,coral,echo,fable,marin,nova,onyx,sage,shimmer,verse,demo0001"
+    },
+    {
+      "name": "the Speak page returns real WAV bytes through the plane",
+      "ok": true,
+      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":87706,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.826292 s of audio · 87,706 bytes · engine took 17.24s · engine build 0.5.7Download WAV\"}"
+    },
+    {
+      "name": "the audio has a download link",
+      "ok": true,
+      "detail": "speech-hf_alpha.wav"
+    },
+    {
+      "name": "the player reports the measured duration and size",
+      "ok": true,
+      "detail": "Spoken: hf_alpha1.826292 s of audio · 87,706 bytes · engine took 17.24s · engine build 0.5.7Download WAV"
+    },
+    {
+      "name": "an unknown voice is refused by the plane with the engine's own sentence",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"error\":{\"message\":\"Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.\",\"type\":\"invalid_request_error\",\"param\":\"input\",\"code\":null},\"detail\":\"Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.\"}}"
+    },
+    {
+      "name": "the spoken audio was read back out of the page for transcription",
+      "ok": true,
+      "detail": "87706 bytes"
+    },
+    {
+      "name": "the Transcribe page shows a transcript",
+      "ok": true,
+      "detail": "यह एक हिंदी वाग के है"
+    },
+    {
+      "name": "the plane measured the upload as the same length as the audio it returned",
+      "ok": true,
+      "detail": "1.826292 s spoken vs 1.826292 s uploaded"
+    },
+    {
+      "name": "the plane counted the transcript in its own counter, not the speech one",
+      "ok": true,
+      "detail": "21 vs 21 characters"
+    },
+    {
+      "name": "the plane metered the upload's seconds under the same workspace",
+      "ok": true,
+      "detail": "3.653 s in the meter"
+    },
+    {
+      "name": "the real transcription engine heard words that were actually spoken",
+      "ok": true,
+      "detail": "said \"यह एक हिन्दी वाक्य है।\", heard \"यह एक हिंदी वाग के है\", shared [\"यह\",\"एक\",\"है\"]"
+    },
+    {
+      "name": "the transcript downloads as .txt holding the text the page shows",
+      "ok": true,
+      "detail": "spoken.transcript.txt: यह एक हिंदी वाग के है"
+    },
+    {
+      "name": "the transcript downloads as .srt with cues carrying the engine's own timings",
+      "ok": true,
+      "detail": "spoken.transcript.srt: 1 / 00:00:00,000 --> 00:00:02,000 / यह एक हिंदी वाग के है / "
+    },
+    {
+      "name": "the transcript downloads as .json holding the engine's own payload",
+      "ok": true,
+      "detail": "spoken.transcript.json: {\n  \"task\": \"transcribe\",\n  \"language\": \"hi\",\n  \"duration\": "
+    },
+    {
+      "name": "an upload with no file is refused with a sentence that says so",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"detail\":\"Choose a recording first. A WAV from the Speak page is a good one.\"}}"
+    },
+    {
+      "name": "an upload past the plane's ceiling is refused with a sentence naming the limit",
+      "ok": true,
+      "detail": "413 \"That upload is larger than 25 MiB. An upload is at most 25 MiB.\""
+    },
+    {
+      "name": "the dashboard refused the oversized upload itself, so the plane never saw a request",
+      "ok": true,
+      "detail": "3 -> 3"
+    },
+    {
+      "name": "a minted key is shown once and looks like a key",
+      "ok": true,
+      "detail": "qbv_f622e3dde54c6137_mCGxvhxd3jFGJhB7YIhrjHuhxS3ajMTJfwldaLd4luc"
+    },
+    {
+      "name": "the key is not shown again after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the list shows the key's public id and never its secret",
+      "ok": true,
+      "detail": "6 cells, secret length 43"
+    },
+    {
+      "name": "revoking marks the key revoked in the list",
+      "ok": true,
+      "detail": "revoked"
+    },
+    {
+      "name": "a revoked key is refused on the next request",
+      "ok": true,
+      "detail": "status 401"
+    },
+    {
+      "name": "the voice library lists exactly the voices the plane serves",
+      "ok": true,
+      "detail": "68 cards vs 68 from the plane"
+    },
+    {
+      "name": "the library's own count line agrees with the plane's catalogue",
+      "ok": true,
+      "detail": "68 of 68 voices. Every card here is a voice the engine repor"
+    },
+    {
+      "name": "searching the library narrows it to the voices that match, and invents none",
+      "ok": true,
+      "detail": "2 of 68: hf_alpha,hf_beta"
+    },
+    {
+      "name": "the narrowed count line names how many of the plane's voices are shown",
+      "ok": true,
+      "detail": "2 of 68 voices. Every card here is a voice the engine report"
+    },
+    {
+      "name": "the library previews a voice it offered, and real WAV bytes come back through the plane",
+      "ok": true,
+      "detail": "{\"voice\":\"hf_alpha\",\"header\":\"RIFF\",\"bytes\":193396}"
+    },
+    {
+      "name": "the preview player reports the measured duration and size",
+      "ok": true,
+      "detail": "Previewing: hf_alpha4.028167 s of audio · 193,396 bytes · engine took 35.454sDow / preview-hf_alpha.wav"
+    },
+    {
+      "name": "the preview was metered as exactly one more speech request under this workspace",
+      "ok": true,
+      "detail": "3 -> 4"
+    },
+    {
+      "name": "the preview's own measured seconds are the seconds the plane added to the meter",
+      "ok": true,
+      "detail": "page says 4.028167 s, plane added 4.0280000000000005 s"
+    },
+    {
+      "name": "Use in Speak carries the voice to the Speak page, which selects it",
+      "ok": true,
+      "detail": "hf_alpha vs hf_alpha"
+    },
+    {
+      "name": "a voice the plane does not have is not preselected, it falls back to the default",
+      "ok": true,
+      "detail": "af_alloy"
+    },
+    {
+      "name": "the same credentials log in straight to the plane",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the Usage page's request count matches the plane's meter",
+      "ok": true,
+      "detail": "4 vs 4"
+    },
+    {
+      "name": "the per-key breakdown the plane records is shown, one row per key",
+      "ok": true,
+      "detail": "per-key rows 1, plane keys 1"
+    },
+    {
+      "name": "the Usage page shows the transcribed-character counter the plane keeps",
+      "ok": true,
+      "detail": "21 vs 21"
+    },
+    {
+      "name": "a cancelled job reads as cancelled and was never spoken",
+      "ok": true,
+      "detail": "#1Cancelledhf_alpha55Nov 02, 2026, 17:16:45never spoken—"
+    },
+    {
+      "name": "cancelling a queued job did not move the meter",
+      "ok": true,
+      "detail": "4->4, 90->90"
+    },
+    {
+      "name": "the real worker drained the queue",
+      "ok": true,
+      "detail": "2: job 2 succeeded, 6.294167 s of audio (stored a4/8f/a48f22554884e8f30547da0a4cccf45924af2e4795c4669a88ec73b51ceb3797.wav)\n{\"claimed\": 1, \"engine_seconds\": 36.828, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-3357012\"}\n"
+    },
+    {
+      "name": "the plane records the spoken job as succeeded",
+      "ok": true,
+      "detail": "[\"succeeded\",\"cancelled\"]"
+    },
+    {
+      "name": "the job's stored audio comes back as a WAV",
+      "ok": true,
+      "detail": "{\"status\":200,\"header\":\"RIFF\",\"bytes\":302164}"
+    },
+    {
+      "name": "the downloaded audio is the bytes the plane stored",
+      "ok": true,
+      "detail": "302164 vs 302164"
+    },
+    {
+      "name": "the jobs table shows one Done row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the real engine made more audio for the paragraph than for the one-liner",
+      "ok": true,
+      "detail": "87706 then 302164 bytes"
+    },
+    {
+      "name": "no uncaught JavaScript errors on any page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "engine_health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "engine_active": "sherpa-onnx",
+  "engine_voice_count": 54,
+  "plane_health": {
+    "upstream_base_url": "http://127.0.0.1:41265",
+    "reachable": true,
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Browser E2E",
+      "screenshot": "e2e/.evidence/screenshots/home.png",
+      "screenshot_bytes": 179874
+    },
+    {
+      "route": "/speak",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Speak",
+      "screenshot": "e2e/.evidence/screenshots/speak.png",
+      "screenshot_bytes": 142307
+    },
+    {
+      "route": "/voices",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Voice library",
+      "screenshot": "e2e/.evidence/screenshots/voices.png",
+      "screenshot_bytes": 657676
+    },
+    {
+      "route": "/transcribe",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Transcribe",
+      "screenshot": "e2e/.evidence/screenshots/transcribe.png",
+      "screenshot_bytes": 142322
+    },
+    {
+      "route": "/keys",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "API keys",
+      "screenshot": "e2e/.evidence/screenshots/keys.png",
+      "screenshot_bytes": 137900
+    },
+    {
+      "route": "/usage",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Usage",
+      "screenshot": "e2e/.evidence/screenshots/usage.png",
+      "screenshot_bytes": 190322
+    },
+    {
+      "route": "/jobs",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Jobs",
+      "screenshot": "e2e/.evidence/screenshots/jobs.png",
+      "screenshot_bytes": 153231
+    }
+  ],
+  "transcript": {
+    "engine_is_stub": false,
+    "spoken_text": "यह एक हिन्दी वाक्य है।",
+    "transcript_text": "यह एक हिंदी वाग के है",
+    "shared_words": [
+      "यह",
+      "एक",
+      "है"
+    ],
+    "spoken_words": [
+      "यह",
+      "एक",
+      "हिन्दी",
+      "वाक्य",
+      "है"
+    ],
+    "spoken_seconds": 1.826292,
+    "upload_seconds_measured": 1.826292,
+    "transcript_characters_in_meter": 21,
+    "segments": 1,
+    "meta": "1.826292 s measured · 21 characters · 85.7 KiB sent · engine took 67.627s · engine build 0.5.7",
+    "downloads": {
+      "txt": {
+        "filename": "spoken.transcript.txt",
+        "bytes": 53
+      },
+      "srt": {
+        "filename": "spoken.transcript.srt",
+        "bytes": 87
+      },
+      "json": {
+        "filename": "spoken.transcript.json",
+        "bytes": 433
+      }
+    }
+  },
+  "library": {
+    "plane_voices": 68,
+    "cards": 68,
+    "narrowed": 2,
+    "previewed": "hf_alpha",
+    "preview_bytes": 193396,
+    "preview_seconds": 4.028167,
+    "requests_before": 3,
+    "requests_after": 4,
+    "handed_over": "hf_alpha"
+  },
+  "usage": {
+    "plane_transcript_characters": 21,
+    "page_transcript_characters": 21,
+    "plane_requests": 4,
+    "page_requests": 4,
+    "plane_keys": 1,
+    "page_per_key_rows": 1,
+    "page_all_table_rows": 3
+  },
+  "audio": {
+    "engine_is_stub": false,
+    "sentence_bytes": 87706,
+    "paragraph_bytes": 302164,
+    "paragraph_seconds": 6.294167
+  },
+  "passed": 75,
+  "failed": 0,
+  "ok": true,
+  "diagnostics": [
+    {
+      "process": "web",
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:45229\n- Network:       http://127.0.0.1:45229\n✓ Ready in 425ms\n✓ Running next.config.mjs took 29ms\n"
+    },
+    {
+      "process": "control-plane",
+      "tail": "INFO:     127.0.0.1:49896 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49896 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49896 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49896 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49896 - \"GET /v1/jobs?limit=50 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52350 - \"GET /v1/jobs HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49896 - \"GET /v1/jobs/2/audio HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [3356606]\n"
+    },
+    {
+      "process": "engine",
+      "tail": "INFO:     127.0.0.1:44954 - \"GET /engines/tts HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:44954 - \"GET /v1/audio/voices HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:44954 - \"GET /engines/tts HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:44954 - \"GET /v1/audio/voices HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:44954 - \"GET /engines/tts HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:34800 - \"POST /v1/audio/speech HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\n2026-11-02 22:47:28,848 INFO [omnivoice.api] Shutdown: cleaning up…\n2026-11-02 22:47:28,898 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager shutting down\n2026-11-02 22:47:29,105 INFO [omnivoice.asr] Releasing the warm transcription ASR (FasterWhisperBackend).\n"
+    }
+  ]
+}
