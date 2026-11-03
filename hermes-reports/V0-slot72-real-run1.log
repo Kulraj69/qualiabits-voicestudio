@@ -1,0 +1,121 @@
+==> verifying the model bytes against the pinned hashes
+    ok model.int8.onnx
+    ok tokens.txt
+    ok voices.bin
+==> engine speech-to-text: faster-whisper on /workspace/m1-models/faster-whisper-small (model.bin pinned)
+==> engine: sherpa-onnx on /workspace/m1-models/kokoro-int8-multi-lang-v1_0
+==> CPU synthesis is slower than real time; this run takes minutes, not seconds.
+PASS  engine is up and answers /health
+PASS  the engine is a real backend, not the suite's stub
+PASS  the engine reports a model directory that exists
+PASS  the engine declares the voices the picker can offer
+PASS  the engine reports a transcription model directory with weights in it
+PASS  the transcription model on disk is the one this run pins
+PASS  the control plane is up on its own database
+PASS  the control plane can see the engine
+PASS  the dashboard builds
+PASS  the dashboard is up and rooted at /
+PASS  signup lands on the dashboard and greets the workspace
+PASS  the session token is not readable by page JavaScript
+PASS  the workspace name cookie is the only cookie the page can see
+PASS  home links to /speak
+PASS  home links to /voices
+PASS  home links to /transcribe
+PASS  home links to /jobs
+PASS  home links to /keys
+PASS  home links to /usage
+PASS  no dead links on home
+PASS  / answers 200 and has a heading
+PASS  /speak answers 200 and has a heading
+PASS  /voices answers 200 and has a heading
+PASS  /transcribe answers 200 and has a heading
+PASS  /keys answers 200 and has a heading
+PASS  /usage answers 200 and has a heading
+PASS  /jobs answers 200 and has a heading
+PASS  /projects answers 200 and has a heading
+PASS  every page takes a keyboard Tab onto a focusable control
+PASS  every page shows a visible focus outline
+PASS  the app contains no native select control on any page
+PASS  every page was captured as a screenshot
+PASS  the shipped theme is the one this context asked for
+PASS  the dark page states its own color-scheme
+PASS  dark body text clears WCAG AA against the page background
+PASS  dark muted text clears WCAG AA
+PASS  dark headings clear WCAG AA
+PASS  a reader whose system asks for light gets the light theme
+PASS  the light page states its own color-scheme
+PASS  light body text clears WCAG AA against the page background
+PASS  light muted text clears WCAG AA
+PASS  light headings clear WCAG AA
+PASS  the two themes really are different pages to look at
+PASS  the toggle is on the page and named for the theme it switches to
+PASS  the served HTML applies the theme before the page's own markup
+PASS  pressing the toggle switches the page to the other theme
+PASS  the choice is written where the no-flash script reads it
+PASS  a remembered choice survives a reload, over the system preference
+PASS  a stored choice is applied by the served HTML, before hydration
+PASS  every page renders light when light is asked for
+PASS  every page's text clears WCAG AA in light
+PASS  the home page's card rows all reach the row's edges
+PASS  the home page's tiles are a wrapping row, not fixed columns
+PASS  the voice list is served by the plane, not hard-coded
+PASS  the voice picker offers every voice the plane serves, and nothing else
+PASS  the Speak page returns real WAV bytes through the plane
+PASS  the audio has a download link
+PASS  the player reports the measured duration and size
+PASS  an unknown voice is refused by the plane with the engine's own sentence
+PASS  the spoken audio was read back out of the page for transcription
+PASS  the Transcribe page shows a transcript
+PASS  the plane measured the upload as the same length as the audio it returned
+PASS  the plane counted the transcript in its own counter, not the speech one
+PASS  the plane metered the upload's seconds under the same workspace
+PASS  the real transcription engine heard words that were actually spoken
+PASS  the transcript downloads as .txt holding the text the page shows
+PASS  the transcript downloads as .srt with cues carrying the engine's own timings
+PASS  the transcript downloads as .json holding the engine's own payload
+PASS  an upload with no file is refused with a sentence that says so
+PASS  an upload past the plane's ceiling is refused with a sentence naming the limit
+PASS  the dashboard refused the oversized upload itself, so the plane never saw a request
+
+71/71 checks passed
+evidence kept in /workspace/qualiabits-voicestudio/hosted/web/e2e/.evidence
+
+failures:
+- the run threw: page.goto: Target page, context or browser has been closed
+Call log:
+  - navigating to "http://127.0.0.1:38025/keys", waiting until "load"
+
+
+--- web log tail ---
+▲ Next.js 16.4.3
+- Local:         http://127.0.0.1:38025
+- Network:       http://127.0.0.1:38025
+✓ Ready in 465ms
+✓ Running next.config.mjs took 37ms
+
+--- control-plane log tail ---
+INFO:     127.0.0.1:38872 - "POST /v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38884 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38872 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38884 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38890 - "GET /healthz HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34238 - "GET /v1/usage HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2244459]
+
+--- engine log tail ---
+  File "/workspace/qualiabits-voicestudio/.venv/lib/python3.12/site-packages/uvicorn/__main__.py", line 4 in <module>
+  File "<frozen runpy>", line 88 in _run_code
+  File "<frozen runpy>", line 198 in _run_module_as_main
+2026-11-04 02:45:00,572 INFO [faster_whisper] Processing audio with duration 00:01.829
+2026-11-04 02:45:02,480 INFO [faster_whisper] VAD filter removed 00:00.000 of audio
+INFO:     127.0.0.1:39682 - "POST /v1/audio/transcriptions HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-11-04 02:45:59,045 INFO [omnivoice.api] Shutdown: cleaning up…
+2026-11-04 02:45:59,049 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager shutting down
+2026-11-04 02:45:59,307 INFO [omnivoice.asr] Releasing the warm transcription ASR (FasterWhisperBackend).
+
