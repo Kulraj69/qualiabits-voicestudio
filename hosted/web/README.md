@@ -133,12 +133,12 @@ records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
-of the eight pages: **ninety-one checks on the stub path** and **seventy-nine against
+of the eight pages: **ninety-one checks on the stub path** and **ninety-seven against
 the real engine**. Without `--keep` the same two paths run one fewer check each
-(**seventy-eight** and **eighty-four**), because the screenshot check has nowhere to
+(**ninety** and **ninety-six**), because the screenshot check has nowhere to
 write; `--no-build` skips one more, the check that the build succeeds. The kept runs
-are `hermes-reports/M3-slot56-web-e2e-stub-r1/result.json` and
-`hermes-reports/M3-slot56-web-e2e-r1/result.json`, and a test reads the counts, the
+are `hermes-reports/M3-slot60-web-e2e-stub-r1/result.json` and
+`hermes-reports/M3-slot60-web-e2e-r1/result.json`, and a test reads the counts, the
 one-check difference and the seven-and-one difference below back out of those files
 rather than trusting this paragraph. The real path adds seven checks a constant-size
 stub cannot pass — the engine's own answers about itself, from its identity and

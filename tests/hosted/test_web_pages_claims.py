@@ -48,10 +48,10 @@ WORD_NUMBERS = {
     "one": 1,
     "six": 6,
     "seven": 7,
-    "seventy-eight": 78,
-    "seventy-nine": 79,
-    "eighty-four": 84,
-    "eighty-five": 85,
+    "ninety": 90,
+    "ninety-one": 91,
+    "ninety-six": 96,
+    "ninety-seven": 97,
 }
 
 SCREENSHOT_CHECK = "every page was captured as a screenshot"
@@ -113,17 +113,17 @@ def test_the_stated_counts_are_the_counts_in_the_two_runs():
     )
 
     for word, expected in (
-        ("seventy-eight", stub_without),
-        ("seventy-nine", stub_keep),
-        ("eighty-four", real_without),
-        ("eighty-five", real_keep),
+        ("ninety", stub_without),
+        ("ninety-one", stub_keep),
+        ("ninety-six", real_without),
+        ("ninety-seven", real_keep),
     ):
         assert word in text, f"the page no longer states {word!r}"
         assert WORD_NUMBERS[word] == expected, (
             f"the page says {word!r} ({WORD_NUMBERS[word]}) and the runs record {expected}"
         )
-    assert "seventy-nine checks on the stub path" in flat(text)
-    assert "eighty-five against the real engine" in flat(text)
+    assert "ninety-one checks on the stub path" in flat(text)
+    assert "ninety-seven against the real engine" in flat(text)
 
 
 def test_the_stated_difference_is_the_real_difference_between_the_two_runs():
