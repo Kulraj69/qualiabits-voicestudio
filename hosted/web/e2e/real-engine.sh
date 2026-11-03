@@ -31,6 +31,9 @@
 # replaces the interpreter path. The three pinned hashes are checked before anything
 # here needs an interpreter at all, which is why a clone whose venv has not been built
 # yet still stops on unpinned model bytes instead of stopping on the missing venv.
+# QUALI_DF replaces the `df` the download branch reads before it writes; the exit codes
+# are 2 (no interpreter), 3 (unpinned bytes) and 4 (the download branch: no room, or an
+# asset that will not fetch or extract).
 #
 # It also resolves a transcription model, because the suite now closes a loop the
 # stub cannot: the sentence the speech engine says is uploaded back in and read by
@@ -77,6 +80,45 @@ require_python() {
   fi
 }
 
+#: How much room the download branch needs, in KB: the asset is about 132 MB and the
+#: extraction holds its own copy of it on the same filesystem, so a box with less than
+#: this fails halfway through a tar. That failure reads like a model problem ("exited 1,
+#: no ok lines") when it is a disk problem, which is what happened here on 2026-11-03
+#: twice while another lane was filling the disk; the preflight and the two sentences
+#: below are the fix, and exit 4 is what says "not the model, not the pins".
+NEEDED_KB=400000
+
+#: Free space on the filesystem holding $1, in KB, as `df` reports it. `QUALI_DF` exists
+#: for the same reason `QUALI_PYTHON` and `QUALI_MODEL_URL` do: a test can drive the full
+#: and not-full paths on a box whose disk is neither. An unreadable reading is not a
+#: refusal — this check only ever stops a run it can prove is out of room.
+free_space_kb() {
+  local df_cmd=${QUALI_DF:-df} free
+  free=$("$df_cmd" -Pk "$1" 2>/dev/null | awk 'NR==2 {print $4}') || true
+  case "$free" in
+    ''|*[!0-9]*) return 1 ;;
+  esac
+  printf '%s' "$free"
+}
+
+#: One sentence per thing a caller has to be able to tell apart: a full disk (4), an
+#: asset that will not fetch or extract (4), unpinned bytes (3), no interpreter (2).
+download_branch_failed() {
+  echo "==> the model download branch failed: $1" >&2
+  echo "==> nothing was verified and nothing was spoken: the pinned bytes were never reached" >&2
+  exit 4
+}
+
+require_free_space() { # directory
+  local free
+  free=$(free_space_kb "$1") || return 0
+  if [ "$free" -lt "$NEEDED_KB" ]; then
+    echo "==> not enough disk in $1: ${free} KB free, about ${NEEDED_KB} KB needed for the model asset and its extraction" >&2
+    echo "==> nothing was downloaded, nothing was verified and nothing was spoken; free some space and run this again" >&2
+    exit 4
+  fi
+}
+
 #: The three files this script pins are checked whatever directory the model came
 #: from. A model already on this machine is as capable of being the wrong bytes as
 #: a downloaded one, and the pins are the whole reason the run is evidence about a
@@ -111,13 +153,16 @@ if [ -z "$MODEL" ]; then
   WORK=${QUALI_E2E_WORK:-${TMPDIR:-/tmp}/qb-real-engine-model}
   mkdir -p "$WORK"
   if [ ! -d "$WORK/$MODEL_NAME" ]; then
+    require_free_space "$WORK"
     echo "==> no $MODEL_NAME on this machine; downloading it from $URL (about 132 MB)"
-    curl -fL --retry 3 -o "$WORK/$TARBALL" "$URL"
+    curl -fL --retry 3 -o "$WORK/$TARBALL" "$URL" \
+      || download_branch_failed "curl could not fetch $URL"
     echo "==> extracting"
     tar xjf "$WORK/$TARBALL" -C "$WORK" 2>/dev/null || {
       require_python
       "$PY" -c "import tarfile,sys; tarfile.open(sys.argv[1],'r:bz2').extractall(sys.argv[2])" \
-             "$WORK/$TARBALL" "$WORK"
+             "$WORK/$TARBALL" "$WORK" \
+        || download_branch_failed "the archive could not be extracted (a short disk shows here too; the preflight already checked for room)"
     }
   fi
   MODEL="$WORK/$MODEL_NAME"

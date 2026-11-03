@@ -204,6 +204,14 @@ that was actually used is written into the provenance label the evidence records
 caller cannot make a found directory read as a downloaded one. `QUALI_MODEL_URL` is not
 a way to speak unpinned bytes: the same three hashes decide.
 
+The download branch needs about 400 MB free (the 132 MB asset plus its extraction) and
+checks for it before fetching anything, because on this box it once died halfway through
+an extraction when another job filled the disk and the failure read like a bad model
+rather than a full disk. The exit codes say which is which: 2 no interpreter, 3 unpinned
+bytes, 4 the download branch (no room, or an asset that will not fetch or extract). The
+guard tests drive that reading through `QUALI_DF`, so they assert about the branch rather
+than about this machine's disk.
+
 That run carries what a constant-size stub cannot produce, every item the
 engine's own answer about itself: its identity from `/health`, the
 backend it reports active with its voice count, the sha256 of `model.int8.onnx`,

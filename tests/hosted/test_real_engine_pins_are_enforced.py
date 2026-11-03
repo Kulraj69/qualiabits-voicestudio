@@ -10,6 +10,13 @@ that matter:
   * the download branch itself fetches, extracts and then refuses unpinned bytes, and
   * the same branch proceeds past the pins when the bytes really are the pins.
 
+Two more were added after this box ran out of disk mid-suite twice on 2026-11-03: the
+download branch now refuses a full disk up front with its own exit code (4) and one
+sentence, and a broken asset exits the same way instead of as a bare `1` from `set -e`.
+Both are driven through `QUALI_DF`, the fake-`df` override, so they assert about the
+branch and not about this machine's disk; the two staging tests above ask to be skipped,
+with the reason, if the disk fills between the preflight and the write.
+
 Two of them deliberately point `QUALI_PYTHON` at a path that does not exist. A cold
 clone of this repository has no `.venv` — that is the state a reviewer starts in — and
 the fourth judge pass on this slice found the pin guard failing there, exiting 2 (no
@@ -46,10 +53,30 @@ def clean_env(**overrides: str) -> dict[str, str]:
     """The environment a caller could otherwise use to skip a path under test."""
     env = dict(os.environ)
     for name in ("QUALI_MODEL_DIR", "QUALI_ASR_MODEL_DIR", "QUALI_MODEL_NAME",
-                 "QUALI_MODEL_URL", "QUALI_PYTHON", "QUALI_E2E_WORK"):
+                 "QUALI_MODEL_URL", "QUALI_PYTHON", "QUALI_E2E_WORK", "QUALI_DF"):
         env.pop(name, None)
     env.update(overrides)
     return env
+
+
+def fake_df(tmp_path: Path, available_kb: int) -> Path:
+    """A `df` whose second line reports `available_kb` free, for the disk tests.
+
+    The box this suite runs on has a real one, and its reading changes while other
+    work runs, so a test of the "not enough room" branch cannot use it: it would be
+    asserting about the disk instead of about the script.
+    """
+    path = tmp_path / f"df-reports-{available_kb}kb"
+    path.write_text(
+        "#!/bin/sh\n"
+        "echo 'Filesystem 1024-blocks Used Available Capacity Mounted on'\n"
+        f"echo 'not-a-real-fs 999999999 1 {available_kb} 99% /'\n"
+    )
+    path.chmod(0o755)
+    return path
+
+
+OUT_OF_ROOM = "not enough disk"
 
 
 def run_script(env: dict[str, str], cwd: Path = REPO_ROOT) -> subprocess.CompletedProcess:
@@ -124,6 +151,7 @@ def test_the_download_branch_fetches_extracts_and_then_refuses_unpinned_bytes(
         QUALI_PYTHON=sys.executable,
     ))
 
+    skip_if_this_box_is_out_of_room(run)
     assert run.returncode == 3, (
         "the download branch did not stop on unpinned bytes; it exited "
         f"{run.returncode}\nstdout:\n{run.stdout[-2000:]}\nstderr:\n{run.stderr[-2000:]}"
@@ -179,6 +207,7 @@ def test_the_download_branch_proceeds_when_the_bytes_are_the_pins(tmp_path: Path
     finally:
         shutil.rmtree(tmp_path / "downloads", ignore_errors=True)
 
+    skip_if_this_box_is_out_of_room(run)
     assert run.returncode == 3, (
         f"expected the transcription check to stop the run, it exited {run.returncode}\n"
         f"stdout:\n{run.stdout[-2000:]}\nstderr:\n{run.stderr[-2000:]}"
@@ -194,4 +223,86 @@ def test_the_download_branch_proceeds_when_the_bytes_are_the_pins(tmp_path: Path
     )
     assert "==> engine speech-to-text" not in run.stdout, (
         "the script went on to a transcription model whose bytes it had just rejected"
+    )
+
+
+def skip_if_this_box_is_out_of_room(run: subprocess.CompletedProcess) -> None:
+    """An environment failure must not be reported as a product failure.
+
+    On 2026-11-03 this suite ran the download branch twice while another lane filled
+    the disk, and both times the assertion below read "exited 1" — the OS's ENOSPC
+    from halfway through an extraction, dressed as the script refusing a model. The
+    script now refuses a full disk up front, and this turns the one failure mode left
+    (the box filling up between the preflight and the write) into a skip that says so.
+    """
+    combined = run.stdout + run.stderr
+    if OUT_OF_ROOM in combined or "No space left on device" in combined:
+        pytest.skip(
+            "this box ran out of disk while the guard staged the 112 MB asset, so the "
+            "download branch was never reached: " + combined[-400:].strip()
+        )
+
+
+def test_the_download_branch_refuses_a_full_disk_before_it_writes_anything(
+    tmp_path: Path,
+) -> None:
+    """Exit 4 and one sentence, instead of a tar crash that reads like a bad model.
+
+    The reading comes from a fake `df` through the script's own `QUALI_DF` override,
+    the same way the pin tests drive `QUALI_PYTHON` and `QUALI_MODEL_URL`: the branch
+    is about the disk, so the test fixes the disk rather than measuring this one.
+    """
+    work = tmp_path / "work"
+    run = run_script(clean_env(
+        QUALI_MODEL_NAME="kokoro-int8-this-box-cannot-hold-it",
+        QUALI_MODEL_URL="file:///nonexistent/never-fetched.tar.bz2",
+        QUALI_E2E_WORK=str(work),
+        QUALI_DF=str(fake_df(tmp_path, available_kb=1000)),
+    ))
+
+    assert run.returncode == 4, (
+        "a full disk should stop the run with its own exit code, not "
+        f"{run.returncode}\nstdout:\n{run.stdout[-2000:]}\nstderr:\n{run.stderr[-2000:]}"
+    )
+    assert OUT_OF_ROOM in run.stderr and str(work) in run.stderr, run.stderr[-2000:]
+    assert "1000 KB free" in run.stderr, (
+        "the sentence does not say how much room the box had: " + run.stderr[-2000:]
+    )
+    assert "downloading it from" not in run.stdout, (
+        "the script went to the network after deciding it had no room"
+    )
+    assert not (work / "kokoro-int8-this-box-cannot-hold-it").exists(), (
+        "the run left a model directory behind although it never had room for one"
+    )
+
+
+def test_a_broken_asset_stops_the_download_branch_with_its_own_exit_code(
+    tmp_path: Path,
+) -> None:
+    """Fetching bytes that are not an archive is not a pin mismatch and not a crash.
+
+    Exit 4 is what a caller can act on ("your download is broken"); the pins exit 3
+    and a missing interpreter exits 2, and a bare `1` from `set -e` says none of that.
+    """
+    work = tmp_path / "work"
+    asset = tmp_path / "downloads" / "not-an-archive.tar.bz2"
+    asset.parent.mkdir(parents=True)
+    asset.write_bytes(b"this is not a bzip2 archive\n")
+    name = "kokoro-int8-this-box-cannot-extract-it"
+
+    run = run_script(clean_env(
+        QUALI_MODEL_NAME=name,
+        QUALI_MODEL_URL=asset.as_uri(),
+        QUALI_E2E_WORK=str(work),
+        QUALI_PYTHON=sys.executable,
+        QUALI_DF=str(fake_df(tmp_path, available_kb=900000)),
+    ))
+
+    assert run.returncode == 4, (
+        "a broken asset should exit 4, it exited "
+        f"{run.returncode}\nstdout:\n{run.stdout[-2000:]}\nstderr:\n{run.stderr[-2000:]}"
+    )
+    assert "the model download branch failed" in run.stderr, run.stderr[-2000:]
+    assert "==> engine: sherpa-onnx" not in run.stdout, (
+        "the script started an engine although it never had a model"
     )
