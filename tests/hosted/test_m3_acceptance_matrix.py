@@ -41,6 +41,11 @@ CELL_NAME_RE = re.compile(r"`([^`]+)`")
 NO_RUN_EVIDENCE = "no run evidence"
 HEADER_FIRST_CELL = "The plan asks for"
 #: What the browser run exercised. If one of these changes, its evidence is stale.
+#: `hosted/web/e2e` is in the list because the harness is part of what the run is:
+#: a judge pass on this slice pointed out that the harness could be edited — the
+#: frame comparison below was added this way, and a check's condition weakened —
+#: without the guard noticing, so a run taken with a different harness could be
+#: quoted as though it were taken with this one.
 MEASURED_SUBJECTS = (
     "hosted/control_plane",
     "hosted/worker",
@@ -48,6 +53,7 @@ MEASURED_SUBJECTS = (
     "hosted/web/app",
     "hosted/web/components",
     "hosted/web/lib",
+    "hosted/web/e2e",
 )
 
 

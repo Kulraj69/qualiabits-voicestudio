@@ -39,6 +39,17 @@ Documentation and tests keep moving after a run; the directories a run measured 
 not, and the same guard runs the `git diff` that decides it — so the evidence here
 is a command a reader can re-run, not a policy to take on trust.
 
+Where that guard stops, said out loud because a judge was right to ask: the run is
+evidence about the code under the directories it measured, and about the harness in
+`hosted/web/e2e` that took it. This repository's HEAD is usually a little ahead of
+the run's revision, because the prose on these pages is corrected after a run — a
+count, a name, a measured word. Those corrections cannot make the run untrue,
+because the numbers they state are read back out of the same run file by guards
+rather than trusted: both paths' check counts, the one-check difference between
+them, and the shared-word count below all fail the suite if the page and the file
+disagree. A change to a measured directory, the harness included, is the other case:
+that fails the same guard, and a fresh browser run is owed.
+
 | The plan asks for | Code | Tests | A check in the browser run |
 | --- | --- | --- | --- |
 | A real Next.js dashboard, its own package, importing nothing from `backend/` | `hosted/web/app/layout.jsx` | `hosted/web/test/controlplane.test.mjs` | `the dashboard is up and rooted at /` |

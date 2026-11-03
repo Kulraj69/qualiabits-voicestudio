@@ -10,6 +10,15 @@ meter the plane keeps.
 Not deployed. Not public. No public URL, no real S3 bucket, no GPU. Everything
 runs on this machine on loopback.
 
+The fastest way to check the claims below without fetching a model: the two committed
+runs in this repository — `hermes-reports/M3-slot60-web-e2e-r1/result.json` (real
+engine, 97 checks) and `hermes-reports/M3-slot60-web-e2e-stub-r1/result.json` (stub, 91
+checks) — record every check's own verdict, the engine's identity and the
+sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) is the
+one command that re-takes the real one, and it refuses to run on weights other than
+the pinned bytes. `npm run e2e` is the two-minute stub path: it proves the app, the
+plane, the worker and the browser, and it deliberately proves nothing about speech.
+
 ## Do this, see that
 
 You need three processes. The dashboard is one of them; the engine and the
@@ -98,8 +107,11 @@ Now walk it, and each step says what you should see:
    plane's own words, before any request leaves the page; the chapters are metered
    separately, so a two-chapter project is two requests, not one.
 
-Every page above is one click from home, every page is dark, and every control
-takes a visible keyboard focus.
+Every page above is one click from home, every page is dark, and every page takes a
+keyboard Tab onto a control that shows a visible focus outline. That is what the two
+keyboard checks in the browser run prove — one focused control per page and a visible
+outline on it — and it is deliberately not the stronger sentence "every control is
+keyboard accessible", which one Tab per page cannot show.
 
 ## Tests
 

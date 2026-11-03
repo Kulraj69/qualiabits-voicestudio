@@ -1344,7 +1344,14 @@ async function main() {
       joinedPayload.set(file.bytes.slice(WAV_HEADER_BYTES), cursor);
       cursor += file.bytes.length - WAV_HEADER_BYTES;
     }
-    const framesMatch = assembledPayload.length === joinedPayload.length
+    // Every chapter has to have been fetched successfully and there have to be as
+    // many of them as the plane reports. Without this the comparison below could
+    // pass on a short list — comparing one chapter's frames with a file that holds
+    // only that chapter — and read as proof of all of them.
+    const chapterFetchesOk = chapterFiles.length === doneProject.chapters.length
+      && chapterFiles.every((file) => file.status === 200);
+    const framesMatch = chapterFetchesOk
+      && assembledPayload.length === joinedPayload.length
       && assembledPayload.every((value, index) => value === joinedPayload[index]);
     check(
       "the audiobook downloads from the page as one WAV holding every chapter",
@@ -1360,7 +1367,9 @@ async function main() {
       `${audiobook.bytes} bytes against ${chapterBytes} summed from the chapters, `
         + `${audiobook.seconds} s against ${chapterSeconds} s; the plane's own file is `
         + `${assembled.bytes.length} bytes, payload ${assembledPayload.length} against `
-        + `${joinedPayload.length} from the chapters, frames ${framesMatch ? "identical" : "different"}`,
+        + `${joinedPayload.length} from the chapters, `
+        + `${chapterFiles.filter((file) => file.status === 200).length}/${doneProject.chapters.length} `
+        + `chapter files fetched, frames ${framesMatch ? "identical" : "different"}`,
     );
     const readyProgress = await page.textContent(`[data-testid="project-progress-${queuedProject.id}"]`);
     check(
