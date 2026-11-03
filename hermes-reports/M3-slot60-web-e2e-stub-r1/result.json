@@ -1,0 +1,658 @@
+{
+  "run": "qualiabits voice — browser dashboard end to end",
+  "engine": "engine_stub.py",
+  "engine_model_source": null,
+  "engine_command": null,
+  "engine_is_stub": true,
+  "engine_model": null,
+  "transcription_model": null,
+  "transcription_model_source": null,
+  "transcription_model_pinned": null,
+  "revision": {
+    "tested_commit": "5c01af181d35d349cdfa38669a9de947497f0757",
+    "worktree_dirty": false,
+    "generated_at_utc": "2026-11-03T05:09:53.639Z"
+  },
+  "browser": "156.0.8078.4",
+  "deployed": false,
+  "public_url": null,
+  "gpu": false,
+  "real_s3": false,
+  "checks": [
+    {
+      "name": "engine is up and answers /health",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+    },
+    {
+      "name": "the control plane is up on its own database",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the control plane can see the engine",
+      "ok": true,
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:43989\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+    },
+    {
+      "name": "the dashboard builds",
+      "ok": true,
+      "detail": "h/logout\n├ ƒ /api/auth/signup\n├ ƒ /api/dashboard-key\n├ ƒ /api/jobs\n├ ƒ /api/jobs/[id]\n├ ƒ /api/jobs/[id]/audio\n├ ƒ /api/keys\n├ ƒ /api/keys/[id]\n├ ƒ /api/projects\n├ ƒ /api/projects/[id]\n├ ƒ /api/projects/[id]/audio\n├ ƒ /api/speech\n├ ƒ /api/transcribe\n├ ƒ /jobs\n├ ƒ /keys\n├ ƒ /login\n├ ƒ /projects\n├ ƒ /signup\n├ ƒ /speak\n├ ƒ /transcribe\n├ ƒ /usage\n└ ƒ /voices\n\n\nƒ  (Dynamic)  server-rendered on demand\n\n"
+    },
+    {
+      "name": "the dashboard is up and rooted at /",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "signup lands on the dashboard and greets the workspace",
+      "ok": true,
+      "detail": "Browser E2E"
+    },
+    {
+      "name": "the session token is not readable by page JavaScript",
+      "ok": true,
+      "detail": "{\"localStorage\":\"[]\",\"cookie\":\"qb_ws={\\\"id\\\":1,\\\"email\\\":\\\"browser-e2e@example.com\\\",\\\"display_name\\\":\\\"Browser E2E\\\"}\",\"hasSecret\":false}"
+    },
+    {
+      "name": "the workspace name cookie is the only cookie the page can see",
+      "ok": true,
+      "detail": "qb_ws={\"id\":1,\"email\":\"browser-e2e@example.com\",\"display_name\":\"Browser E2E\"}"
+    },
+    {
+      "name": "home links to /speak",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /voices",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /transcribe",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /jobs",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /keys",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /usage",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "no dead links on home",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "/ answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Browser E2E\""
+    },
+    {
+      "name": "/speak answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Speak\""
+    },
+    {
+      "name": "/voices answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Voice library\""
+    },
+    {
+      "name": "/transcribe answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Transcribe\""
+    },
+    {
+      "name": "/keys answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"API keys\""
+    },
+    {
+      "name": "/usage answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Usage\""
+    },
+    {
+      "name": "/jobs answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Jobs\""
+    },
+    {
+      "name": "/projects answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Projects\""
+    },
+    {
+      "name": "every page takes a keyboard Tab onto a focusable control",
+      "ok": true,
+      "detail": "[[\"/\",\"A\"],[\"/speak\",\"A\"],[\"/voices\",\"A\"],[\"/transcribe\",\"A\"],[\"/keys\",\"A\"],[\"/usage\",\"A\"],[\"/jobs\",\"A\"],[\"/projects\",\"A\"]]"
+    },
+    {
+      "name": "every page shows a visible focus outline",
+      "ok": true,
+      "detail": "[[\"/\",\"solid 2px\"],[\"/speak\",\"solid 2px\"],[\"/voices\",\"solid 2px\"],[\"/transcribe\",\"solid 2px\"],[\"/keys\",\"solid 2px\"],[\"/usage\",\"solid 2px\"],[\"/jobs\",\"solid 2px\"],[\"/projects\",\"solid 2px\"]]"
+    },
+    {
+      "name": "the app contains no native select control on any page",
+      "ok": true,
+      "detail": "[[\"/\",0],[\"/speak\",0],[\"/voices\",0],[\"/transcribe\",0],[\"/keys\",0],[\"/usage\",0],[\"/jobs\",0],[\"/projects\",0]]"
+    },
+    {
+      "name": "every page was captured as a screenshot",
+      "ok": true,
+      "detail": "[[\"/\",199487],[\"/speak\",136704],[\"/voices\",218757],[\"/transcribe\",143047],[\"/keys\",138905],[\"/usage\",191278],[\"/jobs\",154189],[\"/projects\",176956]]"
+    },
+    {
+      "name": "the voice list is served by the plane, not hard-coded",
+      "ok": true,
+      "detail": "af_alloy,hf_alpha,hm_omega,alloy,echo,profile-1"
+    },
+    {
+      "name": "the voice picker offers every voice the plane serves, and nothing else",
+      "ok": true,
+      "detail": "6 rows vs 6 from the plane"
+    },
+    {
+      "name": "the Speak page returns real WAV bytes through the plane",
+      "ok": true,
+      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":72044,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.012s · engine build sherpa-onnxDownload WAV\"}"
+    },
+    {
+      "name": "the audio has a download link",
+      "ok": true,
+      "detail": "speech-hf_alpha.wav"
+    },
+    {
+      "name": "the player reports the measured duration and size",
+      "ok": true,
+      "detail": "Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.012s · engine build sherpa-onnxDownload WAV"
+    },
+    {
+      "name": "an unknown voice is refused by the plane with the engine's own sentence",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"detail\":\"Voice 'definitely-not-a-voice' is not one of the model's voices: af_alloy, hf_alpha, hm_omega.\",\"param\":\"voice\",\"code\":\"unknown_voice\"}}"
+    },
+    {
+      "name": "the spoken audio was read back out of the page for transcription",
+      "ok": true,
+      "detail": "72044 bytes"
+    },
+    {
+      "name": "the Transcribe page shows a transcript",
+      "ok": true,
+      "detail": "यह स्टब का जवाब है।"
+    },
+    {
+      "name": "the plane measured the upload as the same length as the audio it returned",
+      "ok": true,
+      "detail": "1.5 s spoken vs 1.5 s uploaded"
+    },
+    {
+      "name": "the plane counted the transcript in its own counter, not the speech one",
+      "ok": true,
+      "detail": "19 vs 19 characters"
+    },
+    {
+      "name": "the plane metered the upload's seconds under the same workspace",
+      "ok": true,
+      "detail": "3 s in the meter"
+    },
+    {
+      "name": "the stub transcript is exactly what the stub says it heard",
+      "ok": true,
+      "detail": "यह स्टब का जवाब है।"
+    },
+    {
+      "name": "the transcript downloads as .txt holding the text the page shows",
+      "ok": true,
+      "detail": "spoken.transcript.txt: यह स्टब का जवाब है।"
+    },
+    {
+      "name": "the transcript downloads as .srt with cues carrying the engine's own timings",
+      "ok": true,
+      "detail": "spoken.transcript.srt: 1 / 00:00:00,000 --> 00:00:01,500 / यह स्टब का जवाब है। / "
+    },
+    {
+      "name": "the transcript downloads as .json holding the engine's own payload",
+      "ok": true,
+      "detail": "spoken.transcript.json: {\n  \"task\": \"transcribe\",\n  \"language\": \"hi\",\n  \"duration\": "
+    },
+    {
+      "name": "an upload with no file is refused with a sentence that says so",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"detail\":\"Choose a recording first. A WAV from the Speak page is a good one.\"}}"
+    },
+    {
+      "name": "an upload past the plane's ceiling is refused with a sentence naming the limit",
+      "ok": true,
+      "detail": "413 \"That upload is larger than 25 MiB. An upload is at most 25 MiB.\""
+    },
+    {
+      "name": "the dashboard refused the oversized upload itself, so the plane never saw a request",
+      "ok": true,
+      "detail": "3 -> 3"
+    },
+    {
+      "name": "a minted key is shown once and looks like a key",
+      "ok": true,
+      "detail": "qbv_5e6ae482fe045b59_AFp04ITCyJ_RrMivk5PGCGYaWlIu6hbvlaSQ4Thyt5s"
+    },
+    {
+      "name": "the key is not shown again after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the list shows the key's public id and never its secret",
+      "ok": true,
+      "detail": "6 cells, secret length 43"
+    },
+    {
+      "name": "revoking marks the key revoked in the list",
+      "ok": true,
+      "detail": "revoked"
+    },
+    {
+      "name": "a revoked key is refused on the next request",
+      "ok": true,
+      "detail": "status 401"
+    },
+    {
+      "name": "the voice library lists exactly the voices the plane serves",
+      "ok": true,
+      "detail": "6 cards vs 6 from the plane"
+    },
+    {
+      "name": "the library's own count line agrees with the plane's catalogue",
+      "ok": true,
+      "detail": "6 of 6 voices. Every card here is a voice the engine reporte"
+    },
+    {
+      "name": "the kind filter is present exactly when the plane reported more than one kind",
+      "ok": true,
+      "detail": "3 kinds from the plane, filter present"
+    },
+    {
+      "name": "the kind filter is a labeled combobox, closed until it is opened",
+      "ok": true,
+      "detail": "{\"tag\":\"button\",\"role\":\"combobox\",\"label\":\"Kind of voice\",\"expanded\":\"false\",\"name\":\"All kinds (6)\"}"
+    },
+    {
+      "name": "Enter on the trigger opens a list holding every kind the plane reported, plus All",
+      "ok": true,
+      "detail": "4 rows: All kinds (6) | Engine voices (3) | OpenAI aliases (2) | Saved profiles (1)"
+    },
+    {
+      "name": "Escape closes the kind filter without choosing anything",
+      "ok": true,
+      "detail": "All kinds (6) — 6 cards"
+    },
+    {
+      "name": "typing into the filter's own search narrows the kinds to the one that matches",
+      "ok": true,
+      "detail": "1: Engine voices (3)"
+    },
+    {
+      "name": "choosing a kind with the keyboard narrows the cards to exactly that kind, and invents none",
+      "ok": true,
+      "detail": "3 cards badged Engine voices (the filter says 3) of 6"
+    },
+    {
+      "name": "the narrowed count line names how many of the plane's voices that kind holds",
+      "ok": true,
+      "detail": "3 of 6 voices. Every card here is a voice the engine reporte"
+    },
+    {
+      "name": "choosing All kinds brings every voice the plane serves back",
+      "ok": true,
+      "detail": "6 of 6 cards"
+    },
+    {
+      "name": "searching the library narrows it to the voices that match, and invents none",
+      "ok": true,
+      "detail": "1 of 6: hf_alpha"
+    },
+    {
+      "name": "the narrowed count line names how many of the plane's voices are shown",
+      "ok": true,
+      "detail": "1 of 6 voices. Every card here is a voice the engine reporte"
+    },
+    {
+      "name": "the library previews a voice it offered, and real WAV bytes come back through the plane",
+      "ok": true,
+      "detail": "{\"voice\":\"hf_alpha\",\"header\":\"RIFF\",\"bytes\":72044}"
+    },
+    {
+      "name": "the preview player reports the measured duration and size",
+      "ok": true,
+      "detail": "Previewing: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.004sDownload W / preview-hf_alpha.wav"
+    },
+    {
+      "name": "the preview was metered as exactly one more speech request under this workspace",
+      "ok": true,
+      "detail": "3 -> 4"
+    },
+    {
+      "name": "the preview's own measured seconds are the seconds the plane added to the meter",
+      "ok": true,
+      "detail": "page says 1.5 s, plane added 1.5 s"
+    },
+    {
+      "name": "Use in Speak carries the voice to the Speak page, which selects it",
+      "ok": true,
+      "detail": "hf_alpha vs hf_alpha"
+    },
+    {
+      "name": "a voice the plane does not have is not preselected, it falls back to the default",
+      "ok": true,
+      "detail": "af_alloy"
+    },
+    {
+      "name": "the same credentials log in straight to the plane",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the Usage page's request count matches the plane's meter",
+      "ok": true,
+      "detail": "4 vs 4"
+    },
+    {
+      "name": "the per-key breakdown the plane records is shown, one row per key",
+      "ok": true,
+      "detail": "per-key rows 1, plane keys 1"
+    },
+    {
+      "name": "the Usage page shows the transcribed-character counter the plane keeps",
+      "ok": true,
+      "detail": "19 vs 19"
+    },
+    {
+      "name": "a cancelled job reads as cancelled and was never spoken",
+      "ok": true,
+      "detail": "#1Cancelledhf_alpha55Nov 03, 2026, 05:10:22never spoken—"
+    },
+    {
+      "name": "cancelling a queued job did not move the meter",
+      "ok": true,
+      "detail": "4->4, 115->115"
+    },
+    {
+      "name": "the real worker drained the queue",
+      "ok": true,
+      "detail": "5-467827: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.015, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-467827\"}\n"
+    },
+    {
+      "name": "the plane records the spoken job as succeeded",
+      "ok": true,
+      "detail": "[\"succeeded\",\"cancelled\"]"
+    },
+    {
+      "name": "the job's stored audio comes back as a WAV",
+      "ok": true,
+      "detail": "{\"status\":200,\"header\":\"RIFF\",\"bytes\":72044}"
+    },
+    {
+      "name": "the downloaded audio is the bytes the plane stored",
+      "ok": true,
+      "detail": "72044 vs 72044"
+    },
+    {
+      "name": "the jobs table shows one Done row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "an over-long manuscript is refused by the dashboard in the plane's own sentence",
+      "ok": true,
+      "detail": "page: 'input' is 180004 characters and a project takes at most 180000. Send it as more than one project, or shorten it. | plane: 413 'input' is 180004 characters and a project takes at most 180000. Send it as more than one project, or shorten it."
+    },
+    {
+      "name": "the dashboard refuses it itself, so the plane never sees the request",
+      "ok": true,
+      "detail": "button disabled=true, plane answered 413"
+    },
+    {
+      "name": "the plane split the manuscript into chapters and queued one job each",
+      "ok": true,
+      "detail": "{\"chapters\":2,\"jobs\":[3,4]}"
+    },
+    {
+      "name": "no chapter has been spoken at the moment the manuscript is accepted",
+      "ok": true,
+      "detail": "{\"status\":\"queued\",\"spoken\":0}"
+    },
+    {
+      "name": "the page's progress sentence is counted from the plane's chapter statuses",
+      "ok": true,
+      "detail": "0 of 2 chapters spoken; 2 still queued."
+    },
+    {
+      "name": "the assembled audiobook is a 409 that names the chapters still waiting",
+      "ok": true,
+      "detail": "{\"status\":409,\"detail\":{\"project_status\":\"queued\",\"detail\":\"This project has no assembled audio yet.\",\"waiting\":[{\"chapter\":1,\"status\":\"queued\",\"error\":\"\"},{\"chapter\":2,\"status\":\"queued\",\"error\":\"\"}],\"spoken_chapters\":0,\"chapter_count\":2}}"
+    },
+    {
+      "name": "the real worker spoke every chapter",
+      "ok": true,
+      "detail": "5-467867: job 4 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 2, \"engine_seconds\": 0.026, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 2, \"worker_id\": \"ip-172-31-19-105-467867\"}\n"
+    },
+    {
+      "name": "the audiobook downloads from the page as one WAV holding every chapter",
+      "ok": true,
+      "detail": "{\"status\":200,\"header\":\"RIFF\",\"bytes\":144044,\"chapters\":\"2\",\"seconds\":3}"
+    },
+    {
+      "name": "the assembled file is the chapters' frames under one header, not two",
+      "ok": true,
+      "detail": "144044 bytes against 144088 summed from the chapters, 3 s against 3 s"
+    },
+    {
+      "name": "the page reports the finished project from the plane's own statuses",
+      "ok": true,
+      "detail": "2 of 2 chapters spoken — the audiobook is one file."
+    },
+    {
+      "name": "the meter moved by one request per chapter, not one per project",
+      "ok": true,
+      "detail": "5 -> 7"
+    },
+    {
+      "name": "no uncaught JavaScript errors on any page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "engine_health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "engine-stub"
+  },
+  "plane_health": {
+    "upstream_base_url": "http://127.0.0.1:43989",
+    "reachable": true,
+    "status": "ok",
+    "device": "cpu",
+    "version": "engine-stub"
+  },
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Browser E2E",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/home.png",
+      "screenshot_bytes": 199487
+    },
+    {
+      "route": "/speak",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Speak",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/speak.png",
+      "screenshot_bytes": 136704
+    },
+    {
+      "route": "/voices",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Voice library",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/voices.png",
+      "screenshot_bytes": 218757
+    },
+    {
+      "route": "/transcribe",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Transcribe",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/transcribe.png",
+      "screenshot_bytes": 143047
+    },
+    {
+      "route": "/keys",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "API keys",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/keys.png",
+      "screenshot_bytes": 138905
+    },
+    {
+      "route": "/usage",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Usage",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/usage.png",
+      "screenshot_bytes": 191278
+    },
+    {
+      "route": "/jobs",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Jobs",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/jobs.png",
+      "screenshot_bytes": 154189
+    },
+    {
+      "route": "/projects",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Projects",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/projects.png",
+      "screenshot_bytes": 176956
+    }
+  ],
+  "transcript": {
+    "engine_is_stub": true,
+    "spoken_text": "The dashboard speaks through the control plane.",
+    "transcript_text": "यह स्टब का जवाब है।",
+    "shared_words": [],
+    "spoken_words": [
+      "the",
+      "dashboard",
+      "speaks",
+      "through",
+      "the",
+      "control",
+      "plane"
+    ],
+    "spoken_seconds": 1.5,
+    "upload_seconds_measured": 1.5,
+    "transcript_characters_in_meter": 19,
+    "segments": 1,
+    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.006s · engine build engine-stub",
+    "downloads": {
+      "txt": {
+        "filename": "spoken.transcript.txt",
+        "bytes": 49
+      },
+      "srt": {
+        "filename": "spoken.transcript.srt",
+        "bytes": 83
+      },
+      "json": {
+        "filename": "spoken.transcript.json",
+        "bytes": 448
+      }
+    }
+  },
+  "library": {
+    "plane_voices": 6,
+    "cards": 6,
+    "narrowed": 1,
+    "previewed": "hf_alpha",
+    "preview_bytes": 72044,
+    "preview_seconds": 1.5,
+    "requests_before": 3,
+    "requests_after": 4,
+    "handed_over": "hf_alpha"
+  },
+  "usage": {
+    "plane_transcript_characters": 19,
+    "page_transcript_characters": 19,
+    "plane_requests": 4,
+    "page_requests": 4,
+    "plane_keys": 1,
+    "page_per_key_rows": 1,
+    "page_all_table_rows": 3
+  },
+  "audio": {
+    "engine_is_stub": true,
+    "sentence_bytes": 72044,
+    "paragraph_bytes": 72044,
+    "paragraph_seconds": 1.5
+  },
+  "projects": {
+    "chapter_ceiling": 180000,
+    "chapters": 2,
+    "chapter_bytes": 144088,
+    "audiobook_bytes": 144044,
+    "audiobook_seconds": 3,
+    "meter_before": 5,
+    "meter_after": 7
+  },
+  "passed": 91,
+  "failed": 0,
+  "ok": true,
+  "diagnostics": [
+    {
+      "process": "web",
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:40577\n- Network:       http://127.0.0.1:40577\n✓ Ready in 239ms\n✓ Running next.config.mjs took 27ms\n"
+    },
+    {
+      "process": "control-plane",
+      "tail": "INFO:     127.0.0.1:46368 - \"GET /v1/projects?limit=20 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:46384 - \"GET /v1/projects HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:46368 - \"GET /v1/projects/1/audio HTTP/1.1\" 409 Conflict\nINFO:     127.0.0.1:46368 - \"GET /v1/projects?limit=20 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:46384 - \"GET /v1/projects/1 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:46368 - \"GET /v1/projects/1/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:46384 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [467530]\n"
+    },
+    {
+      "process": "engine",
+      "tail": ""
+    }
+  ]
+}
