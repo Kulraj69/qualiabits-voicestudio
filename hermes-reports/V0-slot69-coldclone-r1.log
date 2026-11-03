@@ -1,3 +1,5 @@
+$ git clone --local --single-branch --branch work/m1-headless /workspace/qualiabits-voicestudio /tmp/qb-slot69-cold   # a clone with no .venv, no node_modules, no model
+$ /workspace/qualiabits-voicestudio/.venv/bin/python -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
 ..............................                                           [100%]
 =============================== warnings summary ===============================
 tests/hosted/conftest.py:29
@@ -5,4 +7,4 @@ tests/hosted/conftest.py:29
     from starlette.testclient import TestClient  # noqa: E402
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-30 passed, 1 warning in 49.76s
+30 passed, 1 warning in 48.92s
