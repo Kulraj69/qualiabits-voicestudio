@@ -30,6 +30,31 @@ disagrees with a sentence here can read the command and its output instead.
 
 ## Do this, see that
 
+**What a fresh clone can do before you install anything heavy.** Everything below
+wants three things staged: the Python environment (`uv sync`, about 2.6 GB), the
+dashboard's dependencies (`npm install`, about 360 MB) and, for the real engine
+path only, the two model directories. Those numbers are measured on this box, not
+guessed, and on a machine that cannot spare them the honest answer is that the
+browser paths will not run. The Python guard suite needs no model and no browser,
+but it does need a Python with pytest and the test extras — `uv sync --group dev`
+puts those in `.venv`. With an interpreter like that, from a bare clone:
+
+```sh
+git clone --branch work/m1-headless <this repository> qb && cd qb
+<python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py \
+    tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
+# 30 passed — no venv in that clone, no model, no browser. Transcript:
+# hermes-reports/V0-slot69-coldclone-r1.log, whose first two lines are the
+# clone and the interpreter it borrowed (a sibling checkout's .venv).
+```
+
+Those four files check that the two archived runs name one revision that is in this
+branch's history, that the counts and the Hindi word count in the prose are the
+runs' own, and that the model pins are enforced on every path into the script. On a
+machine with no model directory the two tests that stage the pinned asset skip, with
+that as their reason; on this box they ran, which is why the transcript says 30
+passed and 0 skipped.
+
 You need three processes. The dashboard is one of them; the engine and the
 control plane are the other two, and running them is described in
 [`hosted/RUN-IT-BY-HAND.md`](../RUN-IT-BY-HAND.md). You do not need any of that
