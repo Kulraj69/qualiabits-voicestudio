@@ -1538,3 +1538,52 @@ Round 4 (same slot, devpost lane): a cold `git clone --branch work/m1-headless -
 pushed fork, at 709b5ea79, contains both committed result files the pages cite, and the three
 provenance guards pass there (22 passed in 2.54 s) with no local state. The web unit suite (78/78) was
 run in the working tree, not the clone, for want of `node_modules`; stated, not implied.
+
+## Slot 69 — V0-build — 2026-11-03 — slice D: one-revision evidence pair, the full-disk fix, and the push
+
+STATUS: in-progress / needs-Kulraj. Not done, no pass claimed; pushed.
+
+The devpost lane's rotation tick read the last line of `lane-rotation.txt` (slot 68, V0-growth), so this
+slot was V0-build. Full account in `/workspace/devpost/hermes-reports/V0-rounds.md` slot 69; the short
+version and the revision chain are here.
+
+WHAT WAS WRONG ON RESUME. The two committed browser runs named different revisions (`ef125b80d` and
+`b89cfcae2`), so together they described no single state of the code, and a sibling run had hand-edited
+the real archive's `tested_commit` to `98ddc48b3` while leaving its `generated_at_utc` alone — one
+changed line, which is a rewritten field rather than a recorded one. The branch was reset to
+`b89cfcae2`, the pair was rebuilt from runs that recorded their own revision, and every run after that
+was taken at a revision the repository can show.
+
+ROUNDS.
+1. `ebe157710` — both paths at `b89cfcae2` over clean trees (real 97/97 from 19:58, stub 91/91 re-taken),
+   `tests/hosted` 215 passed, web unit 99/99. Judge pass 1 (cheap+): 2/3/3/5/1/4/4 = 22/35.
+2. `e62e24565` — the one fixable flaw it found: the model download branch now refuses a full disk before
+   it writes (about 400 MB, exit 4, one sentence) and reports a broken asset the same way instead of a
+   bare `1` from `set -e`; `QUALI_DF` is a documented override and two tests drive both branches (5
+   passed). The box had failed this guard twice for exactly that reason.
+3. `761994b08` — because `hosted/web/e2e` is one of the acceptance guard's measured subjects, both paths
+   were re-taken at `e62e24565`: real 97/97 in about 31 minutes, stub 91/91, each `worktree_dirty` false.
+   `4f89b5ad8` — the acceptance page then said the word count its own guard reads back, which the new run
+   moved (two of five Hindi words this time, three in the run before).
+4. `1d0d88748` and `e88cf2dcf` — the round's transcripts are committed beside the runs, the M3 plan quote
+   is labelled as the owner's brief rather than a parity claim, and the page says what a bare clone can
+   run (the guard suite) and what the browser paths cost to stage (about 2.6 GB venv plus 360 MB npm).
+   Judge pass 3: 2/3/3/5/1/3/4 = 21/35, honesty back to 4 with the transcripts readable in the clone.
+5. `c43949af4` — the cold-clone transcript carries the command it records.
+
+TESTS AT THE PUSHED REVISION `c43949af4` (remote SHA read back equal)
+
+    .venv/bin/python -m pytest tests/hosted -q   -> 217 passed, 1 warning
+    npm --prefix hosted/web test                 -> tests 99, pass 99, fail 0
+    cold clone, no .venv, no model, no browser, the four provenance/pin guards -> 30 passed
+
+WHERE THE PROBLEM IS `*.log` IGNORED: this repository's `.gitignore` ignores `.log`, so the slot's six
+transcripts were committed with `git add -f`, the same way the earlier M1 transcripts were.
+
+NOT FIXED, ON PURPOSE. A judge pass noted the home page's lone Usage card leaves two columns of the
+three-column grid empty. `hosted/web/app` is measured: changing it invalidates the cited pair and costs
+another full real-engine run, so it is recorded here as the next slice's work rather than done tonight.
+
+Owner actions unchanged: the approved g5/g6 scoped runtime with automatic idle shutdown and a hard
+spending limit, the listening check on the committed WAVs, one product differentiator, a deployment and
+object-store decision, and the next M3 page.
