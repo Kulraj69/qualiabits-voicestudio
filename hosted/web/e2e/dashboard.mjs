@@ -1202,7 +1202,15 @@ async function main() {
     // (1) The composer refuses a manuscript past the plane's ceiling, in the
     // plane's sentence — compared with the plane's own answer for the same body.
     if (Number.isFinite(projectCeiling) && projectCeiling > 0) {
-      await page.fill('[data-testid="project-text"]', "शब्द ".repeat(Math.ceil(projectCeiling / 5) + 1));
+      // Playwright's fill is intentionally bounded by the browser's event loop;
+      // this guard needs to cross the plane's 180k ceiling, so set the textarea
+      // through the DOM and fire the same input event a real paste would cause.
+      await page.evaluate((value) => {
+        const field = document.querySelector('[data-testid="project-text"]');
+        const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
+        setter.call(field, value);
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+      }, "शब्द ".repeat(Math.ceil(projectCeiling / 5) + 1));
       await page.waitForSelector('[data-testid="project-over"]', { timeout: 15000 });
       const pageRefusal = (await page.textContent('[data-testid="project-over"]')).trim();
       const disabled = await page.getAttribute('[data-testid="project-create"]', "disabled");
