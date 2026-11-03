@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import NavLinks from "./NavLinks.jsx";
 import SignOutButton from "./SignOutButton.jsx";
+import ThemeToggle from "./ThemeToggle.jsx";
 import { readWorkspace } from "../lib/session.js";
 
 /**
@@ -23,6 +24,7 @@ export default async function SiteHeader() {
       </Link>
       <NavLinks signedIn={Boolean(workspace)} />
       <span className="topbar__spacer" />
+      <ThemeToggle />
       {workspace ? (
         <span className="who">
           <span className="who__email" title={label}>

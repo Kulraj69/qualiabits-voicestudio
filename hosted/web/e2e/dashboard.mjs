@@ -516,7 +516,12 @@ async function main() {
     // ── a real browser ──────────────────────────────────────────────────────
     browser = await playwright.chromium.launch({ args: ["--no-sandbox"] });
     result.browser = browser.version();
-    const context = await browser.newContext();
+    // The baseline context asks for dark, which is the design this dashboard
+    // shipped with and the one every other check in this suite is written
+    // against. Playwright's own default is light, so without this a suite that
+    // asserts nothing about the theme would silently start rendering the other
+    // one. The light path gets its own context below.
+    const context = await browser.newContext({ colorScheme: "dark" });
     const page = await context.newPage();
     const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(String(error)));
@@ -604,6 +609,185 @@ async function main() {
         result.pages.every((p) => (p.screenshot_bytes || 0) > 10000),
         JSON.stringify(result.pages.map((p) => [p.route, p.screenshot_bytes])));
     }
+
+    // ── the theme: dark by default, light on request, remembered ───────────
+    // M3's brief asks for a dashboard that is "responsive, fast, dark/light".
+    // Everything above ran in a context that asks for dark (the shipped
+    // design); this is where the light path is driven by a reader who asks for
+    // it, and where the contrast of both is measured rather than eyeballed.
+    // WCAG's own formula, applied to the colours the browser computed.
+    const luminanceOf = (colour) => {
+      const parts = String(colour).match(/[\d.]+/g);
+      if (!parts || parts.length < 3) return null;
+      const [r, g, b] = parts.slice(0, 3).map(Number);
+      const channel = (value) => {
+        const c = value / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    };
+    const contrastOf = (foreground, background) => {
+      const a = luminanceOf(foreground);
+      const b = luminanceOf(background);
+      if (a === null || b === null) return null;
+      const [hi, lo] = a >= b ? [a, b] : [b, a];
+      return Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100;
+    };
+    const THEME_PROBE = `(() => {
+      const style = (selector) => {
+        const element = selector ? document.querySelector(selector) : document.body;
+        return element ? getComputedStyle(element) : null;
+      };
+      const body = style(null);
+      const toggle = document.querySelector('[data-testid="theme-toggle"]');
+      const h1 = document.querySelector("h1");
+      const lede = document.querySelector(".page-head__lede, .hero__lede");
+      return {
+        theme: document.documentElement.getAttribute("data-theme"),
+        color_scheme: getComputedStyle(document.documentElement).colorScheme,
+        toggle_label: toggle ? toggle.getAttribute("aria-label") : null,
+        toggle_glyph: toggle ? (toggle.textContent || "").trim() : null,
+        body_color: body.color,
+        body_background: body.backgroundColor,
+        h1_color: h1 ? getComputedStyle(h1).color : null,
+        lede_color: lede ? getComputedStyle(lede).color : null,
+      };
+    })()`;
+    const probeTheme = (target) => target.evaluate(THEME_PROBE);
+
+    // The pages were just visited in the dark context; its own home page is
+    // still the one the app serves to a signed-in reader.
+    await page.goto(`${webBase}/`, { waitUntil: "load" });
+    const dark = await probeTheme(page);
+    result.theme = { dark, light: null, contrast: {} };
+    check("the shipped theme is the one this context asked for", dark.theme === "dark",
+      JSON.stringify(dark));
+    check("the dark page states its own color-scheme",
+      dark.color_scheme === "dark", String(dark.color_scheme));
+    const darkBody = contrastOf(dark.body_color, dark.body_background);
+    const darkLede = contrastOf(dark.lede_color, dark.body_background);
+    const darkH1 = contrastOf(dark.h1_color, dark.body_background);
+    result.theme.contrast.dark = { body: darkBody, lede: darkLede, h1: darkH1 };
+    check("dark body text clears WCAG AA against the page background", darkBody >= 4.5,
+      `${darkBody}:1 (${dark.body_color} on ${dark.body_background})`);
+    check("dark muted text clears WCAG AA", darkLede >= 4.5, `${darkLede}:1`);
+    check("dark headings clear WCAG AA", darkH1 >= 4.5, `${darkH1}:1`);
+
+    const lightContext = await browser.newContext({ colorScheme: "light" });
+    const lightPage = await lightContext.newPage();
+    await lightPage.goto(`${webBase}/`, { waitUntil: "load" });
+    const light = await probeTheme(lightPage);
+    result.theme.light = light;
+    check("a reader whose system asks for light gets the light theme",
+      light.theme === "light", JSON.stringify(light));
+    check("the light page states its own color-scheme",
+      light.color_scheme === "light", String(light.color_scheme));
+    const lightBody = contrastOf(light.body_color, light.body_background);
+    const lightLede = contrastOf(light.lede_color, light.body_background);
+    const lightH1 = contrastOf(light.h1_color, light.body_background);
+    result.theme.contrast.light = { body: lightBody, lede: lightLede, h1: lightH1 };
+    check("light body text clears WCAG AA against the page background", lightBody >= 4.5,
+      `${lightBody}:1 (${light.body_color} on ${light.body_background})`);
+    check("light muted text clears WCAG AA", lightLede >= 4.5, `${lightLede}:1`);
+    check("light headings clear WCAG AA", lightH1 >= 4.5, `${lightH1}:1`);
+    check("the two themes really are different pages to look at",
+      luminanceOf(light.body_background) > 0.7 && luminanceOf(dark.body_background) < 0.15,
+      `light ${luminanceOf(light.body_background)}, dark ${luminanceOf(dark.body_background)}`);
+    check("the toggle is on the page and named for the theme it switches to",
+      light.toggle_label === "Switch to the light theme" && light.toggle_glyph.length > 0,
+      `label ${JSON.stringify(light.toggle_label)}, glyph ${JSON.stringify(light.toggle_glyph)}`);
+
+    // The no-flash claim is about the served HTML, so it is read from the served
+    // HTML: the inline script that sets the attribute has to come before the
+    // page's own markup, or the reader sees the wrong theme paint first.
+    const served = await (await lightPage.request.get(`${webBase}/`)).text();
+    const scriptAt = served.indexOf(`localStorage.getItem("qb_theme")`);
+    const shellAt = served.indexOf('class="shell"');
+    check("the served HTML applies the theme before the page's own markup",
+      scriptAt > -1 && shellAt > -1 && scriptAt < shellAt,
+      `script at byte ${scriptAt}, first markup at byte ${shellAt}`);
+
+    await lightPage.click('[data-testid="theme-toggle"]');
+    const flipped = await probeTheme(lightPage);
+    check("pressing the toggle switches the page to the other theme",
+      flipped.theme === "dark" && flipped.toggle_label === "Switch to the light theme",
+      JSON.stringify({ theme: flipped.theme, label: flipped.toggle_label }));
+    const remembered = await lightPage.evaluate(() => window.localStorage.getItem("qb_theme"));
+    check("the choice is written where the no-flash script reads it", remembered === "dark",
+      JSON.stringify(remembered));
+    await lightPage.goto(`${webBase}/`, { waitUntil: "load" });
+    const reloaded = await probeTheme(lightPage);
+    check("a remembered choice survives a reload, over the system preference",
+      reloaded.theme === "dark", JSON.stringify({ theme: reloaded.theme }));
+
+    // Applied before the page is interactive, and the system preference is not
+    // what decides it: this context asks for dark, the store says light, and the
+    // attribute already reads light when the document finishes parsing, before
+    // React has hydrated and before any client component has run.
+    const rememberedContext = await browser.newContext({ colorScheme: "dark" });
+    const rememberedPage = await rememberedContext.newPage();
+    await rememberedPage.goto(`${webBase}/`, { waitUntil: "load" });
+    await rememberedPage.evaluate(() => window.localStorage.setItem("qb_theme", "light"));
+    await rememberedPage.goto(`${webBase}/`, { waitUntil: "domcontentloaded" });
+    const early = await rememberedPage.evaluate(
+      () => document.documentElement.getAttribute("data-theme"));
+    check("a stored choice is applied by the served HTML, before hydration",
+      early === "light", `data-theme at domcontentloaded: ${JSON.stringify(early)} (this context asks for dark)`);
+    await rememberedContext.close();
+
+    // Every page, both themes: the token set is site-wide, so a page that missed
+    // it would be the one a reader lands on first. The stored choice from the
+    // toggle above is cleared first, because a remembered theme is *supposed* to
+    // outrank the system preference — leaving it set would make this block a test
+    // of the toggle rather than of the pages.
+    await lightPage.evaluate(() => window.localStorage.removeItem("qb_theme"));
+    const lightPages = [];
+    for (const route of PAGES) {
+      await lightPage.goto(webBase + route, { waitUntil: "load" });
+      const seen = await probeTheme(lightPage);
+      lightPages.push({ route, theme: seen.theme, background: seen.body_background,
+        contrast: contrastOf(seen.body_color, seen.body_background) });
+    }
+    result.theme.pages_light = lightPages;
+    check("every page renders light when light is asked for",
+      lightPages.every((p) => p.theme === "light"), JSON.stringify(lightPages));
+    check("every page's text clears WCAG AA in light",
+      lightPages.every((p) => p.contrast >= 4.5),
+      JSON.stringify(lightPages.map((p) => [p.route, p.contrast])));
+
+    // The trailing row of a card grid. Seven tiles in three columns used to
+    // leave two gaps beside the last one; every row is now the full width of the
+    // row it sits in.
+    await page.goto(`${webBase}/`, { waitUntil: "load" });
+    const grid = await page.evaluate(() => {
+      const row = document.querySelector(".grid--cards");
+      if (!row) return null;
+      const container = row.getBoundingClientRect();
+      const cards = [...row.children].map((el) => el.getBoundingClientRect());
+      const rows = new Map();
+      for (const card of cards) {
+        const key = Math.round(card.top);
+        if (!rows.has(key)) rows.set(key, []);
+        rows.get(key).push(card);
+      }
+      return {
+        container_width: Math.round(container.width),
+        cards: cards.length,
+        rows: [...rows.entries()].map(([top, boxes]) => ({
+          top,
+          count: boxes.length,
+          left: Math.round(Math.min(...boxes.map((b) => b.left))),
+          right: Math.round(Math.max(...boxes.map((b) => b.right))),
+        })),
+      };
+    });
+    result.home_grid = grid;
+    check("the home page's card rows all reach the row's edges",
+      Boolean(grid) && grid.rows.every((r) => Math.abs((r.right - r.left) - grid.container_width) <= 2),
+      JSON.stringify(grid));
+    check("the home page's tiles are a wrapping row, not fixed columns",
+      Boolean(grid) && grid.cards >= 7 && new Set(grid.rows.map((r) => r.count)).size > 1,
+      JSON.stringify(grid && { cards: grid.cards, row_sizes: grid.rows.map((r) => r.count) }));
 
     // ── speak: a real WAV through the plane, played and downloadable ────────
     // The picker is compared with the plane's own catalogue here, which means

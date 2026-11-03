@@ -1,6 +1,7 @@
 import "./globals.css";
 
 import SiteHeader from "../components/SiteHeader.jsx";
+import { NO_FLASH_SCRIPT } from "../lib/theme.js";
 
 export const metadata = {
   title: "QualiaBits Voice — dashboard",
@@ -10,8 +11,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    // `suppressHydrationWarning` is on <html> because the inline script below
+    // writes `data-theme` onto it before React hydrates. The attribute is the
+    // point, not drift: it is how the reader's theme reaches the stylesheet
+    // before the first paint.
+    <html lang="en" suppressHydrationWarning>
       <body>
+        {/* Runs before anything else is parsed, so the theme is on <html> before
+            the stylesheet has anything to paint. Dark is the fallback. */}
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
         <div className="shell">
           <SiteHeader />
           <main className="main">{children}</main>
