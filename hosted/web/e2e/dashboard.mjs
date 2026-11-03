@@ -256,6 +256,19 @@ async function plane(base, urlPath, { method = "GET", token, body } = {}) {
   return { status: response.status, data };
 }
 
+/** The plane's own bytes for a route, not its JSON.
+ *
+ * The audiobook check needs the assembled file and each chapter as bytes, so that
+ * the frames the page hands out can be compared with the frames the chapters hold.
+ * A JSON helper cannot do that; this is the same call, read as a buffer.
+ */
+async function planeBytes(base, urlPath, token) {
+  const response = await fetch(base + urlPath, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  return { status: response.status, bytes: new Uint8Array(await response.arrayBuffer()) };
+}
+
 function sha256(file) {
   return createHash("sha256").update(readFileSync(file)).digest("hex");
 }
@@ -1307,6 +1320,32 @@ async function main() {
         seconds: Number(response.headers.get("x-qualiabits-audio-seconds")),
       };
     }, queuedProject.id);
+    // The claim is about the file the page hands a visitor, so the plane's own
+    // bytes are read in the same run and the frames compared byte for byte: every
+    // chapter through the session that queued it, and the assembled file. The two
+    // length checks below prove a RIFF of about the right size came back; this
+    // proves it is those chapters' frames, under one header, and not two WAVs.
+    const WAV_HEADER_BYTES = 44;
+    const assembled = await planeBytes(planeBase, `/v1/projects/${queuedProject.id}/audio`, session);
+    const chapterFiles = [];
+    for (const chapter of doneProject.chapters) {
+      if (chapter.audio_url) {
+        chapterFiles.push(await planeBytes(planeBase, chapter.audio_url, session));
+      }
+    }
+    const assembledPayload = assembled.bytes.slice(WAV_HEADER_BYTES);
+    const payloadLength = chapterFiles.reduce(
+      (total, file) => total + Math.max(0, file.bytes.length - WAV_HEADER_BYTES),
+      0,
+    );
+    const joinedPayload = new Uint8Array(payloadLength);
+    let cursor = 0;
+    for (const file of chapterFiles) {
+      joinedPayload.set(file.bytes.slice(WAV_HEADER_BYTES), cursor);
+      cursor += file.bytes.length - WAV_HEADER_BYTES;
+    }
+    const framesMatch = assembledPayload.length === joinedPayload.length
+      && assembledPayload.every((value, index) => value === joinedPayload[index]);
     check(
       "the audiobook downloads from the page as one WAV holding every chapter",
       audiobook.status === 200 && audiobook.header === "RIFF" && audiobook.chapters === "2",
@@ -1314,10 +1353,14 @@ async function main() {
     );
     check(
       "the assembled file is the chapters' frames under one header, not two",
-      audiobook.bytes <= chapterBytes && chapterBytes - audiobook.bytes < 200
-        && Math.abs(audiobook.seconds - chapterSeconds) < 0.05,
+      audiobook.status === 200 && audiobook.header === "RIFF" && audiobook.chapters === "2"
+        && audiobook.bytes <= chapterBytes && chapterBytes - audiobook.bytes < 200
+        && Math.abs(audiobook.seconds - chapterSeconds) < 0.05
+        && framesMatch,
       `${audiobook.bytes} bytes against ${chapterBytes} summed from the chapters, `
-        + `${audiobook.seconds} s against ${chapterSeconds} s`,
+        + `${audiobook.seconds} s against ${chapterSeconds} s; the plane's own file is `
+        + `${assembled.bytes.length} bytes, payload ${assembledPayload.length} against `
+        + `${joinedPayload.length} from the chapters, frames ${framesMatch ? "identical" : "different"}`,
     );
     const readyProgress = await page.textContent(`[data-testid="project-progress-${queuedProject.id}"]`);
     check(

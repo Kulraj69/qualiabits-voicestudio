@@ -16,9 +16,11 @@
 # Model resolution order: QUALI_MODEL_DIR, hosted/web/<name>, the repository
 # root, the repository's parent, /workspace/m1-models/<name>, then the download
 # into $QUALI_E2E_WORK (default ${TMPDIR:-/tmp}/qb-real-engine-model). The
-# download is the same release asset and the same three pinned sha256 values the
-# hosted proof's script uses (hosted/scripts/hosted_demo.sh); a mismatch stops
-# the run rather than speaking with unpinned bytes. Nothing here falls back to
+# download is the same release asset the hosted proof's script uses
+# (hosted/scripts/hosted_demo.sh), and the same three sha256 values are pinned
+# here: they are checked whatever directory the model came from, downloaded or
+# already on the machine, and a mismatch stops the run rather than speaking with
+# unpinned bytes. Nothing here falls back to
 # the stub, because a run that quietly did would be the opposite of evidence.
 #
 # It also resolves a transcription model, because the suite now closes a loop the
@@ -60,6 +62,23 @@ if [ ! -x "$PY" ]; then
   exit 2
 fi
 
+#: The three files this script pins are checked whatever directory the model came
+#: from. A model already on this machine is as capable of being the wrong bytes as
+#: a downloaded one, and the pins are the whole reason the run is evidence about a
+#: model rather than about "some Kokoro directory". The check used to live inside
+#: the download branch, which quietly exempted every found model.
+check_model_file() { # file expected
+  actual=$(sha256sum "$1" | cut -d' ' -f1)
+  if [ "$actual" != "$2" ]; then
+    echo "HASH MISMATCH for $1" >&2
+    echo "  expected $2" >&2
+    echo "  actual   $actual" >&2
+    echo "Stop: do not run a model whose bytes are not the ones this script pins." >&2
+    exit 3
+  fi
+  echo "    ok $(basename "$1")"
+}
+
 MODEL=""
 for candidate in "${QUALI_MODEL_DIR:-}" "$WEB/$MODEL_NAME" "$REPO/$MODEL_NAME" \
                  "$(dirname "$REPO")/$MODEL_NAME" "/workspace/m1-models/$MODEL_NAME"; do
@@ -69,6 +88,7 @@ for candidate in "${QUALI_MODEL_DIR:-}" "$WEB/$MODEL_NAME" "$REPO/$MODEL_NAME" \
   fi
 done
 
+MODEL_SOURCE=""
 if [ -z "$MODEL" ]; then
   WORK=${QUALI_E2E_WORK:-${TMPDIR:-/tmp}/qb-real-engine-model}
   mkdir -p "$WORK"
@@ -81,23 +101,13 @@ if [ -z "$MODEL" ]; then
              "$WORK/$TARBALL" "$WORK"
   fi
   MODEL="$WORK/$MODEL_NAME"
-  MODEL_SOURCE="downloaded and hash-checked by this script into $WORK"
-  echo "==> verifying the model bytes against the pinned hashes"
-  check() { # file expected
-    actual=$(sha256sum "$1" | cut -d' ' -f1)
-    if [ "$actual" != "$2" ]; then
-      echo "HASH MISMATCH for $1" >&2
-      echo "  expected $2" >&2
-      echo "  actual   $actual" >&2
-      echo "Stop: do not run a model whose bytes are not the ones this script pins." >&2
-      exit 3
-    fi
-    echo "    ok $(basename "$1")"
-  }
-  check "$MODEL/model.int8.onnx" "$SHA_MODEL"
-  check "$MODEL/tokens.txt" "$SHA_TOKENS"
-  check "$MODEL/voices.bin" "$SHA_VOICES"
+  MODEL_SOURCE="downloaded by this script into $WORK"
 fi
+
+echo "==> verifying the model bytes against the pinned hashes"
+check_model_file "$MODEL/model.int8.onnx" "$SHA_MODEL"
+check_model_file "$MODEL/tokens.txt" "$SHA_TOKENS"
+check_model_file "$MODEL/voices.bin" "$SHA_VOICES"
 
 ASR=""
 for candidate in "${QUALI_ASR_MODEL_DIR:-}" "$WEB/$ASR_MODEL_NAME" "$REPO/$ASR_MODEL_NAME" \

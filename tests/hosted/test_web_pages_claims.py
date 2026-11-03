@@ -52,9 +52,12 @@ WORD_NUMBERS = {
     "ninety-one": 91,
     "ninety-six": 96,
     "ninety-seven": 97,
+    "ninety-nine": 99,
 }
 
 SCREENSHOT_CHECK = "every page was captured as a screenshot"
+UNIT_COUNT_RE = re.compile(r"(\w[\w-]*) checks, no browser")
+REAL_ENGINE = WEB / "e2e" / "real-engine.sh"
 
 
 def readme() -> str:
@@ -197,4 +200,41 @@ def test_the_kind_filter_is_this_package_s_own_searchable_select():
     # The fork's own control is still where the comment says it is.
     assert (REPO_ROOT / "electron" / "src" / "shared" / "components" / "SearchableSelect.jsx").is_file(), (
         "the upstream control this package's own one is named after is gone"
+    )
+
+def test_the_unit_suite_count_in_the_readme_is_the_cases_its_files_hold():
+    """The page's "Ninety-nine checks, no browser" sentence, checked against the files.
+
+    A judge pass on this slice caught the number stale: the page said seventy-eight
+    while the suite ran ninety-nine. The sentence is how a reader knows the unit
+    suite covers what the page says it covers, so the count is read from the test
+    files themselves rather than trusted to whoever last edited the paragraph.
+    """
+    match = UNIT_COUNT_RE.search(readme())
+    assert match, "the page no longer says how many unit checks it has"
+    counted = sum(
+        len(re.findall(r"\btest\(", path.read_text()))
+        for path in sorted((WEB / "test").glob("*.mjs"))
+    )
+    assert WORD_NUMBERS.get(match.group(1).lower()) == counted, (
+        f"the page says {match.group(1)!r} unit checks; the files hold {counted}"
+    )
+
+
+def test_the_speech_model_pins_are_checked_however_the_model_was_found():
+    """A pinned hash checked only inside the download branch is not a pin.
+
+    A judge pass on this slice pointed out that `real-engine.sh` verified the three
+    sha256 values only after a download, so a Kokoro directory already on the machine
+    was used unchecked while the README promised the bytes were pinned. The three
+    checks now sit at the top level of the script, outside every branch, and the
+    indentation is what this guard reads: anything inside `if [ -z "$MODEL" ]` is
+    indented, so an indented check means the branch was put back.
+    """
+    source = REAL_ENGINE.read_text()
+    calls = [line for line in source.splitlines() if 'check_model_file "$MODEL/' in line]
+    assert len(calls) == 3, f"the script checks {len(calls)} of the three pinned files"
+    indented = [line for line in calls if not line.startswith("check_model_file ")]
+    assert indented == [], (
+        "a pinned-hash check is indented, so it runs only inside a branch: " + repr(indented)
     )

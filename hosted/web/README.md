@@ -118,7 +118,7 @@ turn an answer into a `.srt` (including the case where the engine returned no
 segments), the voice search and kind filter the library uses, the grouping and
 keyboard rules of the select control below, and the five
 library claims the browser run is supposed to make, and the plane's own upload
-ceiling and the sentence it is refused with. Seventy-eight checks, no browser —
+ceiling and the sentence it is refused with. Ninety-nine checks, no browser —
 nine of them read
 `e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
 browser run is supposed to record cannot be deleted without a test failing.
@@ -162,10 +162,13 @@ hosted/web/e2e/real-engine.sh --keep
 It takes the model from `QUALI_MODEL_DIR`, or from one of four other places it
 looks (`hosted/web/<name>`, the repository root, the repository's parent,
 `/workspace/m1-models/<name>`); if none of those has it, it **downloads** the
-release asset (about 132 MB) into `${TMPDIR:-/tmp}/qb-real-engine-model`, checks
-the three pinned sha256 values and starts nothing until they match — the same
-URL, the same pins and the same three files the hosted proof's script checks
-(`../scripts/hosted_demo.sh`). It never falls back to the stub, because a run
+release asset (about 132 MB) into `${TMPDIR:-/tmp}/qb-real-engine-model` — the same
+URL and the same three files the hosted proof's script checks
+(`../scripts/hosted_demo.sh`). Whichever directory it ends up using, downloaded or
+already on the machine, the three pinned files (`model.int8.onnx`, `tokens.txt`,
+`voices.bin`) have to hash to the pinned values and it starts nothing until they
+do; a model this machine already happened to have is not checked any more loosely
+than one it fetched. It never falls back to the stub, because a run
 that quietly did would be the opposite of evidence. So from a fresh clone this
 path needs one thing, the venv [`hosted/README.md`](../README.md) builds:
 
