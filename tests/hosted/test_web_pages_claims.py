@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -101,6 +102,47 @@ def test_the_page_names_two_runs_one_per_path():
     stub = [name for name in cited if "-stub-" in name]
     real = [name for name in cited if "-stub-" not in name]
     assert len(stub) == 1 and len(real) == 1, sorted(cited)
+
+
+def test_the_two_cited_runs_were_taken_at_one_revision():
+    """The provenance gate, read from the two files the page names.
+
+    Round 3 of slice C had to close this by hand: the two committed browser runs
+    recorded different revisions, so together they described no single state of the
+    code while the page read as though they did. Each run's own `revision` block is
+    the only thing that can settle it, so it is read here, and the commit both name
+    has to exist in this repository and still be in this branch's history — a page
+    citing a run from a commit nobody can check is not evidence.
+    """
+    cited = cited_runs()
+    commits = {}
+    for name, result in cited.items():
+        revision = result["revision"]
+        assert revision["worktree_dirty"] is False, (
+            f"{name} was taken over a dirty tree, so it is evidence about no revision"
+        )
+        assert revision["tested_commit"], f"{name} names no commit"
+        commits[name] = revision["tested_commit"]
+
+    assert len(set(commits.values())) == 1, (
+        "the page's two runs were taken at different revisions, so the pair describes "
+        f"no single state of this code: {commits}"
+    )
+    commit = next(iter(commits.values()))
+    known = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "cat-file", "-e", f"{commit}^{{commit}}"],
+        capture_output=True, text=True,
+    )
+    assert known.returncode == 0, (
+        f"the cited runs name {commit}, which is not a commit in this repository"
+    )
+    ancestor = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "merge-base", "--is-ancestor", commit, "HEAD"],
+        capture_output=True, text=True,
+    )
+    assert ancestor.returncode == 0, (
+        f"the cited runs name {commit}, which is not in this branch's history"
+    )
 
 
 def test_the_stated_counts_are_the_counts_in_the_two_runs():

@@ -192,6 +192,18 @@ cd ../..        # the repository root, where pyproject.toml is
 uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
 ```
 
+The three pinned hashes are checked *before* anything in that script needs the venv,
+so an unpinned model directory is refused on a clone whose venv has not been built yet
+(the run exits 3 with `HASH MISMATCH`, not 2 with a missing interpreter). The download
+branch extracts the `.tar.bz2` with `tar`, and falls back to the venv's own Python when
+`tar` cannot read bzip2 — on this image `bzip2` is not installed, so that fallback is
+the path a download actually takes. Two variables exist so the guard tests can drive
+those branches without a network or a model: `QUALI_PYTHON` replaces the interpreter
+path and `QUALI_MODEL_URL` replaces the release asset the download fetches; the URL
+that was actually used is written into the provenance label the evidence records, so a
+caller cannot make a found directory read as a downloaded one. `QUALI_MODEL_URL` is not
+a way to speak unpinned bytes: the same three hashes decide.
+
 That run carries what a constant-size stub cannot produce, every item the
 engine's own answer about itself: its identity from `/health`, the
 backend it reports active with its voice count, the sha256 of `model.int8.onnx`,

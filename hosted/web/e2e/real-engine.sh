@@ -23,6 +23,15 @@
 # unpinned bytes. Nothing here falls back to
 # the stub, because a run that quietly did would be the opposite of evidence.
 #
+# Two overrides exist for the same reason QUALI_MODEL_DIR does: a test can exercise
+# this script's own paths without the network or a built venv. QUALI_MODEL_URL
+# replaces the release asset the download branch fetches (the bytes are still checked
+# against the pins below, and the URL actually used is recorded in the evidence's own
+# provenance label, so the label is not something a caller can assert); QUALI_PYTHON
+# replaces the interpreter path. The three pinned hashes are checked before anything
+# here needs an interpreter at all, which is why a clone whose venv has not been built
+# yet still stops on unpinned model bytes instead of stopping on the missing venv.
+#
 # It also resolves a transcription model, because the suite now closes a loop the
 # stub cannot: the sentence the speech engine says is uploaded back in and read by
 # the engine's own speech-to-text route. That model is CTranslate2 Whisper small
@@ -49,18 +58,24 @@ ASR_MODEL_NAME=${QUALI_ASR_MODEL_NAME:-faster-whisper-small}
 #: run that used different bytes would be evidence about something else.
 SHA_ASR_MODEL=3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671
 TARBALL="$MODEL_NAME.tar.bz2"
-URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/$TARBALL"
+URL=${QUALI_MODEL_URL:-"https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/$TARBALL"}
 # The same three values hosted/scripts/hosted_demo.sh pins, from the M1 run.
 SHA_MODEL=75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e
 SHA_TOKENS=6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425
 SHA_VOICES=1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29
-PY="$REPO/.venv/bin/python"
+PY=${QUALI_PYTHON:-"$REPO/.venv/bin/python"}
 
-if [ ! -x "$PY" ]; then
-  echo "no venv at $PY. Build it once, then call this again:" >&2
-  echo "    cd $REPO && uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12" >&2
-  exit 2
-fi
+#: Deliberately not called before the pin checks below: a wrong model directory has to
+#: be refused even on a clone whose venv has not been built. A test on this slice ran
+#: the pin check from a cold clone and found it exiting 2 (no venv) instead of 3
+#: (unpinned bytes), so the interpreter is required only where it is used.
+require_python() {
+  if [ ! -x "$PY" ]; then
+    echo "no python at $PY. Build the venv once (or set QUALI_PYTHON), then call this again:" >&2
+    echo "    cd $REPO && uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12" >&2
+    exit 2
+  fi
+}
 
 #: The three files this script pins are checked whatever directory the model came
 #: from. A model already on this machine is as capable of being the wrong bytes as
@@ -90,18 +105,23 @@ done
 
 MODEL_SOURCE=""
 if [ -z "$MODEL" ]; then
+  #: No interpreter is required here on purpose: fetching and extracting the asset is
+  #: curl and tar, and the pins below decide whether the bytes may be spoken at all.
+  #: A clone with no venv can therefore still be told its model directory is wrong.
   WORK=${QUALI_E2E_WORK:-${TMPDIR:-/tmp}/qb-real-engine-model}
   mkdir -p "$WORK"
   if [ ! -d "$WORK/$MODEL_NAME" ]; then
-    echo "==> no $MODEL_NAME on this machine; downloading it (about 132 MB)"
+    echo "==> no $MODEL_NAME on this machine; downloading it from $URL (about 132 MB)"
     curl -fL --retry 3 -o "$WORK/$TARBALL" "$URL"
     echo "==> extracting"
-    tar xjf "$WORK/$TARBALL" -C "$WORK" 2>/dev/null || \
+    tar xjf "$WORK/$TARBALL" -C "$WORK" 2>/dev/null || {
+      require_python
       "$PY" -c "import tarfile,sys; tarfile.open(sys.argv[1],'r:bz2').extractall(sys.argv[2])" \
              "$WORK/$TARBALL" "$WORK"
+    }
   fi
   MODEL="$WORK/$MODEL_NAME"
-  MODEL_SOURCE="downloaded by this script into $WORK"
+  MODEL_SOURCE="downloaded by this script from $URL into $WORK"
 fi
 
 echo "==> verifying the model bytes against the pinned hashes"
@@ -120,6 +140,7 @@ if [ -z "$ASR" ]; then
   # The Hugging Face cache stores a snapshot as symlinks into blobs/, so the
   # snapshot directory is resolved rather than guessed — the path changes with
   # every revision downloaded.
+  require_python
   ASR=$("$PY" - <<'PYEOF' 2>/dev/null || true
 import glob, os
 for path in glob.glob(
@@ -164,6 +185,10 @@ mkdir -p "$STATE"
 MODEL_SOURCE=${MODEL_SOURCE:-"found at $MODEL"}
 echo "==> engine: sherpa-onnx on $MODEL"
 echo "==> CPU synthesis is slower than real time; this run takes minutes, not seconds."
+
+# The engine, the suite and the worker are all started through this interpreter, so it
+# is required once the run is really going to happen.
+require_python
 
 cd "$WEB"
 OMNIVOICE_TTS_BACKEND=sherpa-onnx \
