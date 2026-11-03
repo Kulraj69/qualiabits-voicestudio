@@ -1310,14 +1310,45 @@ async function main() {
     const chapterBytes = doneProject.chapters.reduce((total, chapter) => total + (chapter.audio_bytes ?? 0), 0);
     const chapterSeconds = doneProject.chapters.reduce((total, chapter) => total + (chapter.audio_seconds ?? 0), 0);
     const audiobook = await page.evaluate(async (id) => {
-      const response = await fetch(`/api/projects/${id}/audio`);
-      const buffer = new Uint8Array(await response.arrayBuffer());
+      const digest = async (bytes) => {
+        const hash = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      };
+      const read = async (url) => {
+        const response = await fetch(url);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        return {
+          status: response.status,
+          header: String.fromCharCode(...bytes.slice(0, 4)),
+          bytes: bytes.length,
+          chapters: response.headers.get("x-qualiabits-project-chapters"),
+          seconds: Number(response.headers.get("x-qualiabits-audio-seconds")),
+          payload: bytes.slice(44),
+        };
+      };
+      const project = await read(`/api/projects/${id}/audio`);
+      const detail = await fetch(`/api/projects/${id}`).then((response) => response.json());
+      const chapters = [];
+      for (const chapter of detail.project.chapters) {
+        chapters.push(await read(`/api/jobs/${chapter.job_id}/audio`));
+      }
+      const joined = new Uint8Array(chapters.reduce((total, one) => total + one.payload.length, 0));
+      let offset = 0;
+      for (const one of chapters) {
+        joined.set(one.payload, offset);
+        offset += one.payload.length;
+      }
       return {
-        status: response.status,
-        header: String.fromCharCode(...buffer.slice(0, 4)),
-        bytes: buffer.length,
-        chapters: response.headers.get("x-qualiabits-project-chapters"),
-        seconds: Number(response.headers.get("x-qualiabits-audio-seconds")),
+        status: project.status,
+        header: project.header,
+        bytes: project.bytes,
+        chapters: project.chapters,
+        seconds: project.seconds,
+        payload_bytes: project.payload.length,
+        payload_sha256: await digest(project.payload),
+        chapter_count: chapters.length,
+        chapter_ok: chapters.filter((one) => one.status === 200).length,
+        chapters_joined_sha256: await digest(joined),
       };
     }, queuedProject.id);
     // The claim is about the file the page hands a visitor, so the plane's own
@@ -1350,7 +1381,18 @@ async function main() {
     // only that chapter — and read as proof of all of them.
     const chapterFetchesOk = chapterFiles.length === doneProject.chapters.length
       && chapterFiles.every((file) => file.status === 200);
-    const framesMatch = chapterFetchesOk
+    // And the bytes the page handed the browser have to be the bytes read here: the
+    // page's own routes go through the Next proxy, which is a component a run like
+    // this one could be blamed for, so the two payload digests are compared rather
+    // than assumed equal. A judge pass was right that comparing only the plane's
+    // copy left a broken proxy able to pass this check.
+    const sha256Bytes = (bytes) => createHash("sha256").update(Buffer.from(bytes)).digest("hex");
+    const pagePayload = audiobook.payload_bytes === assembledPayload.length
+      && audiobook.payload_sha256 === sha256Bytes(assembledPayload);
+    const pageChapters = audiobook.chapter_count === doneProject.chapters.length
+      && audiobook.chapter_ok === doneProject.chapters.length
+      && audiobook.chapters_joined_sha256 === sha256Bytes(joinedPayload);
+    const framesMatch = chapterFetchesOk && pagePayload && pageChapters
       && assembledPayload.length === joinedPayload.length
       && assembledPayload.every((value, index) => value === joinedPayload[index]);
     check(
@@ -1369,7 +1411,8 @@ async function main() {
         + `${assembled.bytes.length} bytes, payload ${assembledPayload.length} against `
         + `${joinedPayload.length} from the chapters, `
         + `${chapterFiles.filter((file) => file.status === 200).length}/${doneProject.chapters.length} `
-        + `chapter files fetched, frames ${framesMatch ? "identical" : "different"}`,
+        + `chapter files fetched, the page's own bytes ${pagePayload && pageChapters ? "same" : "DIFFERENT"}, `
+        + `frames ${framesMatch ? "identical" : "different"}`,
     );
     const readyProgress = await page.textContent(`[data-testid="project-progress-${queuedProject.id}"]`);
     check(

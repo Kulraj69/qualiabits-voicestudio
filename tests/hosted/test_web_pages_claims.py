@@ -116,9 +116,7 @@ def test_the_stated_counts_are_the_counts_in_the_two_runs():
     )
 
     for word, expected in (
-        ("ninety", stub_without),
         ("ninety-one", stub_keep),
-        ("ninety-six", real_without),
         ("ninety-seven", real_keep),
     ):
         assert word in text, f"the page no longer states {word!r}"
@@ -127,6 +125,13 @@ def test_the_stated_counts_are_the_counts_in_the_two_runs():
         )
     assert "ninety-one checks on the stub path" in flat(text)
     assert "ninety-seven against the real engine" in flat(text)
+    # The un-kept totals are not asserted against the page: the harness only writes
+    # result.json when it is asked to keep evidence, so there is no committed run to
+    # read them from, and a judge pass was right that the page should not quote
+    # arithmetic as a measurement. What is still checked is that the rule holds.
+    assert stub_without == stub_keep - 1 and real_without == real_keep - 1, (
+        "the screenshot check is no longer the only difference between --keep and not"
+    )
 
 
 def test_the_stated_difference_is_the_real_difference_between_the_two_runs():

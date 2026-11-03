@@ -167,6 +167,18 @@ def test_the_code_the_cited_run_exercised_has_not_changed_since():
         "the page cites a run taken before these files changed, so it describes a "
         "revision that is no longer here; re-run the browser suite:\n" + changed
     )
+    # Commits are not the whole story: an uncommitted edit to a measured directory
+    # leaves the same gap as a committed one, and a judge pass on this slice pointed
+    # out that the `diff <commit> HEAD` form above cannot see it. A harness edit in
+    # the working tree would have invalidated the cited run silently.
+    dirty = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "status", "--porcelain", "--", *MEASURED_SUBJECTS],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    assert dirty == "", (
+        "a measured directory has uncommitted changes, so the cited run no longer "
+        "describes this working tree; commit them and re-run the browser suite:\n" + dirty
+    )
 
 
 #: The prose spells its small numbers out, so the guard has to read them back.

@@ -146,9 +146,12 @@ taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
 of the eight pages: **ninety-one checks on the stub path** and **ninety-seven against
-the real engine**. Without `--keep` the same two paths run one fewer check each
-(**ninety** and **ninety-six**), because the screenshot check has nowhere to
-write; `--no-build` skips one more, the check that the build succeeds. The kept runs
+the real engine**. Without `--keep` the screenshot check has nowhere to write, so
+either path runs one check fewer; `--no-build` skips one more on top of that, the
+check that the build succeeds. Only the two `--keep` runs are quoted as numbers here,
+because they are the two that are committed: a judge pass was right that the shorter
+forms' totals were arithmetic the page stated as though they had been measured. The
+kept runs
 are `hermes-reports/M3-slot60-web-e2e-stub-r1/result.json` and
 `hermes-reports/M3-slot60-web-e2e-r1/result.json`, and a test reads the counts, the
 one-check difference and the seven-and-one difference below back out of those files

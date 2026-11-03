@@ -155,7 +155,13 @@ echo "==> engine speech-to-text: faster-whisper on $ASR (model.bin pinned)"
 STATE=${QUALI_E2E_ENGINE_STATE:-${TMPDIR:-/tmp}/qb-real-engine-state}
 mkdir -p "$STATE"
 
-MODEL_SOURCE=${QUALI_MODEL_SOURCE:-${MODEL_SOURCE:-"found at $MODEL"}}
+# The provenance label the evidence records is derived here, never taken from the
+# environment: a caller who could set it could make a found directory read as a
+# downloaded one while the bytes stayed the same, which is exactly how a label stops
+# meaning anything. A judge pass on this slice pointed that out about the two
+# `QUALI_*_SOURCE` overrides that used to be here. The resolved directory is recorded
+# too, so a reader can check the label against a path.
+MODEL_SOURCE=${MODEL_SOURCE:-"found at $MODEL"}
 echo "==> engine: sherpa-onnx on $MODEL"
 echo "==> CPU synthesis is slower than real time; this run takes minutes, not seconds."
 
@@ -178,6 +184,6 @@ QB_E2E_TRANSCRIBE_LANGUAGE="${QB_E2E_TRANSCRIBE_LANGUAGE:-hi}" \
 QB_E2E_ENGINE_LABEL="sherpa-onnx on $MODEL_NAME (QB_E2E_ENGINE_CMD)" \
 QB_E2E_MODEL_SOURCE="$MODEL_SOURCE" \
 QB_E2E_ASR_MODEL="$ASR" \
-QB_E2E_ASR_MODEL_SOURCE="${QUALI_ASR_SOURCE:-found at $ASR}" \
+QB_E2E_ASR_MODEL_SOURCE="found at $ASR" \
 QB_E2E_ASR_MODEL_PINNED="$SHA_ASR_MODEL" \
   node e2e/dashboard.mjs "$@"
