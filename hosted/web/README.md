@@ -19,6 +19,15 @@ one command that re-takes the real one, and it refuses to run on weights other t
 the pinned bytes. `npm run e2e` is the two-minute stub path: it proves the app, the
 plane, the worker and the browser, and it deliberately proves nothing about speech.
 
+The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
+this repository, and their transcripts are committed beside the two run files:
+`hermes-reports/V0-slot69-tests-r4.log` (the Python guard suite, 217 passed),
+`V0-slot69-web-unit-r3.log` (the web unit suite, 99 passed), `V0-slot69-pins-r2.log`
+(the pinned-bytes guard, 5 passed), `V0-slot69-coldclone-r1.log` (the same guards from
+a clone with no `.venv`, 30 passed), `V0-slot69-stub-run3.log` and
+`V0-slot69-real-run3.log` (the two browser runs the archives hold). A reader who
+disagrees with a sentence here can read the command and its output instead.
+
 ## Do this, see that
 
 You need three processes. The dashboard is one of them; the engine and the

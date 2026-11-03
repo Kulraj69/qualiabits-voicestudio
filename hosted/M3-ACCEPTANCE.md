@@ -7,7 +7,10 @@ rules file for it to map against, so this page claims product scope only.
 The milestone plan for M3 is: *new web UI (Next.js): clean ElevenLabs-quality
 dashboard — Text to Speech, Voice Library, Voice Clone (with consent), Voice Design,
 Dubbing, Transcription, Audiobooks/Projects, API Keys, Usage. Responsive, fast,
-dark/light.*
+dark/light.* That is the owner's brief, quoted as it was written, and it is a target
+rather than a claim: nothing in this repository measures itself against a commercial
+voice product, no such product has been run or quoted, and the two comparisons the
+project does have are wall-clock timings against another local engine.
 
 Four slices are built. **Slice A** is the four things a customer does first — sign
 up, speak, mint keys, see what was used. **Slice B** is transcription: a recording in,
