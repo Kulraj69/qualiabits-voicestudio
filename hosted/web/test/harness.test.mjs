@@ -95,3 +95,39 @@ test("the hand-off into Speak is driven and checked, both ways", () => {
 test("the library is one of the pages the run visits, tabs into and captures", () => {
   assert.match(HARNESS, /const PAGES = \["\/", "\/speak", "\/voices"/);
 });
+
+test("the long-form page is visited, and the run queues a real manuscript on it", () => {
+  assert.match(HARNESS, /"\/jobs", "\/projects"\]/);
+  assert.match(HARNESS, /await page\.goto\(`\$\{webBase\}\/projects`/);
+  assert.match(HARNESS, /\[data-testid="project-text"\]/);
+  assert.match(HARNESS, /\[data-testid="project-create"\]/);
+  // The manuscript is written as paragraphs of their own, so the number of
+  // chapters is a fact about the text and not about the splitter's arithmetic.
+  assert.match(HARNESS, /const chapterOne = /);
+  assert.match(HARNESS, /`\$\{chapterOne\}\\n\\n\$\{chapterTwo\}`/);
+});
+
+test("the run checks the dashboard's refusal against the plane's own sentence", () => {
+  assert.match(HARNESS, /const projectCeiling = Number\(planeHealth\?\.project_max_chars\)/);
+  assert.match(HARNESS, /\[data-testid="project-over"\]/);
+  assert.match(HARNESS, /pageRefusal === planeRefusal\.detail/);
+  assert.match(HARNESS, /an over-long manuscript is refused by the dashboard in the plane's own sentence/);
+});
+
+test("the run asks for the audiobook before and after the worker, and compares both", () => {
+  // Before: the refusal, with the chapters that are still waiting named.
+  assert.match(HARNESS, /fetch\(`\/api\/projects\/\$\{id\}\/audio`\)/);
+  assert.match(HARNESS, /earlyDownload\.detail\.waiting\.length === 2/);
+  // After: the file, its own chapter count header, and the sum of the chapters.
+  assert.match(HARNESS, /x-qualiabits-project-chapters/);
+  assert.match(HARNESS, /chapterBytes - audiobook\.bytes < 200/);
+  // And the meter: chapters are orders, a project is not.
+  assert.match(HARNESS, /usageAfterProject\.requests === usageBeforeProject\.requests \+ 2/);
+});
+
+test("the run records the long-form numbers it measured, not a summary of them", () => {
+  assert.match(HARNESS, /result\.projects = \{/);
+  for (const field of ["chapter_ceiling", "chapters", "chapter_bytes", "audiobook_bytes", "audiobook_seconds", "meter_before", "meter_after"]) {
+    assert.match(HARNESS, new RegExp(`${field}:`));
+  }
+});

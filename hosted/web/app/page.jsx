@@ -31,6 +31,12 @@ const TILES = [
     body: "Queue a paragraph, watch it move to done, then play and download the stored audio.",
   },
   {
+    href: "/projects",
+    kicker: "Long-form",
+    title: "Projects",
+    body: "Paste a manuscript, let the plane split it into chapters and queue one job each, then download the whole book as one file when every chapter is done.",
+  },
+  {
     href: "/keys",
     kicker: "The product API",
     title: "API keys",
@@ -63,8 +69,9 @@ export default async function HomePage() {
           </h1>
           <p className="hero__lede">
             Sign up for a workspace, then speak text with a voice taken from the
-            engine's own catalogue, queue longer pieces of audio, transcribe a
-            recording, mint API keys and read the meter the plane keeps. Every number on these pages comes from
+            engine's own catalogue, queue longer pieces of audio or a whole manuscript
+            as chapters, transcribe a recording, mint API keys and read the meter the
+            plane keeps. Every number on these pages comes from
             the control plane's records, not from this page's own state.
           </p>
           <div className="hero__actions">

@@ -1,4 +1,4 @@
-# What M3 asked for so far — slices A to C — and where each piece is
+# What M3 asked for so far — slices A to D — and where each piece is
 
 No official judging criteria are mapped here, and none can be: M3 is a milestone in
 this repository's own plan, not a hackathon this product is entered in. There is no
@@ -9,7 +9,7 @@ dashboard — Text to Speech, Voice Library, Voice Clone (with consent), Voice D
 Dubbing, Transcription, Audiobooks/Projects, API Keys, Usage. Responsive, fast,
 dark/light.*
 
-Three slices are built. **Slice A** is the four things a customer does first — sign
+Four slices are built. **Slice A** is the four things a customer does first — sign
 up, speak, mint keys, see what was used. **Slice B** is transcription: a recording in,
 the engine's transcript out, metered in its own counters. **Slice C** is the Voice
 Library: every voice the plane reports, searchable, each one previewable through the
@@ -18,13 +18,20 @@ to satisfy the repository's own select rule (`AGENTS.md`, "Shared select control
 the five pickers on the site — the voice on Speak and Jobs, the language filter, the
 transcription language and answer format, and the library's kind filter — are now one
 package-local searchable control instead of native selects, with its pure half tested
-without a browser. Two of the pages
-M3 names — Voice Clone with a consent checkbox and Voice Design — and two more —
-Dubbing and Audiobooks — are **not built**, and the last section of this page says so
+without a browser. **Slice D** is long-form: a manuscript in, chapters out. The plane
+splits the text at paragraph, then sentence, then word boundaries — never inside a
+word — queues one ordinary metered job per chapter, shows per-chapter progress on the
+page, and assembles the chapters the engine actually produced into one downloadable
+WAV. It refuses in two places rather than guessing: a manuscript whose chapter count
+or single word breaks the stated limits, and an assembly whose chapter formats
+disagree, because joining 24 kHz mono to 48 kHz stereo produces a file that every
+player opens and every listener hears at the wrong speed. Three of the pages
+M3 names — Voice Clone with a consent checkbox, Voice Design and Dubbing — are
+**not built**, and the last section of this page says so
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot56-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot60-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -64,6 +71,17 @@ is a command a reader can re-run, not a policy to take on trust.
 | Grouped rows come from the kind the plane reported, and filtering keeps the grouping | `hosted/web/lib/searchable-select.js` | `hosted/web/test/voices.test.mjs` | `choosing a kind with the keyboard narrows the cards to exactly that kind, and invents none` |
 | The transcription controls are the same control as every other picker | `hosted/web/components/TranscribeView.jsx` | `hosted/web/test/searchable-select.test.mjs` | `the Transcribe page shows a transcript` |
 | Dark, and the QualiaBits palette and spacing | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
+| Long-form: a manuscript in, chapters out, one job per chapter | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | `the plane split the manuscript into chapters and queued one job each` |
+| The split lands on a boundary, never inside a word, and repeats exactly | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | no run evidence: the splitter is pure, so the browser run says nothing a unit test does not |
+| A chapter ceiling the queue will accept, read from both modules | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | no run evidence: the same pure unit test reads both numbers |
+| Per-chapter progress, counted from the plane's own statuses | `hosted/web/components/ProjectsView.jsx` | `tests/hosted/test_hosted_projects.py` | `the page's progress sentence is counted from the plane's chapter statuses` |
+| A manuscript past the limit is refused in the plane's own sentence, before the request | `hosted/web/lib/projects.js` | `hosted/web/test/projects.test.mjs` | `an over-long manuscript is refused by the dashboard in the plane's own sentence` |
+| No audiobook before every chapter is spoken: a 409 that names the chapters waiting | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_projects.py` | `the assembled audiobook is a 409 that names the chapters still waiting` |
+| The audiobook is the chapters' own frames under one header | `hosted/control_plane/projects.py` | `tests/hosted/test_project_assembly.py` | `the assembled file is the chapters' frames under one header, not two` |
+| The assembler refuses formats it cannot join, naming both chapters | `hosted/control_plane/projects.py` | `tests/hosted/test_project_assembly.py` | no run evidence: the refusal is a pure function of two byte strings |
+| Chapters are metered, not projects: one request per spoken chapter | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_projects.py` | `the meter moved by one request per chapter, not one per project` |
+| Another workspace can never read a project, a chapter or its audio | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_projects.py` | no run evidence: the browser run signs one workspace up |
+| An older database gains the two new tables, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | no run evidence: the browser run creates a fresh database |
 
 Two sentences that belong beside that table, because the gap between what is proven
 and what is not is exactly where a product page starts lying:
@@ -98,7 +116,7 @@ and what is not is exactly where a product page starts lying:
 
 ## What is not built, and is not stubbed
 
-Voice Clone with a consent checkbox, Voice Design, Dubbing, Audiobooks/Projects, the
+Voice Clone with a consent checkbox, Voice Design, Dubbing, the
 agents tab, a light theme, and the marketing landing page are all **later slices of
 M3**. None of
 them is a greyed-out button or a "coming soon" card: a page that is not built is not on

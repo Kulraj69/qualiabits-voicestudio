@@ -1,10 +1,11 @@
 # The QualiaBits Voice dashboard
 
-The browser front end for the hosted control plane in [`hosted/`](../). Seven pages,
+The browser front end for the hosted control plane in [`hosted/`](../). Eight pages,
 each one a real thing a customer does: sign up and sign in; speak text and hear it;
 browse the engine's own voice catalogue and preview any of them; send a recording in
 and read the transcript back; mint and revoke API keys; watch a queued job and
-download what it made; read the meter the plane keeps.
+download what it made; paste in a manuscript and get one audiobook back; read the
+meter the plane keeps.
 
 Not deployed. Not public. No public URL, no real S3 bucket, no GPU. Everything
 runs on this machine on loopback.
@@ -85,6 +86,17 @@ Now walk it, and each step says what you should see:
    the plane's own notes about what each counter means. **Characters** and
    **characters transcribed** are separate lines on purpose: one is text you asked
    the engine to say, the other is text it handed back.
+8. **Projects** at `/projects` — paste a manuscript, give it a title, choose a
+   voice, press **Create project**. The plane splits the text at paragraph ends
+   first, then sentence ends, then spaces — never inside a word — and queues one
+   ordinary job per chapter; the row shows *n of m chapters spoken* counted from the
+   plane's own chapter statuses. Run the worker (`hosted/scripts/run_worker.py`) and
+   the row moves to **Ready to download** with one **Download WAV** holding every
+   chapter. Press that button before every chapter is done and the download is
+   refused with a sentence naming the chapters still waiting. A manuscript past the
+   plane's own ceiling (180,000 characters) is refused in the composer, in the
+   plane's own words, before any request leaves the page; the chapters are metered
+   separately, so a two-chapter project is two requests, not one.
 
 Every page above is one click from home, every page is dark, and every control
 takes a visible keyboard focus.
@@ -121,7 +133,7 @@ records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
-of the seven pages: **seventy-nine checks on the stub path** and **eighty-five against
+of the eight pages: **ninety-one checks on the stub path** and **seventy-nine against
 the real engine**. Without `--keep` the same two paths run one fewer check each
 (**seventy-eight** and **eighty-four**), because the screenshot check has nowhere to
 write; `--no-build` skips one more, the check that the build succeeds. The kept runs
@@ -135,7 +147,7 @@ stub can satisfy, so the two totals differ by six. This path also checks the tra
 downloads (each one a real click and a real file read back off disk) and sends one byte
 past the plane's own 25 MiB upload ceiling, refused with the sentence that names
 the limit. `--keep` writes `result.json`, the process logs and a full-page screenshot of
-each of the seven pages to `e2e/.evidence/`.
+each of the eight pages to `e2e/.evidence/`.
 
 **The one substitution** is the engine: `e2e/engine_stub.py`, the same shape as
 the stub the Python suite uses, so the browser run needs no model download. The
@@ -251,7 +263,7 @@ contact with either is HTTP.
 
 ## What is not here, and is not stubbed
 
-Voice cloning, voice design, dubbing, audiobooks, the agents tab, the marketing
+Voice cloning, voice design, dubbing, the agents tab, the marketing
 landing page, email verification, billing and deployment are all later slices. None of them exists as a greyed-out button here — a page that is
 not built is not on the site.
 

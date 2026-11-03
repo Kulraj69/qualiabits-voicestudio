@@ -547,7 +547,7 @@ async function main() {
     // /speak (its focus) and let the other three pages be covered by inference.
     // A judge was right to call that narrower than the claim, so each page is
     // now visited, tabbed into and, when evidence is kept, captured.
-    const PAGES = ["/", "/speak", "/voices", "/transcribe", "/keys", "/usage", "/jobs"];
+    const PAGES = ["/", "/speak", "/voices", "/transcribe", "/keys", "/usage", "/jobs", "/projects"];
     const shotDir = path.join(runDir, "screenshots");
     if (KEEP) mkdirSync(shotDir, { recursive: true });
     result.pages = [];
@@ -1187,6 +1187,153 @@ async function main() {
         `${spoken?.bytes} then ${jobAudio.bytes} bytes`,
       );
     }
+
+    // ── projects: a manuscript, split, spoken chapter by chapter, joined ────
+    //
+    // The long-form path, end to end and in one browser session: the page queues a
+    // manuscript, the plane splits it, the *real* worker speaks each chapter, and
+    // the assembled audiobook comes back through the dashboard. The two claims
+    // worth a browser are the honest ones: no audiobook is offered before every
+    // chapter is done, and the dashboard refuses an over-long manuscript in the
+    // plane's own words before sending it anywhere.
+    await page.goto(`${webBase}/projects`, { waitUntil: "load" });
+    const projectCeiling = Number(planeHealth?.project_max_chars);
+
+    // (1) The composer refuses a manuscript past the plane's ceiling, in the
+    // plane's sentence — compared with the plane's own answer for the same body.
+    if (Number.isFinite(projectCeiling) && projectCeiling > 0) {
+      await page.fill('[data-testid="project-text"]', "शब्द ".repeat(Math.ceil(projectCeiling / 5) + 1));
+      await page.waitForSelector('[data-testid="project-over"]', { timeout: 15000 });
+      const pageRefusal = (await page.textContent('[data-testid="project-over"]')).trim();
+      const disabled = await page.getAttribute('[data-testid="project-create"]', "disabled");
+      const planeRefusal = await page.evaluate(async ({ ceiling }) => {
+        const response = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ title: "", input: "शब्द ".repeat(Math.ceil(ceiling / 5) + 1), voice: "hf_alpha" }),
+        });
+        const data = await response.json().catch(() => ({}));
+        return { status: response.status, detail: String(data?.detail ?? "") };
+      }, { ceiling: projectCeiling });
+      check(
+        "an over-long manuscript is refused by the dashboard in the plane's own sentence",
+        pageRefusal === planeRefusal.detail && pageRefusal.includes(String(projectCeiling)),
+        `page: ${pageRefusal} | plane: ${planeRefusal.status} ${planeRefusal.detail}`,
+      );
+      check(
+        "the dashboard refuses it itself, so the plane never sees the request",
+        disabled !== null && planeRefusal.status === 413,
+        `button disabled=${disabled !== null}, plane answered ${planeRefusal.status}`,
+      );
+    }
+
+    // (2) A real manuscript: two paragraphs of their own, sized so the plane's own
+    // splitter makes exactly two chapters from them (each paragraph is under the
+    // 1500-character chapter target and the two together are over it, so the first
+    // chapter closes on the paragraph break) — and the page shows what the plane
+    // reported, not what it assumed.
+    const chapterOne = "पहला अध्याय: " + "यह वाक्य इस अध्याय में दोहराया गया है। ".repeat(35);
+    const chapterTwo = "दूसरा अध्याय: " + "यह दूसरा वाक्य इस अध्याय में है। ".repeat(45);
+    await page.fill('[data-testid="project-title"]', "e2e की किताब");
+    await page.fill('[data-testid="project-text"]', `${chapterOne}\n\n${chapterTwo}`);
+    await chooseSelect(page, "project-voice", VOICE);
+    const usageBeforeProject = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;
+    await page.click('[data-testid="project-create"]');
+    await page.waitForSelector('[data-testid="project-notice"]', { timeout: 20000 });
+
+    const listed = (await plane(planeBase, "/v1/projects", { token: session })).data;
+    const queuedProject = listed.projects[0];
+    check(
+      "the plane split the manuscript into chapters and queued one job each",
+      queuedProject?.chapter_count === 2 && queuedProject.chapters.length === 2,
+      JSON.stringify({ chapters: queuedProject?.chapter_count, jobs: queuedProject?.chapters?.map((c) => c.job_id) }),
+    );
+    check(
+      "no chapter has been spoken at the moment the manuscript is accepted",
+      queuedProject?.spoken_chapters === 0 && queuedProject.status === "queued",
+      JSON.stringify({ status: queuedProject?.status, spoken: queuedProject?.spoken_chapters }),
+    );
+    const projectProgress = await page.textContent(`[data-testid="project-progress-${queuedProject.id}"]`);
+    check(
+      "the page's progress sentence is counted from the plane's chapter statuses",
+      /0 of 2 chapters spoken/.test(projectProgress),
+      projectProgress,
+    );
+
+    // (3) The audiobook does not exist yet, and asking for it says why.
+    const earlyDownload = await page.evaluate(async (id) => {
+      const response = await fetch(`/api/projects/${id}/audio`);
+      const data = await response.json().catch(() => ({}));
+      return { status: response.status, detail: data?.detail };
+    }, queuedProject.id);
+    check(
+      "the assembled audiobook is a 409 that names the chapters still waiting",
+      earlyDownload.status === 409
+        && Array.isArray(earlyDownload.detail?.waiting)
+        && earlyDownload.detail.waiting.length === 2
+        && earlyDownload.detail.spoken_chapters === 0,
+      JSON.stringify(earlyDownload),
+    );
+
+    // (4) The real worker speaks both chapters, and then the file exists.
+    const projectWorker = await runToEnd(
+      PYTHON,
+      [path.join(REPO, "hosted", "scripts", "run_worker.py"), "--once"],
+      planeEnv,
+      REPO,
+    );
+    check("the real worker spoke every chapter", projectWorker.code === 0, projectWorker.out.slice(-300));
+    await page.waitForSelector(`[data-testid="project-audio-${queuedProject.id}"]`, { timeout: 60000 });
+
+    const doneProject = (await plane(planeBase, `/v1/projects/${queuedProject.id}`, { token: session })).data.project;
+    const chapterBytes = doneProject.chapters.reduce((total, chapter) => total + (chapter.audio_bytes ?? 0), 0);
+    const chapterSeconds = doneProject.chapters.reduce((total, chapter) => total + (chapter.audio_seconds ?? 0), 0);
+    const audiobook = await page.evaluate(async (id) => {
+      const response = await fetch(`/api/projects/${id}/audio`);
+      const buffer = new Uint8Array(await response.arrayBuffer());
+      return {
+        status: response.status,
+        header: String.fromCharCode(...buffer.slice(0, 4)),
+        bytes: buffer.length,
+        chapters: response.headers.get("x-qualiabits-project-chapters"),
+        seconds: Number(response.headers.get("x-qualiabits-audio-seconds")),
+      };
+    }, queuedProject.id);
+    check(
+      "the audiobook downloads from the page as one WAV holding every chapter",
+      audiobook.status === 200 && audiobook.header === "RIFF" && audiobook.chapters === "2",
+      JSON.stringify(audiobook),
+    );
+    check(
+      "the assembled file is the chapters' frames under one header, not two",
+      audiobook.bytes <= chapterBytes && chapterBytes - audiobook.bytes < 200
+        && Math.abs(audiobook.seconds - chapterSeconds) < 0.05,
+      `${audiobook.bytes} bytes against ${chapterBytes} summed from the chapters, `
+        + `${audiobook.seconds} s against ${chapterSeconds} s`,
+    );
+    const readyProgress = await page.textContent(`[data-testid="project-progress-${queuedProject.id}"]`);
+    check(
+      "the page reports the finished project from the plane's own statuses",
+      /2 of 2 chapters spoken/.test(readyProgress) && /Ready to download/.test(await page.textContent(`[data-testid="project-status-${queuedProject.id}"]`)),
+      readyProgress,
+    );
+
+    // (5) Chapters are metered, not projects.
+    const usageAfterProject = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;
+    check(
+      "the meter moved by one request per chapter, not one per project",
+      usageAfterProject.requests === usageBeforeProject.requests + 2,
+      `${usageBeforeProject.requests} -> ${usageAfterProject.requests}`,
+    );
+    result.projects = {
+      chapter_ceiling: Number.isFinite(projectCeiling) ? projectCeiling : null,
+      chapters: doneProject.chapters.length,
+      chapter_bytes: chapterBytes,
+      audiobook_bytes: audiobook.bytes,
+      audiobook_seconds: audiobook.seconds,
+      meter_before: usageBeforeProject.requests,
+      meter_after: usageAfterProject.requests,
+    };
 
     // ── keyboard focus is visible ───────────────────────────────────────────
     // Covered for every page above, where each route is tabbed into and its

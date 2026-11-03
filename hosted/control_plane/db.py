@@ -6,10 +6,10 @@ a customer authenticates.
 
 SQLite by default (a single box, one control plane), any SQLAlchemy URL via
 ``QUALI_DATABASE_URL`` otherwise. The schema is created on startup with
-``create_all`` and its version is written into ``schema_meta``; there is no
-migration tool for the control plane yet. That is fine while the schema is a
-week old and nothing is deployed — it stops being fine the moment a real
-customer's data lives in it, and slice B carries the alembic setup.
+``create_all``, and a database that already exists is brought forward one ordered
+step at a time by ``migrations.py``; the version it has been brought to lives in
+``schema_meta``. The engine's tables are not here and nothing in ``backend/``
+opens this database.
 """
 from __future__ import annotations
 
@@ -214,6 +214,57 @@ class Job(Base):
     @property
     def terminal(self) -> bool:
         return self.status in ("succeeded", "failed", "cancelled")
+
+
+class Project(Base):
+    """A manuscript, and the settings every one of its chapters is spoken with.
+
+    A project owns no audio of its own: the chapters are ordinary ``Job`` rows, and
+    the audiobook is assembled from what those jobs stored. That is deliberate —
+    the queue's claim, lease and retry rules are the hard part of long-form work,
+    and a second copy of them here would be a second set of bugs. What the project
+    adds is the order of the chapters and the fact that they were one manuscript.
+    """
+
+    __tablename__ = "projects"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(120), default="")
+    voice: Mapped[str] = mapped_column(String(120), default="")
+    response_format: Mapped[str] = mapped_column(String(16), default="wav")
+    source_characters: Mapped[int] = mapped_column(Integer, default=0)
+    chapter_count: Mapped[int] = mapped_column(Integer, default=0)
+    #: The ceiling the splitter was given, kept so a reader can tell why a
+    #: manuscript became this many chapters rather than guessing.
+    chapter_max_chars: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+
+
+class ProjectChapter(Base):
+    """One chapter: a position in a project, and the job that speaks it.
+
+    The chapter's text lives on the job (``Job.input_text``), not here. Two copies
+    of the same paragraph could disagree, and the one the engine was actually asked
+    to speak is the job's.
+    """
+
+    __tablename__ = "project_chapters"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    job_id: Mapped[int] = mapped_column(
+        ForeignKey("jobs.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    #: Zero-based, and the order the audiobook is assembled in.
+    chapter_index: Mapped[int] = mapped_column(Integer)
+    characters: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class Database:

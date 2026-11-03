@@ -14,6 +14,7 @@ const LINKS = [
   { href: "/voices", label: "Voices" },
   { href: "/transcribe", label: "Transcribe" },
   { href: "/jobs", label: "Jobs" },
+  { href: "/projects", label: "Projects" },
   { href: "/keys", label: "Keys" },
   { href: "/usage", label: "Usage" },
 ];

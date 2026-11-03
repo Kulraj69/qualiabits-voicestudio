@@ -13,8 +13,8 @@ git clone https://github.com/Kulraj69/qualiabits-voicestudio.git
 cd qualiabits-voicestudio
 uv sync --frozen --no-default-groups --group cpu --group dev --python python3.12
 
-# about half a minute (30-35 s on the box the numbers below came from), no model and
-# no download: the tests. Everything is real except the engine, which is a stub
+# about a minute (58 s on the box the numbers below came from), no model and no
+# download: the tests. Everything is real except the engine, which is a stub
 # answering with a WAV of a known duration.
 .venv/bin/python -m pytest tests/hosted -q
 
@@ -65,6 +65,11 @@ tests/hosted/                 its tests
 | `GET /v1/jobs/{id}` | session or key | one of your jobs, with its full text |
 | `DELETE /v1/jobs/{id}` | session or key | cancel a job that has not been claimed |
 | `GET /v1/jobs/{id}/audio` | session or key | the stored audio of a finished job |
+| `POST /v1/projects` | session or key | a manuscript: split into chapters, one job queued per chapter |
+| `GET /v1/projects` | session or key | your projects, newest first, each with per-chapter progress |
+| `GET /v1/projects/{id}` | session or key | one project and its chapters, each with its job |
+| `DELETE /v1/projects/{id}` | session or key | cancel a project's chapters that have not been claimed |
+| `GET /v1/projects/{id}/audio` | session or key | the assembled audiobook, joined from the chapters the plane stored |
 
 Not in yet, and named as the next slices: email verification, billing, deployment.
 
@@ -74,13 +79,16 @@ a recording to transcribe; `audio_seconds` is the audio that moved, measured fro
 the WAV header of the bytes themselves — the returned one for speech, the uploaded
 one for transcription. One recording's upload is bounded before it is parsed (25
 MiB by default, `QUALI_TRANSCRIBE_MAX_BYTES`), and a refusal never reaches the
-engine. A `srt` or `text` answer is not counted in characters, because counting a
+engine. Long-form work has no counter of its own on purpose: a project's chapters
+are ordinary jobs on the same speech route, so a two-chapter project is two
+requests and two chapters' worth of characters, and the assembled audiobook is
+not counted as audio that was spoken a second time. A `srt` or `text` answer is not counted in characters, because counting a
 subtitle file would count timecodes as speech; its seconds are still recorded.
 
 ## The dashboard
 
-The dashboard has seven pages now — home, Speak, Voices, Transcribe, Jobs, Keys,
-Usage. The
+The dashboard has eight pages now — home, Speak, Voices, Transcribe, Jobs, Projects,
+Keys, Usage. The
 browser front end that speaks through this plane lives in
 [`hosted/web/`](web/README.md) — its own Next.js package, importing nothing from
 `backend/`, this plane's own routes being its only contact with it. Run it, and
@@ -110,7 +118,7 @@ writes are read back and verified before they are called stored, on both backend
 
 ## Testing
 
-The same fast path as at the top: no model download, 30 to 35 seconds, nine test
+The same fast path as at the top: no model download, about a minute, seventeen test
 files and two substitutions. The engine is a real ASGI app answering with a WAV of a
 known duration, so the meter is checked against audio rather than against a number a
 test invented. The object store's S3 path runs against a local S3-compatible server on

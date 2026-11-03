@@ -20,7 +20,10 @@ from pathlib import Path
 #: m2c1 — slice C: adds ``usage_events.transcript_characters``, so what a
 #:        customer sent us to transcribe is never added to what they asked us
 #:        to speak.
-SCHEMA_VERSION = "m2c1"
+#: m2d1 — slice D: adds ``projects`` and ``project_chapters``, so a manuscript can
+#:        be queued as chapters and assembled back into one file. No existing table
+#:        is changed: the chapters are ordinary jobs.
+SCHEMA_VERSION = "m2d1"
 
 DEFAULT_UPSTREAM = "http://127.0.0.1:3900"
 DEFAULT_SESSION_TTL_SECONDS = 12 * 60 * 60

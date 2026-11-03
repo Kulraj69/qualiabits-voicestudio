@@ -13,6 +13,8 @@ import { readSessionToken } from "./session.js";
 const FORWARDED = [
   "content-type",
   "x-qualiabits-job",
+  "x-qualiabits-project",
+  "x-qualiabits-project-chapters",
   "x-qualiabits-audio-seconds",
   "x-qualiabits-engine-seconds",
   "x-qualiabits-object-sha256",

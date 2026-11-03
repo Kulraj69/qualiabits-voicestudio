@@ -107,8 +107,10 @@ def write_slice_a_database(path: Path, *, email: str = "old@example.com") -> Non
 def test_a_fresh_database_is_created_at_the_current_version(tmp_path):
     db = Database(f"sqlite:///{tmp_path / 'fresh.db'}")
     assert migrate(db, expected_version=SCHEMA_VERSION) == "created"
-    assert db.schema_version() == SCHEMA_VERSION == "m2c1"
+    assert db.schema_version() == SCHEMA_VERSION == "m2d1"
     assert inspect(db.engine).has_table("jobs")
+    assert inspect(db.engine).has_table("projects")
+    assert inspect(db.engine).has_table("project_chapters")
     assert "transcript_characters" in {
         column["name"] for column in inspect(db.engine).get_columns("usage_events")
     }
@@ -120,8 +122,8 @@ def test_a_slice_a_database_is_brought_forward_and_keeps_every_row(tmp_path):
     db = Database(f"sqlite:///{path}")
 
     assert db.schema_version() == "m2a1"
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2c1"
-    assert db.schema_version() == "m2c1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2d1"
+    assert db.schema_version() == "m2d1"
     assert inspect(db.engine).has_table("jobs")
 
     with db.session() as session:
@@ -148,7 +150,7 @@ def test_upgrading_twice_changes_nothing_the_second_time(tmp_path):
     write_slice_a_database(path)
     db = Database(f"sqlite:///{path}")
 
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2c1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2d1"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     with db.session() as session:
@@ -170,7 +172,14 @@ def test_a_step_can_be_run_again_without_failing(tmp_path):
         steps["m2c1"](connection)
     with db.engine.begin() as connection:
         steps["m2c1"](connection)
+    # The table step of slice D, twice: a crash between the DDL and the stamp.
+    with db.engine.begin() as connection:
+        steps["m2d1"](connection)
+    with db.engine.begin() as connection:
+        steps["m2d1"](connection)
     assert inspect(db.engine).has_table("jobs")
+    assert inspect(db.engine).has_table("projects")
+    assert inspect(db.engine).has_table("project_chapters")
     assert "transcript_characters" in {
         column["name"] for column in inspect(db.engine).get_columns("usage_events")
     }
@@ -209,6 +218,17 @@ def test_a_build_claiming_a_version_nobody_knows_is_refused(tmp_path):
     assert "m2z9" in str(error.value)
 
 
+def test_the_builds_schema_version_is_the_last_migration_step():
+    """``config`` and ``migrations`` name the same version, or the plane refuses.
+
+    Two places declare the schema version, which is one place too many; this is the
+    guard that keeps them from drifting apart silently.
+    """
+    from hosted.control_plane.migrations import MIGRATION_VERSION
+
+    assert SCHEMA_VERSION == MIGRATION_VERSION == KNOWN_VERSIONS[-1]
+
+
 def test_the_known_versions_are_in_the_order_the_steps_are_applied():
     assert KNOWN_VERSIONS[-1] == SCHEMA_VERSION
     produced = [version for version, _ in MIGRATIONS]
@@ -228,7 +248,7 @@ def test_the_app_upgrades_a_slice_a_database_in_place_and_the_customer_still_log
     write_slice_a_database(tmp_path / "control-plane.db")
     with app_client(tmp_path, engine) as client:
         health = client.get("/healthz").json()
-        assert health["schema_state"] == "upgraded:m2a1->m2c1"
+        assert health["schema_state"] == "upgraded:m2a1->m2d1"
         assert health["schema_version"] == SCHEMA_VERSION
 
         # The customer who signed up under slice A signs in with the same password.
@@ -250,6 +270,28 @@ def test_the_app_upgrades_a_slice_a_database_in_place_and_the_customer_still_log
         )
         assert queued.status_code == 202
         assert client.get("/healthz").json()["jobs"] == {"queued": 1}
+
+        # And the slice-D feature works on the same old database: a manuscript is
+        # split and queued as chapters the old ledger has never seen before. Two
+        # paragraphs of their own, so it is genuinely two chapters.
+        project = client.post(
+            "/v1/projects",
+            json={
+                "title": "पुराने ग्राहक की किताब",
+                "input": "\n\n".join(
+                    [
+                        "पहला पैराग्राफ: " + "यह वाक्य यहाँ है। " * 60,
+                        "दूसरा पैराग्राफ: " + "यह दूसरा वाक्य है। " * 60,
+                    ]
+                ),
+                "voice": "hf_alpha",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert project.status_code == 202, project.text
+        assert project.json()["project"]["chapter_count"] == 2
+        # Two chapter jobs, on top of the one job queued above.
+        assert client.get("/healthz").json()["jobs"] == {"queued": 3}
 
 
 def test_the_health_route_says_created_for_a_fresh_database(client):

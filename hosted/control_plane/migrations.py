@@ -31,13 +31,14 @@ from typing import Callable
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Connection
 
-from .db import Base, Database, Job
+from .db import Base, Database, Job, Project, ProjectChapter
 
 #: Oldest first. A database is stamped with the last entry it has been brought to.
 #: m2a1 — slice A (workspaces, api_keys, session_tokens, usage_events).
 #: m2b1 — slice B (adds the jobs queue).
 #: m2c1 — slice C (adds usage_events.transcript_characters).
-KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1", "m2c1")
+#: m2d1 — slice D (adds projects and project_chapters).
+KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1", "m2c1", "m2d1")
 
 MIGRATION_VERSION = KNOWN_VERSIONS[-1]
 
@@ -96,11 +97,24 @@ def _add_transcript_characters(connection: Connection) -> None:
     )
 
 
+def _add_projects(connection: Connection) -> None:
+    """m2d1: long-form work — a manuscript and the chapters it was split into.
+
+    Two new tables, no change to anything that already exists: the chapters are
+    ordinary jobs, so this step adds no column to ``jobs`` and an older plane's
+    rows keep their meaning untouched. ``checkfirst=True`` gives the same
+    "re-running changes nothing" property the two steps above have.
+    """
+    Project.__table__.create(connection, checkfirst=True)
+    ProjectChapter.__table__.create(connection, checkfirst=True)
+
+
 #: (version this step produces, work to do). Order matters; the stamp is written
 #: in the same transaction as the work.
 MIGRATIONS: tuple[tuple[str, Callable[[Connection], None]], ...] = (
     ("m2b1", _add_jobs_table),
     ("m2c1", _add_transcript_characters),
+    ("m2d1", _add_projects),
 )
 
 
@@ -153,6 +167,13 @@ def migrate(db: Database, *, expected_version: str) -> str:
     for target, step in MIGRATIONS:
         if _order(target) <= _order(present):
             continue
+        if _order(target) > _order(expected_version):
+            # A step this build does not claim to know. Stopping here keeps the
+            # stamp honest: without it, a build that says it is ``m2c1`` would apply
+            # the ``m2d1`` step too and then stamp the database ``m2c1``, leaving a
+            # schema that has tables the stamp denies and the next start of the
+            # newer build with nothing to do about them.
+            break
         with db.engine.begin() as connection:
             step(connection)
             _stamp(connection, target)

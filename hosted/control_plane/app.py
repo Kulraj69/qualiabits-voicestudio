@@ -25,6 +25,12 @@ Routes and who may call them:
     GET    /v1/jobs/{id}            session or key — one of your jobs
     DELETE /v1/jobs/{id}            session or key — cancel a queued job
     GET    /v1/jobs/{id}/audio      session or key — the stored audio of a done job
+    POST   /v1/projects             session or key — a manuscript, split and queued
+    GET    /v1/projects             session or key — your projects, newest first
+    GET    /v1/projects/{id}        session or key — one project and its chapters
+    DELETE /v1/projects/{id}        session or key — cancel its queued chapters
+    GET    /v1/projects/{id}/audio  session or key — the assembled audiobook, when
+                                     every chapter has been spoken
 
 Two deliberate omissions. There is no public signup-then-speak shortcut: speaking
 always needs a key, so every byte of audio is attributable to a key. (A job may be
@@ -34,6 +40,7 @@ customer cannot even ask for somebody else's numbers, let alone read them.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from contextlib import asynccontextmanager
@@ -56,10 +63,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
-from . import jobs, metering, security, storage, voices as voice_catalogue
+from . import jobs, metering, projects, security, storage, voices as voice_catalogue
 from .auth import Principal, principal
 from .config import Settings
-from .db import ApiKey, Database, Job, SessionToken, Workspace, utcnow
+from .db import ApiKey, Database, Job, Project, ProjectChapter, SessionToken, Workspace, utcnow
 from .upstream import UpstreamClient, UpstreamResult
 
 #: ``starlette.datastructures.UploadFile``, not ``fastapi.UploadFile``: the latter
@@ -152,6 +159,20 @@ class JobRequest(BaseModel):
     response_format: str = Field(default="wav", max_length=16)
 
 
+class ProjectRequest(BaseModel):
+    """A manuscript. Long by design, so the ceiling is checked rather than declared.
+
+    ``max_length`` is deliberately absent: a pydantic length refusal is a 422 with
+    a schema-shaped body, and the sentence a customer should get names the ceiling
+    in characters and says what to do about it.
+    """
+
+    title: str = Field(default="", max_length=projects.TITLE_MAX_CHARS)
+    input: str = Field(default="")
+    voice: str = Field(default="", max_length=120)
+    response_format: str = Field(default="wav", max_length=16)
+
+
 def normalise_email(raw: str) -> str:
     email = raw.strip().lower()
     if not EMAIL_RE.match(email):
@@ -202,6 +223,104 @@ def _own_job_row(session: Session, job_id: int, workspace_id: int) -> Job:
             status_code=status.HTTP_404_NOT_FOUND, detail="No such job."
         )
     return job
+
+
+def _own_project_row(session: Session, project_id: int, workspace_id: int) -> Project:
+    """One of this workspace's projects, or a 404 — the same shape as a job row.
+
+    A project id that belongs to somebody else answers exactly like one that does
+    not exist, so the route cannot be used to learn that an id is real.
+    """
+    row = session.execute(
+        select(Project).where(
+            Project.id == project_id, Project.workspace_id == workspace_id
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No such project."
+        )
+    return row
+
+
+def _chapter_rows(session: Session, project_id: int) -> list[tuple[ProjectChapter, Job]]:
+    """A project's chapters in reading order, each with the job that speaks it.
+
+    An inner join on purpose: a chapter whose job has gone is not a chapter with
+    unknown audio, it is a row that cannot be assembled, and hiding it would make
+    the audiobook silently shorter than the manuscript.
+    """
+    return list(
+        session.execute(
+            select(ProjectChapter, Job)
+            .join(Job, Job.id == ProjectChapter.job_id)
+            .where(ProjectChapter.project_id == project_id)
+            .order_by(ProjectChapter.chapter_index)
+        ).all()
+    )
+
+
+def project_status(statuses: list[str]) -> str:
+    """One word for a whole project, decided in the order a reader cares about.
+
+    A project is only ``ready`` when every chapter has been spoken; one failed
+    chapter is a ``failed`` project even if the rest are still queued, because
+    that is the fact the reader has to act on.
+    """
+    if not statuses:
+        return "empty"
+    if all(item == jobs.SUCCEEDED for item in statuses):
+        return "ready"
+    for word in (jobs.RUNNING, jobs.QUEUED, jobs.FAILED, jobs.CANCELLED):
+        if word in statuses:
+            return word
+    return "unknown"
+
+
+def project_dict(
+    project: Project, rows: list[tuple[ProjectChapter, Job]]
+) -> dict:
+    """What a customer sees of a project, including per-chapter progress."""
+    chapters = [
+        {
+            "index": chapter.chapter_index,
+            "position": chapter.chapter_index + 1,
+            "characters": chapter.characters,
+            "status": job.status,
+            "job_id": job.id,
+            "error": job.error or "",
+            "audio_seconds": job.audio_seconds,
+            "audio_bytes": job.audio_bytes,
+            "audio_url": (
+                f"/v1/jobs/{job.id}/audio" if job.status == jobs.SUCCEEDED else None
+            ),
+            "preview": (job.input_text or "")[:jobs.INPUT_PREVIEW_CHARS],
+        }
+        for chapter, job in rows
+    ]
+    counts: dict[str, int] = {}
+    for chapter in chapters:
+        counts[chapter["status"]] = counts.get(chapter["status"], 0) + 1
+    spoken_seconds = sum(
+        chapter["audio_seconds"] for chapter in chapters if chapter["audio_seconds"]
+    )
+    return {
+        "id": project.id,
+        "title": project.title,
+        "voice": project.voice,
+        "response_format": project.response_format,
+        "status": project_status([chapter["status"] for chapter in chapters]),
+        "chapter_count": project.chapter_count,
+        "source_characters": project.source_characters,
+        "chapter_max_chars": project.chapter_max_chars,
+        "chapter_characters": [chapter["characters"] for chapter in chapters],
+        "statuses": counts,
+        "spoken_chapters": counts.get(jobs.SUCCEEDED, 0),
+        "spoken_seconds": round(spoken_seconds, 3),
+        "created_at": project.created_at.isoformat(),
+        "chapters": chapters,
+        "audio_url": f"/v1/projects/{project.id}/audio",
+    }
 
 
 def _key_id(who: Principal) -> int | None:
@@ -292,6 +411,13 @@ def create_app(
             # upload itself instead of streaming it here and losing the polite
             # refusal to a closed connection. Same number the route enforces.
             "transcribe_max_bytes": state.settings.transcribe_max_bytes,
+            # The long-form limits, published for the same reason: the dashboard
+            # refuses an over-long manuscript with the plane's own number instead
+            # of a copy of it that drifts (``hosted/web/lib/projects.js``).
+            "project_max_chars": projects.PROJECT_MAX_CHARS,
+            "chapter_target_chars": projects.CHAPTER_TARGET_CHARS,
+            "chapter_max_chars": projects.CHAPTER_MAX_CHARS,
+            "chapter_max_count": projects.CHAPTER_MAX_COUNT,
             "storage": state.store.describe(),
             "jobs": counts,
         }
@@ -567,6 +693,215 @@ def create_app(
             content=body,
             media_type=storage.content_type_for_key(job.object_key),
             headers=headers,
+        )
+
+    # ── projects: a manuscript, split and queued ─────────────────────────────
+    @app.post("/v1/projects", status_code=status.HTTP_202_ACCEPTED)
+    def create_project(
+        body: ProjectRequest, request: Request, session: DbSession
+    ) -> dict:
+        """Split a manuscript and queue one job per chapter.
+
+        The split happens here, in the request, and the chapters are ordinary jobs:
+        there is no second queue, no second worker and no second meter. What this
+        route owns is the decision of where the chapters end (``projects``), and
+        the record of which job speaks which chapter.
+        """
+        who = principal(session, request, allow="any")
+        text = (body.input or "").strip()
+        if not text:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="'input' must be a non-empty string.",
+            )
+        if len(text) > projects.PROJECT_MAX_CHARS:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=(
+                    f"'input' is {len(text)} characters and a project takes at most "
+                    f"{projects.PROJECT_MAX_CHARS}. Send it as more than one project, "
+                    "or shorten it."
+                ),
+            )
+        try:
+            chapters = projects.split_chapters(text)
+        except projects.SplitError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+            ) from exc
+
+        voice = (body.voice or "").strip()
+        response_format = (body.response_format or "wav").strip().lower() or "wav"
+        project = Project(
+            workspace_id=who.workspace_id,
+            title=(body.title or "").strip(),
+            voice=voice,
+            response_format=response_format,
+            source_characters=len(text),
+            chapter_count=len(chapters),
+            chapter_max_chars=projects.CHAPTER_MAX_CHARS,
+        )
+        session.add(project)
+        session.flush()
+        rows: list[tuple[ProjectChapter, Job]] = []
+        for index, chapter_text in enumerate(chapters):
+            job = jobs.enqueue(
+                session,
+                workspace_id=who.workspace_id,
+                api_key_id=_key_id(who),
+                text=chapter_text,
+                voice=voice,
+                response_format=response_format,
+                max_attempts=state.settings.job_max_attempts,
+            )
+            chapter = ProjectChapter(
+                project_id=project.id,
+                job_id=job.id,
+                chapter_index=index,
+                characters=len(chapter_text),
+            )
+            session.add(chapter)
+            session.flush()
+            rows.append((chapter, job))
+        session.commit()
+        return {
+            "project": project_dict(project, rows),
+            "queued_via": who.via,
+            "note": (
+                f"{len(chapters)} chapter job(s) queued; nothing has been spoken yet. "
+                "A worker process speaks them in order, and "
+                "GET /v1/projects/{id}/audio answers with one assembled file once "
+                "every chapter is succeeded."
+            ),
+        }
+
+    @app.get("/v1/projects")
+    def list_projects(
+        request: Request,
+        session: DbSession,
+        limit: int = Query(default=20, ge=1, le=50),
+    ) -> dict:
+        who = principal(session, request, allow="any")
+        found = session.execute(
+            select(Project)
+            .where(Project.workspace_id == who.workspace_id)
+            .order_by(Project.id.desc())
+            .limit(limit)
+        ).scalars().all()
+        total = session.execute(
+            select(func.count(Project.id)).where(
+                Project.workspace_id == who.workspace_id
+            )
+        ).scalar_one()
+        return {
+            "projects": [
+                project_dict(row, _chapter_rows(session, row.id)) for row in found
+            ],
+            "returned": len(found),
+            "limit": limit,
+            "workspace_total": total,
+        }
+
+    @app.get("/v1/projects/{project_id}")
+    def get_project(project_id: int, request: Request, session: DbSession) -> dict:
+        who = principal(session, request, allow="any")
+        project = _own_project_row(session, project_id, who.workspace_id)
+        return {"project": project_dict(project, _chapter_rows(session, project.id))}
+
+    @app.delete("/v1/projects/{project_id}")
+    def cancel_project(project_id: int, request: Request, session: DbSession) -> dict:
+        """Cancel the chapters that have not been spoken yet, and nothing else."""
+        who = principal(session, request, allow="any")
+        project = _own_project_row(session, project_id, who.workspace_id)
+        rows = _chapter_rows(session, project.id)
+        cancelled = [job.id for _chapter, job in rows if jobs.cancel(session, job)]
+        session.commit()
+        return {
+            "project": project_dict(project, rows),
+            "cancelled_jobs": cancelled,
+            "note": (
+                "Only chapters still queued were cancelled. A chapter already being "
+                "spoken is not interrupted, and one already stored is kept — the "
+                "meter saw one request per chapter that was spoken, not per project."
+            ),
+        }
+
+    @app.get("/v1/projects/{project_id}/audio")
+    def project_audio(project_id: int, request: Request, session: DbSession) -> Response:
+        """The whole audiobook, joined from the chapters the plane actually stored."""
+        who = principal(session, request, allow="any")
+        project = _own_project_row(session, project_id, who.workspace_id)
+        rows = _chapter_rows(session, project.id)
+        statuses = [job.status for _chapter, job in rows]
+        waiting = [
+            {
+                "chapter": chapter.chapter_index + 1,
+                "status": job.status,
+                "error": job.error or "",
+            }
+            for chapter, job in rows
+            if job.status != jobs.SUCCEEDED
+        ]
+        if not rows or waiting:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "project_status": project_status(statuses),
+                    "detail": "This project has no assembled audio yet.",
+                    "waiting": waiting,
+                    "spoken_chapters": statuses.count(jobs.SUCCEEDED),
+                    "chapter_count": len(rows),
+                },
+            )
+        parts: list[tuple[str, bytes]] = []
+        for chapter, job in rows:
+            position = chapter.chapter_index + 1
+            if not job.object_key:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "project_status": project_status(statuses),
+                        "detail": (
+                            f"Chapter {position} is recorded as spoken but has no "
+                            "stored object, so the audiobook cannot be assembled."
+                        ),
+                        "waiting": [{"chapter": position, "status": job.status, "error": job.error or ""}],
+                        "spoken_chapters": statuses.count(jobs.SUCCEEDED),
+                        "chapter_count": len(rows),
+                    },
+                )
+            try:
+                # Read at request time, from the store: the file is the record of
+                # what the chapter job delivered, and nothing is cached in memory.
+                parts.append((f"chapter {position}", state.store.get(job.object_key)))
+            except storage.StorageError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Chapter {position}'s stored audio could not be read: {exc}",
+                ) from exc
+        try:
+            assembled = projects.join_wavs(parts)
+        except projects.CannotAssemble as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "project_status": project_status(statuses),
+                    "detail": f"The chapters cannot be joined into one file: {exc}",
+                    "spoken_chapters": len(parts),
+                    "chapter_count": len(rows),
+                },
+            ) from exc
+        joined = projects.wav_format(assembled)
+        return Response(
+            content=assembled,
+            media_type="audio/wav",
+            headers={
+                "X-Qualiabits-Project": str(project.id),
+                "X-Qualiabits-Project-Chapters": str(len(parts)),
+                "X-Qualiabits-Audio-Seconds": f"{joined.seconds:.3f}",
+                "X-Qualiabits-Object-Sha256": hashlib.sha256(assembled).hexdigest(),
+                "Content-Disposition": f'attachment; filename="project-{project.id}.wav"',
+            },
         )
 
     # ── the metered proxy ─────────────────────────────────────────────────────
