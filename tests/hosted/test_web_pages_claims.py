@@ -302,3 +302,44 @@ def test_the_speech_model_pins_are_checked_however_the_model_was_found():
     assert indented == [], (
         "a pinned-hash check is indented, so it runs only inside a branch: " + repr(indented)
     )
+
+
+#: Every subject the README's "not here" section has ever called a later slice, and
+#: the route a page for it would live at. Kept as a table so the guard can go both
+#: ways: a route that exists may not be named there, and a route that does not may
+#: not be dropped from it.
+NOT_HERE_SUBJECTS = (
+    ("voice cloning", "clone"),
+    ("voice design", "design"),
+    ("dubbing", "dub"),
+    ("agents tab", "agents"),
+    ("email verification", "verify"),
+    ("billing", "billing"),
+    ("marketing landing page", "landing"),
+)
+
+
+def test_the_not_here_section_agrees_with_the_pages_that_are_served():
+    """A slice that lands has to leave this list, and a slice that has not must stay.
+
+    Slice F built dubbing and left the sentence naming it a later slice, which is
+    contradiction number one of the judge pass on this slice: the same page walks
+    `/dub` a few hundred lines above. The word and the route cannot both be true, so
+    the guard reads both.
+    """
+    text = readme()
+    start = text.index("## What is not here, and is not stubbed")
+    section = text[start:]
+    section = section[: section.index("\n## ", 1)]
+    # The section is wrapped prose, so "marketing landing page" can sit across a line
+    # break; the words are what is being read, not the layout.
+    section = " ".join(section.lower().split())
+
+    for subject, route in NOT_HERE_SUBJECTS:
+        served = (WEB / "app" / route).is_dir()
+        named = subject in section
+        assert served != named, (
+            f"the page calls {subject!r} a later slice while app/{route} "
+            + ("is served" if served else "does not exist")
+            + ", so one of the two sentences is false"
+        )

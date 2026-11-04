@@ -38,7 +38,7 @@ plane, the worker and the browser, and it deliberately proves nothing about spee
 
 The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
 this repository, and their transcripts are committed beside the two run files:
-`hermes-reports/V0-slot77-tests-r1.log` (the Python guard suite, 241 passed),
+`hermes-reports/V0-slot77-tests-r1.log` (the Python guard suite, 242 passed),
 `V0-slot77-web-unit-r1.log` (the web unit suite, 112 passed), `V0-slot75-pins-r1.log`
 (the pinned-bytes guard, 5 passed), `V0-slot77-coldclone-r1.log` (the same guards twice
 from a clone of `3a820f474` with no `.venv`, no `node_modules` and no model: 29 passed
@@ -63,16 +63,20 @@ git clone --branch work/m1-headless <this repository> qb && cd qb
 <python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py \
     tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
 # 30 passed — no venv in that clone, no model, no browser. Transcript:
-# hermes-reports/V0-slot69-coldclone-r1.log, whose first two lines are the
-# clone and the interpreter it borrowed (a sibling checkout's .venv).
+# hermes-reports/V0-slot77-coldclone-r1.log, taken from a clone of 3a820f474, whose
+# first lines are the clone, the revision and the interpreter it borrowed (a sibling
+# checkout's .venv — the clone itself has none). That transcript records both
+# attempts: the first was 29 passed with one skip, because this box had no room for
+# the 112 MB asset one guard stages, and the second was 30 passed. The command is
+# the same both times; only the box changed.
 ```
 
 Those four files check that the two archived runs name one revision that is in this
 branch's history, that the counts and the Hindi word count in the prose are the
 runs' own, and that the model pins are enforced on every path into the script. On a
 machine with no model directory the two tests that stage the pinned asset skip, with
-that as their reason; on this box they ran, which is why the transcript says 30
-passed and 0 skipped.
+that as their reason; on this box they ran in the second attempt, which is why that
+line says 30 passed and 0 skipped.
 
 You need three processes. The dashboard is one of them; the engine and the
 control plane are the other two, and running them is described in
@@ -385,9 +389,12 @@ contact with either is HTTP.
 
 ## What is not here, and is not stubbed
 
-Voice cloning, voice design, dubbing, the agents tab, the marketing
+Voice cloning, voice design, the agents tab, the marketing
 landing page, email verification, billing and deployment are all later slices. None of them exists as a greyed-out button here — a page that is
-not built is not on the site.
+not built is not on the site. The `/dub` page was on this list until slice F built
+it: it re-voices a recording in a voice the plane offers, in the language the engine
+heard, and it does not translate. A guard reads this section and fails if a page that
+exists is named here, or a page that does not exist is offered.
 
 ## Licence
 

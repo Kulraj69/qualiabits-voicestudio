@@ -78,7 +78,10 @@ because the numbers they state are read back out of the same run file by guards
 rather than trusted: both paths' check counts, the one-check difference between
 them, and the shared-word count below all fail the suite if the page and the file
 disagree. A change to a measured directory, the harness included, is the other case:
-that fails the same guard, and a fresh browser run is owed.
+that fails the same guard, and a fresh browser run is owed. Concretely, for this
+pair: the two browser paths ran at `933aacf83`, the last commit that touched any
+measured directory is `3e7857d45`, and every commit after the run is prose, a
+transcript or an archive — which is the `git diff` the guard runs, not a promise.
 
 | The plan asks for | Code | Tests | A check in the browser run |
 | --- | --- | --- | --- |
