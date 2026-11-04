@@ -1,0 +1,36 @@
+What changed after judge pass 1 (26/35: 2/4/4/5/2/4/5, FAIL)
+
+FIXED — flaw 5, "evidence is optimized for auditability over presentation": a stranger
+reached the verification material before the product. `hosted/web/README.md` now opens
+with two short paragraphs a product reader can use — what the eight pages are for, and
+that this is the customer-facing half of the product (a business signs in, works inside
+its own metered allowance, hands out API keys) — and only then states the not-deployed
+status and points at the two committed runs. Nothing was removed from the evidence.
+
+FIXED — the same pass's note that the strongest proof needs multi-gigabyte staging:
+the top of the page already led with the two committed `result.json` files, and it still
+does, one paragraph lower. The setup costs are stated as measured numbers rather than
+as a hurdle.
+
+NOT FIXED, AND WHY — flaw 1, "fundamental lack of novelty" (originality 2): a dark/light
+theme with an accessibility guard is a solid product slice, not a novel idea, and the
+one thing that would move it (a product differentiator) is the owner's decision. This
+lane cannot invent it. Recorded in the round log and in the queue's needs-Kulraj list.
+
+NOT FIXED, AND WHY — flaw 2, "large V0 scope gap" (criteria fit 2): Voice Clone, Voice
+Design, Dubbing, the agents tab, phone calls, deployment, a public URL, a real bucket
+and a GPU run are the remaining M3/M5/M6 slices. Each is either the owner's decision
+(which page next, where to deploy) or gated on the owner's approved runtime. One slice
+at a time, and this pass did not skip ahead to claim them.
+
+NOT FIXED, AND WHY — flaw 4, "reviewer setup is heavy": staged dependencies are about
+2.6 GB of Python plus 360 MB of npm, and the real-engine path needs two model
+directories (one about 132 MB, one about 460 MB). Those are measurements this box
+produced, not a preference; the page states them and offers the committed runs as the
+zero-install path. A reader who wants to re-run the strongest proof must stage them.
+
+THIS ROUND is judge pass 2 of the slice, which is what pass 1 scored D8 "not
+demonstrated" for. At the revision the pass-2 bundle describes, `tests/hosted` is 224
+passed and the web unit suite 106 passed (transcripts `V0-slot72-tests-r1.log` and
+`V0-slot72-web-unit-r1.log`, taken at `1d1977e93`), and the two guard suites that read
+these pages were re-run after this edit (16 passed).
