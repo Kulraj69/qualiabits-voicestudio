@@ -32,7 +32,7 @@ from build_m3_review_prompt import (  # noqa: E402
     stub_summary,
 )
 
-SLICE = "M3-slot72"
+SLICE = "M3-slot75"
 
 
 def review_files(limit: int = 3) -> str:
@@ -55,8 +55,8 @@ def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
     evidence = REPORTS / f"{SLICE}-web-e2e-r1" / "result.json"
     stub = REPORTS / f"{SLICE}-web-e2e-stub-r1" / "result.json"
-    tests = REPORTS / "V0-slot72-tests-r1.log"
-    unit = REPORTS / "V0-slot72-web-unit-r1.log"
+    tests = REPORTS / "V0-slot75-tests-r1.log"
+    unit = REPORTS / "V0-slot75-web-unit-r1.log"
 
     parts = [
         f"# Judge pass {label} on M3 slice E (the light theme), cheap+ tier\n",
@@ -84,7 +84,11 @@ def main() -> None:
         "browser refuses localStorage.\n"
         "D4 every colour is a token, and the two light blocks (the data-theme one and "
         "the no-script prefers-color-scheme one) declare the same tokens with the same "
-        "values — checked by a guard that bites on a tampered copy.\n"
+        "values — checked by a guard that bites on a tampered copy — and the "
+        "no-script block is driven in a real browser: two contexts with "
+        "javaScriptEnabled false, one light one dark, over all eight pages, with "
+        "data-theme asserted absent and the computed palette read back over the "
+        "DevTools protocol.\n"
         "D5 contrast is measured, not eyeballed: WCAG AA (4.5:1) for body, muted and "
         "heading text in both themes, on every page in light.\n"
         "D6 the card grid fills its trailing row — the hole a judge pass on slice D "
@@ -134,9 +138,10 @@ def main() -> None:
         "object store. There is no GPU. No human has listened to the audio. M1 (the "
         "scoped GPU run and a listening check), a product differentiator, a "
         "deployment/bucket decision and the next M3 page are the owner's. The "
-        "no-script fallback (a browser that runs no JavaScript) is asserted by the "
-        "CSS guard and by the served stylesheet, not by a JavaScript-disabled "
-        "browser run. The contrast numbers are measured against the page background "
+        "no-script path buys a working dashboard: a scriptless reader is served the "
+        "landing page and then the sign-in page in the theme their system asks for, "
+        "and signing in needs script, so it is a readable fallback and the run "
+        "records which page each route served. The contrast numbers are measured against the page background "
         "token, not against the soft accent glow painted over it.\n",
         "## Output format\n",
         "For each of the seven criteria: score and two or three sentences of evidence "

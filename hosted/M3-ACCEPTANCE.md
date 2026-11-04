@@ -34,7 +34,13 @@ light. Dark is unchanged and stays the default; a reader whose system asks for l
 or who presses the switch in the top bar, gets a light page whose every colour comes
 from the same token set, and their choice is remembered. The theme is set on `<html>`
 by an inline script the layout renders, before the stylesheet paints, so a remembered
-choice never flashes the other one first. Slice E also fixed the hole a judge pass on
+choice never flashes the other one first. A reader whose browser runs no script never
+runs that script at all: `<html>` keeps no `data-theme`, and the light palette comes
+from the `prefers-color-scheme` fallback in the same stylesheet — driven in a real
+browser with script off, and read back over the DevTools protocol because a page with
+no script has nothing to ask. That is a readable fallback rather than a working
+dashboard without script: a scriptless reader gets the landing page and the sign-in
+page, and signing in needs script. Slice E also fixed the hole a judge pass on
 slice D pointed at: the home page's card row wraps now, so the seventh tile fills its
 row to the edges instead of leaving two columns empty beside it. Three of the pages
 M3 names — Voice Clone with a consent checkbox, Voice Design and Dubbing — are
@@ -42,7 +48,7 @@ M3 names — Voice Clone with a consent checkbox, Voice Design and Dubbing — a
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot72-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot75-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -98,6 +104,7 @@ that fails the same guard, and a fresh browser run is owed.
 | A switch in the top bar that names the theme it gives you and remembers it | `hosted/web/components/ThemeToggle.jsx` | `hosted/web/test/theme.test.mjs` | `a remembered choice survives a reload, over the system preference` |
 | Every colour is a token, and the light palette's two declarations agree | `hosted/web/app/globals.css` | `tests/hosted/test_theme_tokens.py` | `every page renders light when light is asked for` |
 | Both themes' body, muted and heading text clear WCAG AA, measured in the browser | `hosted/web/app/globals.css` | `tests/hosted/test_theme_tokens.py` | `every page's text clears WCAG AA in light` |
+| A browser that runs no script still gets the reader's own theme, from the media-query fallback | `hosted/web/app/globals.css` | `hosted/web/test/theme.test.mjs` | `with script switched off, a light preference paints the light palette on every page` |
 | The home page's card row wraps, so the seventh tile fills its row | `hosted/web/app/page.jsx` | `hosted/web/test/format.test.mjs` | `the home page's card rows all reach the row's edges` |
 | Long-form: a manuscript in, chapters out, one job per chapter | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | `the plane split the manuscript into chapters and queued one job each` |
 | The split lands on a boundary, never inside a word, and repeats exactly | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | no run evidence: the splitter is pure, so the browser run says nothing a unit test does not |

@@ -1,0 +1,54 @@
+Overall: FAIL — 26/35
+
+1. Originality — 2/5
+
+A dark/light dashboard theme, contrast checks, and responsive card wrapping are standard product work, not a memorable hackathon idea. The artifact explicitly acknowledges this in `hosted/M3-ACCEPTANCE.md:31-38`, saying originality is expected to remain below 4 because “a theme is not a novel idea.” The real-engine closed loop is rigorous, but it is evidence quality rather than a novel user-facing concept.
+
+2. Taste — 4/5
+
+The UI has a restrained palette, one accent, coherent spacing, visible focus treatment, and no placeholder pages for unbuilt features. The copy is unusually specific about system boundaries and known limitations. The README remains an evidence dossier of several hundred lines, so the reviewer experience is credible but not especially elegant.
+
+3. Human feel — 4/5
+
+The project has a recognizable maintainer voice: “a page that is not built is not on the site” and the candid transcription-quality caveats feel specific rather than promotional. It avoids generic startup language and reports imperfect Hindi recognition plainly. However, the repeated caveats, long parenthetical explanations, and audit-style test narration make portions feel mechanically assembled rather than naturally written.
+
+4. Technical depth — 5/5
+
+The real run records 118 passing checks, real engine identity, model hashes, metering, key revocation, transcription, worker execution, project assembly, browser downloads, theme resolution, contrast, and card geometry. The supplied logs also show 224 Python tests and 106 web unit tests passing. The tests cover failure boundaries, not only happy paths.
+
+5. Criteria fit — 2/5
+
+The slice has strong evidence for D1-D7, but it is measured against the full V0 milestone. There is no evidence here for voice cloning, voice design, dubbing, voice agents, phone calls, deployment, public HTTPS, real S3, GPU autoscaling, signup on a hosted deployment, a demo video, comparison pages, lead lists, or growth work. The omissions are explicitly stated in `hosted/web/README.md:351-355` and `hosted/M3-ACCEPTANCE.md:147-151`.
+
+6. Reviewer path — 4/5
+
+The README gives concrete commands, expected results, routes, test counts, and separate stub versus real-engine paths. The committed result files make the main claims inspectable without immediately downloading models. A fresh re-run still requires roughly 2.6 GB of Python dependencies, 360 MB of web dependencies, model assets for the strongest path, and potentially long CPU execution, weakening the “few minutes” requirement.
+
+7. Honesty — 5/5
+
+The claims are carefully bounded: `deployed: false`, `public_url: null`, `gpu: false`, and `real_s3: false` are recorded in the run. Stub audio is labelled as stubbed, model bytes are hash-checked, and the imperfect transcription output is shown rather than presented as quality evidence. No invented users, pricing, deployment status, performance claims, or listening results are apparent.
+
+Five most damaging flaws
+
+1. No novel user-facing idea — 2/5 originality is structurally below the pass threshold. `hosted/M3-ACCEPTANCE.md:31-38` explicitly confirms that the slice is a conventional theme/accessibility improvement.
+
+2. Large V0 scope gap — the milestone still lacks cloning, design, dubbing, agents, phone calls, deployment, public URL, real S3, GPU operation, and growth deliverables. References: `hosted/web/README.md:351-355`; `hosted/M3-ACCEPTANCE.md:147-151`; real run fields `deployed`, `public_url`, `gpu`, and `real_s3`.
+
+3. D8 is not independently complete yet — the supplied material contains the first-pass verdict and a builder-written account of fixes, but no completed independent pass-2 verdict. The current judge pass cannot serve as evidence that it already passed itself. Reference: the “What changed after the pass above” section, especially “THIS ROUND is judge pass 2.”
+
+4. Heavy reproduction path — `hosted/web/README.md`, “What a fresh clone can do before you install anything heavy” and the real-engine section, require substantial dependency and model staging. The committed results improve inspectability but do not make the strongest proof quick to reproduce.
+
+5. The no-script fallback is not browser-tested — the artifact explicitly says in “What is NOT claimed” that it is asserted by CSS guards and served stylesheet inspection, not by a JavaScript-disabled browser run. This is acceptable honesty, but it leaves part of D4/D1’s fallback behavior less directly verified than the normal browser paths.
+
+D-item status
+
+- D1: Demonstrated — system preference, dark default, remembered choice, and light rendering are covered by the real and stub browser results.
+- D2: Demonstrated — the no-flash script precedes page markup, with byte positions recorded in the browser run.
+- D3: Demonstrated — the toggle is keyboard reachable, names the destination theme, persists the choice, and catches storage failures.
+- D4: Demonstrated for token parity; partly demonstrated for runtime fallback — the token guard checks the duplicated palettes, but no JavaScript-disabled browser run exercises the no-script path.
+- D5: Demonstrated — body, muted, and heading contrast is measured above WCAG AA on all eight light pages.
+- D6: Demonstrated — browser geometry verifies the trailing card row reaches the container edges.
+- D7: Demonstrated — both READMEs and `hosted/M3-ACCEPTANCE.md` describe Slice E and quote committed run evidence.
+- D8: Partly demonstrated — a first judge pass, claimed fixes, and a second-pass submission are supplied, but the second independent pass has not yet produced its verdict.
+
+What would make it win: add a genuinely distinctive user-facing voice workflow, then evidence the missing V0 capabilities and complete an independently recorded second judge round with every score at least 4.

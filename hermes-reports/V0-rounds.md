@@ -1587,3 +1587,26 @@ another full real-engine run, so it is recorded here as the next slice's work ra
 Owner actions unchanged: the approved g5/g6 scoped runtime with automatic idle shutdown and a hard
 spending limit, the listening check on the committed WAVs, one product differentiator, a deployment and
 object-store decision, and the next M3 page.
+
+## Rotation slot 75 — V0-build — 2026-11-04 — resuming slice E to the end of its self-loop
+
+ROTATION. `lane-rotation.txt` ends with slot 74 (hackathon: all H1-H6 blocked or gated), so the
+next tick of `[V0-build, hackathon, V0-build, V0-growth]` is **V0-build**. Slot 72's V0-build run
+opened M3 slice E (the light theme + the home card row) and stopped mid-self-loop: five commits are
+local on `work/m1-headless` at `38e6ec7c7`, the remote still reads `95cbb9702`, and its second
+cheap+ pass (26/35) is sitting uncommitted as `hermes-reports/M3-slot72-review2.txt`. This slot
+resumes that work rather than opening a second slice in the same lane.
+
+PLAN / definition of done for this round (slice E's items 1-8 from slot 72, third round onward):
+1. Close the one fixable finding pass 2 raised: D4's no-script fallback was asserted against the
+   stylesheet's text and never driven in a real browser. Drive it — a Chromium context with
+   `javaScriptEnabled: false` and a light preference, every page, colours read back over CDP (there
+   is no page JavaScript to ask), plus a dark-preference control.
+2. Close pass 2's D8 complaint by producing an independent pass 3 whose verdict is a file, and
+   fixing every fixable finding it makes.
+3. Re-take both browser paths at ONE revision over clean trees (the harness is a measured subject,
+   so the cited pair goes stale the moment it changes), update the acceptance page and both
+   READMEs to the counts the runs record, and keep `tests/hosted` + the web unit suite green.
+4. Cold-clone replay, push, remote SHA read back equal.
+Targeted criteria (JUDGE-RUBRIC.md): taste, human feel, technical depth, README do-X-see-Y,
+honesty. Originality and criteria fit stay the owner's (a differentiator, an official rules file).

@@ -168,6 +168,19 @@ colours the browser itself reports for both themes (16.8:1 dark, 16.45:1 light f
 text), presses the button, reloads, and checks the served HTML carried `data-theme`
 before the page's own markup.
 
+Script off is its own path, and it is driven rather than asserted. A second pair of
+browser contexts runs with `javaScriptEnabled: false`, one asking for light and one for
+dark, over all eight pages. With no script `data-theme` is never written — the run
+checks that no page carries it — so what a reader sees comes from the
+`prefers-color-scheme` fallback in `globals.css` alone; the palette is read back out of
+the browser over the DevTools protocol, because a page with no script has nothing to
+ask. Light resolves to `rgb(246, 246, 250)` and dark to `rgb(8, 8, 14)` on every page,
+at 16.45:1 and 16.8:1. What that path does **not** buy is a working dashboard without
+script: a scriptless reader is served the landing page and then the sign-in page, in the
+theme their system asks for, and the sign-in form itself needs script. It is a readable
+fallback, not a no-JavaScript product, and the run records which page each route served
+so the claim is inspectable.
+
 ## Tests
 
 Two layers, both runnable here:
@@ -200,16 +213,16 @@ records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
-of the eight pages: **one-hundred-twelve checks on the stub path** and
-**one-hundred-eighteen against the real engine**. Without `--keep` the screenshot check
+of the eight pages: **one-hundred-eighteen checks on the stub path** and
+**one-hundred-twenty-four against the real engine**. Without `--keep` the screenshot check
 has nowhere to write, so
 either path runs one check fewer; `--no-build` skips one more on top of that, the
 check that the build succeeds. Only the two `--keep` runs are quoted as numbers here,
 because they are the two that are committed: a judge pass was right that the shorter
 forms' totals were arithmetic the page stated as though they had been measured. The
 kept runs
-are `hermes-reports/M3-slot72-web-e2e-stub-r1/result.json` and
-`hermes-reports/M3-slot72-web-e2e-r1/result.json`, and a test reads the counts, the
+are `hermes-reports/M3-slot75-web-e2e-stub-r1/result.json` and
+`hermes-reports/M3-slot75-web-e2e-r1/result.json`, and a test reads the counts, the
 one-check difference and the seven-and-one difference below back out of those files
 rather than trusting this paragraph. The real path adds seven checks a constant-size
 stub cannot pass — the engine's own answers about itself, from its identity and
