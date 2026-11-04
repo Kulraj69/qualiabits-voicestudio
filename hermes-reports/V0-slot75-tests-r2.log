@@ -1,0 +1,11 @@
+........................................................................ [ 32%]
+........................................................................ [ 64%]
+........................................................................ [ 96%]
+........                                                                 [100%]
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /workspace/qualiabits-voicestudio/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+224 passed, 1 warning in 102.24s (0:01:42)

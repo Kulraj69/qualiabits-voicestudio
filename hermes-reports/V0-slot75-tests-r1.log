@@ -1,0 +1,123 @@
+........................................................................ [ 32%]
+........................................................................ [ 64%]
+...........F.F.........................................................F [ 96%]
+FF......                                                                 [100%]
+=================================== FAILURES ===================================
+__________ test_the_cited_run_passed_and_was_taken_over_a_clean_tree ___________
+
+    def test_the_cited_run_passed_and_was_taken_over_a_clean_tree():
+        result = run_result()
+        assert result["passed"] == len(result["checks"]), "the cited run has failing checks"
+        # "passed" is the harness's own arithmetic. A judge pass on round 2 of slice C
+        # pointed out that a file could keep that total while flipping one check's own
+        # verdict, so the individual verdicts are read as well.
+        not_ok = [check["name"] for check in result["checks"] if not check.get("ok")]
+        assert not_ok == [], f"the cited run records these checks as not ok: {not_ok}"
+>       assert result["revision"]["worktree_dirty"] is False, (
+            "the cited run was taken over a dirty tree, so it is not evidence about any "
+            "revision"
+        )
+E       AssertionError: the cited run was taken over a dirty tree, so it is not evidence about any revision
+E       assert True is False
+
+tests/hosted/test_m3_acceptance_matrix.py:152: AssertionError
+___________ test_the_shared_word_count_in_the_prose_is_the_run_s_own ___________
+
+    def test_the_shared_word_count_in_the_prose_is_the_run_s_own():
+        """The page says how much of the spoken sentence came back. Keep it true.
+    
+        That sentence said *two* while the run it cites records *three* shared words,
+        which is exactly the kind of count a judge is right to call a lie. Reading the
+        number back out of the run is cheaper than trusting prose, so the page's
+        sentence, the number and the words it names are all checked here.
+        """
+        text = page_text()
+        transcript = run_result()["transcript"]
+        match = re.search(r"(\w+) of the (\w+) words of the Hindi sentence", text)
+        assert match, "the page no longer says how many of the spoken words came back"
+        shared, spoken = transcript["shared_words"], transcript["spoken_words"]
+>       assert WORD_NUMBERS.get(match.group(1)) == len(shared), (
+            f"the page says {match.group(1)!r} words came back; the run records "
+            f"{len(shared)}: {shared}"
+        )
+E       AssertionError: the page says 'two' words came back; the run records 3: ['एक', 'हिन्दी', 'है']
+E       assert 2 == 3
+E        +  where 2 = <built-in method get of dict object at 0x70f57935b980>('two')
+E        +    where <built-in method get of dict object at 0x70f57935b980> = {'one': 1, 'two': 2, 'three': 3, 'four': 4, ...}.get
+E        +    and   'two' = <built-in method group of re.Match object at 0x70f57058d800>(1)
+E        +      where <built-in method group of re.Match object at 0x70f57058d800> = <re.Match object; span=(16187, 16230), match='two of the five words of the Hindi sentence'>.group
+E        +  and   3 = len(['एक', 'हिन्दी', 'है'])
+
+tests/hosted/test_m3_acceptance_matrix.py:201: AssertionError
+__________________ test_the_page_names_two_runs_one_per_path ___________________
+
+    def test_the_page_names_two_runs_one_per_path():
+        cited = cited_runs()
+>       assert len(cited) == 2, f"the page names {sorted(cited)}"
+E       AssertionError: the page names ['M3-slot72-web-e2e-r1', 'M3-slot72-web-e2e-stub-r1', 'M3-slot75-web-e2e-r1', 'M3-slot75-web-e2e-stub-r1']
+E       assert 4 == 2
+E        +  where 4 = len({'M3-slot72-web-e2e-r1': {'run': 'qualiabits voice — browser dashboard end to end', 'engine': 'sherpa-onnx on kokoro-i... '/workspace/qualiabits-voicestudio/.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port {port}', ...}})
+
+tests/hosted/test_web_pages_claims.py:105: AssertionError
+______________ test_the_two_cited_runs_were_taken_at_one_revision ______________
+
+    def test_the_two_cited_runs_were_taken_at_one_revision():
+        """The provenance gate, read from the two files the page names.
+    
+        Round 3 of slice C had to close this by hand: the two committed browser runs
+        recorded different revisions, so together they described no single state of the
+        code while the page read as though they did. Each run's own `revision` block is
+        the only thing that can settle it, so it is read here, and the commit both name
+        has to exist in this repository and still be in this branch's history — a page
+        citing a run from a commit nobody can check is not evidence.
+        """
+        cited = cited_runs()
+        commits = {}
+        for name, result in cited.items():
+            revision = result["revision"]
+>           assert revision["worktree_dirty"] is False, (
+                f"{name} was taken over a dirty tree, so it is evidence about no revision"
+            )
+E           AssertionError: M3-slot75-web-e2e-r1 was taken over a dirty tree, so it is evidence about no revision
+E           assert True is False
+
+tests/hosted/test_web_pages_claims.py:125: AssertionError
+____________ test_the_stated_counts_are_the_counts_in_the_two_runs _____________
+
+    def test_the_stated_counts_are_the_counts_in_the_two_runs():
+        text = readme()
+        cited = cited_runs()
+        stub = cited[[name for name in cited if "-stub-" in name][0]]
+        real = cited[[name for name in cited if "-stub-" not in name][0]]
+    
+        _, stub_keep, stub_without = counted(stub)
+        _, real_keep, real_without = counted(real)
+        assert stub["engine_is_stub"] is True and real["engine_is_stub"] is False, (
+            "the run the page calls the stub path is not the stub path"
+        )
+    
+        for word, expected in (
+            ("one-hundred-eighteen", stub_keep),
+            ("one-hundred-twenty-four", real_keep),
+        ):
+            assert word in text, f"the page no longer states {word!r}"
+>           assert WORD_NUMBERS[word] == expected, (
+                f"the page says {word!r} ({WORD_NUMBERS[word]}) and the runs record {expected}"
+            )
+E           AssertionError: the page says 'one-hundred-eighteen' (118) and the runs record 112
+E           assert 118 == 112
+
+tests/hosted/test_web_pages_claims.py:169: AssertionError
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /workspace/qualiabits-voicestudio/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/hosted/test_m3_acceptance_matrix.py::test_the_cited_run_passed_and_was_taken_over_a_clean_tree
+FAILED tests/hosted/test_m3_acceptance_matrix.py::test_the_shared_word_count_in_the_prose_is_the_run_s_own
+FAILED tests/hosted/test_web_pages_claims.py::test_the_page_names_two_runs_one_per_path
+FAILED tests/hosted/test_web_pages_claims.py::test_the_two_cited_runs_were_taken_at_one_revision
+FAILED tests/hosted/test_web_pages_claims.py::test_the_stated_counts_are_the_counts_in_the_two_runs
+5 failed, 219 passed, 1 warning in 94.54s (0:01:34)

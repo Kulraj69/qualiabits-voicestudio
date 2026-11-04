@@ -1,0 +1,36 @@
+What changed after judge pass 2 on slice E (the one that scored 26/35)
+
+Pass 2 raised five flaws. Two are the owner's and stay: originality (a differentiator
+is Kulraj's decision) and criteria fit (there is no rules file for a product milestone,
+and most of the V0 milestone is unbuilt in every slice). Of the other three, one was
+fixable here and is fixed:
+
+1. "The no-script fallback is not browser-tested." It was asserted by the CSS guard and
+   by reading the served stylesheet. It is now driven: the harness opens two browser
+   contexts with `javaScriptEnabled: false` — one asking for light, one for dark — walks
+   all eight pages, asserts that `<html>` carries no `data-theme` attribute on any of
+   them, and reads the computed palette back over the DevTools protocol, which is the
+   browser talking rather than page script (a scriptless page has nothing to ask).
+   Recorded: light `rgb(246, 246, 250)` at 16.45:1 and dark `rgb(8, 8, 14)` at 16.8:1 on
+   every page. Six new checks, present in both runs of the retaken pair.
+
+2. "D8 is not independently complete" — a real flaw in the bundle rather than in the
+   product: pass 2 was asked to produce a verdict on a bundle whose own text said "THIS
+   ROUND is judge pass 2", so the bundle both asked for and claimed the pass. The builder
+   now shows the judge the committed verdicts of the earlier passes as files and points at
+   the runs taken for this pass; the verdict below is a separate committed file.
+
+3. "Heavy reproduction path" — structural, and stated: the strongest path needs about
+   2.6 GB of Python dependencies, about 360 MB of node modules and two model directories.
+   The committed result files are inspectable without any of it; the run is not.
+
+What that fix does not claim. A scriptless reader gets the landing page and then the
+sign-in page, in the theme their system asks for; the sign-in form itself needs script.
+It is a readable fallback, not a working no-JavaScript dashboard, and the run records
+which page each route served so a reader can check that rather than take it.
+
+The pair was re-taken for this pass: the harness is one of the subjects the acceptance
+guard measures, so the committed pair goes stale the moment it changes. Both paths were
+taken at one commit over a clean tree, and the archives were staged outside the
+repository while the runs were taken so that the second run could not see the first
+run's files as a dirty tree — which is exactly how the run before this one was lost.
