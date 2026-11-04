@@ -1610,3 +1610,75 @@ PLAN / definition of done for this round (slice E's items 1-8 from slot 72, thir
 4. Cold-clone replay, push, remote SHA read back equal.
 Targeted criteria (JUDGE-RUBRIC.md): taste, human feel, technical depth, README do-X-see-Y,
 honesty. Originality and criteria fit stay the owner's (a differentiator, an official rules file).
+
+## Slot 75 — V0-build — 2026-11-04 — slice E's self-loop finished, and pushed
+
+STATUS: slice E done as an artifact; the milestone is in-progress / needs-Kulraj, and no
+milestone pass is claimed. Pushed `95cbb9702..618138064`, then the review artifacts to
+`7c4e03d58`; remote SHA read back equal both times.
+
+ROTATION. `lane-rotation.txt` ended at slot 74 (hackathon: all H1-H6 blocked or gated), so the
+next tick of `[V0-build, hackathon, V0-build, V0-growth]` was V0-build. Slot 72's V0-build run had
+opened M3 slice E and stopped mid-self-loop: five commits local, remote still `95cbb9702`, its
+second cheap+ pass (26/35) uncommitted, and pass 2's one fixable finding open. This slot resumed
+that work rather than opening a second slice in the lane.
+
+ROUND 3 — BUILD, TEST, JUDGE.
+- The finding: D4's no-script half rested on the stylesheet's own text, not on a browser.
+- `hosted/web/e2e/dashboard.mjs` now drives it: two contexts with `javaScriptEnabled: false`
+  (one light, one dark) over all eight pages, asserting `<html>` carries no `data-theme` and
+  reading the computed palette back over the DevTools protocol — a page with no script has
+  nothing to ask. Six new checks, in both paths.
+- Real tests, same revision, clean trees: stub `118/118`, real engine `124/124`
+  (`hermes-reports/M3-slot75-web-e2e-r1|stub-r1/result.json`, both `tested_commit 46b304413`,
+  `worktree_dirty false`); `tests/hosted` 224 passed; web unit 106 passed. Measured, not
+  asserted: light `rgb(246,246,250)` at 16.45:1 and dark `rgb(8,8,14)` at 16.8:1 on every page.
+- A real defect in *my own staging* was caught by the acceptance guard: the first retake of the
+  real path recorded `worktree_dirty: true`, because the stub run's archive had been copied into
+  the repository before it. The archives were staged outside the repository instead, and both
+  paths were taken again at one commit. Re-running was the fix; editing the field would have been
+  the same rewritten-evidence defect the repository has already had to revert once.
+- Judge pass 3 (cheap+): 22/35, honesty 2. The honesty flaw was the bundle's, not the code's:
+  the builder handed the judge the guard-suite transcript from *before* the retake (219 passed,
+  5 failed) while the README quoted 224.
+
+ROUND 4 — FIX, TEST, JUDGE.
+- Fixed the bundle: it now selects the newest transcript of each suite and prints that file's own
+  timestamp and size beside it, so a superseded log is visible in the bundle rather than silent.
+- Also fixed what the retake moved: the acceptance page's Hindi sentence now says the three words
+  this run's own guard read (`एक, हिन्दी, है`) and discloses the two the runs before it heard, and
+  both READMEs and the count guard follow the new pair.
+- Cold clone at `8847bdec1`, no `.venv`, no `node_modules`, no model: the four provenance and pin
+  guards 30 passed (`V0-slot75-coldclone-r1.log`).
+- Judge pass 4 (cheap+), on the corrected bundle: 26/35 — originality 2, taste 4, human feel 4,
+  **technical depth 5**, criteria fit 2, reviewer path 4, **honesty 5**, "no honesty flaw is
+  apparent". D1-D8 all demonstrated. No fixable flaw left open: three of its five flaws are the
+  owner's (a differentiator; the V0 scope; the repo has no rules file), and two are structural
+  (the real path needs ~2.6 GB of dependencies; the strongest evidence is a recorded run rather
+  than a live one, which the acceptance page explains).
+
+ROUND 5 — the one presentation flaw that was fixable.
+- Pass 4 called the README an evidence dossier and the stranger's path to the product's value too
+  long. The audit material stays — that is what the honesty claim costs — and the page now opens
+  with five lines saying which command to run for the product and which directory holds the
+  evidence. Full suite after the edit: `tests/hosted` 224 passed.
+
+DONE GATE. Slice E's own definition of done (items 1-8 of slot 72's plan) is met and shown above.
+The *milestone's* gate is not: the last judge round still has two criteria below 4, and both are
+owner decisions, so this is left in-progress with no pass claimed, exactly as the rule says.
+HEAD is a little ahead of the cited runs (`46b304413`) because prose and the judge bundle were
+corrected after them; the acceptance page says so and a guard reads the cited files back.
+
+NEEDS-KULRAJ (exact actions, unchanged, priority order)
+1. Approve a bounded GPU runtime for M1 (a scoped g5/g6 instance with automatic idle shutdown and
+   a hard spending limit) and listen to the committed WAVs
+   (`hermes-reports/M1-slot23-speech-r2/audio/`, `hermes-reports/M2-slot44-e2e-r1/audio/`) and say
+   whether the voice is sellable.
+2. Name ONE product differentiator — the single item that would move originality off 2.
+3. Decide deployment and a real object-store bucket.
+4. Choose the next M3 page: Voice Clone with consent, Voice Design, Dubbing, or a light/dark
+   polish round — all buildable here on CPU without him.
+5. Provide the official criteria/sponsor requirements if this product is to be entered anywhere.
+
+Nothing was deployed, published, messaged, submitted, spent or priced; no GPU, no provider call,
+no terms accepted.
