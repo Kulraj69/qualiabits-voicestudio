@@ -54,6 +54,9 @@ WORD_NUMBERS = {
     "ninety-six": 96,
     "ninety-seven": 97,
     "ninety-nine": 99,
+    "one-hundred-six": 106,
+    "one-hundred-twelve": 112,
+    "one-hundred-eighteen": 118,
 }
 
 SCREENSHOT_CHECK = "every page was captured as a screenshot"
@@ -158,15 +161,15 @@ def test_the_stated_counts_are_the_counts_in_the_two_runs():
     )
 
     for word, expected in (
-        ("ninety-one", stub_keep),
-        ("ninety-seven", real_keep),
+        ("one-hundred-twelve", stub_keep),
+        ("one-hundred-eighteen", real_keep),
     ):
         assert word in text, f"the page no longer states {word!r}"
         assert WORD_NUMBERS[word] == expected, (
             f"the page says {word!r} ({WORD_NUMBERS[word]}) and the runs record {expected}"
         )
-    assert "ninety-one checks on the stub path" in flat(text)
-    assert "ninety-seven against the real engine" in flat(text)
+    assert "one-hundred-twelve checks on the stub path" in flat(text)
+    assert "one-hundred-eighteen against the real engine" in flat(text)
     # The un-kept totals are not asserted against the page: the harness only writes
     # result.json when it is asked to keep evidence, so there is no committed run to
     # read them from, and a judge pass was right that the page should not quote
@@ -250,7 +253,7 @@ def test_the_kind_filter_is_this_package_s_own_searchable_select():
     )
 
 def test_the_unit_suite_count_in_the_readme_is_the_cases_its_files_hold():
-    """The page's "Ninety-nine checks, no browser" sentence, checked against the files.
+    """The page's "One-hundred-six checks, no browser" sentence, checked against the files.
 
     A judge pass on this slice caught the number stale: the page said seventy-eight
     while the suite ran ninety-nine. The sentence is how a reader knows the unit

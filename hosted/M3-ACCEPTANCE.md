@@ -1,4 +1,4 @@
-# What M3 asked for so far — slices A to D — and where each piece is
+# What M3 asked for so far — slices A to E — and where each piece is
 
 No official judging criteria are mapped here, and none can be: M3 is a milestone in
 this repository's own plan, not a hackathon this product is entered in. There is no
@@ -12,7 +12,7 @@ rather than a claim: nothing in this repository measures itself against a commer
 voice product, no such product has been run or quoted, and the two comparisons the
 project does have are wall-clock timings against another local engine.
 
-Four slices are built. **Slice A** is the four things a customer does first — sign
+Five slices are built. **Slice A** is the four things a customer does first — sign
 up, speak, mint keys, see what was used. **Slice B** is transcription: a recording in,
 the engine's transcript out, metered in its own counters. **Slice C** is the Voice
 Library: every voice the plane reports, searchable, each one previewable through the
@@ -28,13 +28,21 @@ page, and assembles the chapters the engine actually produced into one downloada
 WAV. It refuses in two places rather than guessing: a manuscript whose chapter count
 or single word breaks the stated limits, and an assembly whose chapter formats
 disagree, because joining 24 kHz mono to 48 kHz stereo produces a file that every
-player opens and every listener hears at the wrong speed. Three of the pages
+player opens and every listener hears at the wrong speed. **Slice E** is the second
+half of the brief's one adjective: the dashboard was dark-only, and it is now dark and
+light. Dark is unchanged and stays the default; a reader whose system asks for light,
+or who presses the switch in the top bar, gets a light page whose every colour comes
+from the same token set, and their choice is remembered. The theme is set on `<html>`
+by an inline script the layout renders, before the stylesheet paints, so a remembered
+choice never flashes the other one first. Slice E also fixed the hole a judge pass on
+slice D pointed at: the home page's card row wraps now, so the seventh tile fills its
+row to the edges instead of leaving two columns empty beside it. Three of the pages
 M3 names — Voice Clone with a consent checkbox, Voice Design and Dubbing — are
 **not built**, and the last section of this page says so
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot60-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot72-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -84,7 +92,13 @@ that fails the same guard, and a fresh browser run is owed.
 | The voice picker offers the plane's voices and nothing else | `hosted/web/components/SpeakView.jsx` | `hosted/web/test/searchable-select.test.mjs` | `the voice picker offers every voice the plane serves, and nothing else` |
 | Grouped rows come from the kind the plane reported, and filtering keeps the grouping | `hosted/web/lib/searchable-select.js` | `hosted/web/test/voices.test.mjs` | `choosing a kind with the keyboard narrows the cards to exactly that kind, and invents none` |
 | The transcription controls are the same control as every other picker | `hosted/web/components/TranscribeView.jsx` | `hosted/web/test/searchable-select.test.mjs` | `the Transcribe page shows a transcript` |
-| Dark, and the QualiaBits palette and spacing | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
+| Dark and light, and the QualiaBits palette and spacing in both | `hosted/web/app/globals.css` | `hosted/web/test/format.test.mjs` | `every page shows a visible focus outline` |
+| Dark stays the default; a reader who asks for light gets a light page | `hosted/web/lib/theme.js` | `hosted/web/test/theme.test.mjs` | `a reader whose system asks for light gets the light theme` |
+| The theme is set before the first paint, so a remembered choice never flashes | `hosted/web/app/layout.jsx` | `hosted/web/test/theme.test.mjs` | `the served HTML applies the theme before the page's own markup` |
+| A switch in the top bar that names the theme it gives you and remembers it | `hosted/web/components/ThemeToggle.jsx` | `hosted/web/test/theme.test.mjs` | `a remembered choice survives a reload, over the system preference` |
+| Every colour is a token, and the light palette's two declarations agree | `hosted/web/app/globals.css` | `tests/hosted/test_theme_tokens.py` | `every page renders light when light is asked for` |
+| Both themes' body, muted and heading text clear WCAG AA, measured in the browser | `hosted/web/app/globals.css` | `tests/hosted/test_theme_tokens.py` | `every page's text clears WCAG AA in light` |
+| The home page's card row wraps, so the seventh tile fills its row | `hosted/web/app/page.jsx` | `hosted/web/test/format.test.mjs` | `the home page's card rows all reach the row's edges` |
 | Long-form: a manuscript in, chapters out, one job per chapter | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | `the plane split the manuscript into chapters and queued one job each` |
 | The split lands on a boundary, never inside a word, and repeats exactly | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | no run evidence: the splitter is pure, so the browser run says nothing a unit test does not |
 | A chapter ceiling the queue will accept, read from both modules | `hosted/control_plane/projects.py` | `tests/hosted/test_project_chapters.py` | no run evidence: the same pure unit test reads both numbers |
@@ -109,10 +123,11 @@ and what is not is exactly where a product page starts lying:
   page cites, two of the five words of the Hindi sentence came back — एक and
   है — and a guard below reads that number back out of the run's own
   `transcript.shared_words` rather than trusting this sentence. The count moves
-  between runs of the *same code*: the run taken immediately before this one heard
-  three of the five (यह, एक and है), the one before that two, and each lost a
-  different word. This run heard यह as *यहा*, हिन्दी as *हिंदी* and वाक्य as
-  *वाग के*. It is not a transcription-quality claim, and the page
+  between runs of the *same code*: three of them came back in an earlier run
+  (`hermes-reports/M3-slot56-web-e2e-r1`: यह, एक and है) and the same two in each
+  run since, and each run loses a different word. This run heard यह as *यहा*,
+  हिन्दी as *हिंदी* and वाक्य as *वाग क्या*, where the run before it heard the same
+  यह and वाक्य as *वाग के*. It is not a transcription-quality claim, and the page
   does not make one; what is stable is the loop: the wiring, the metering
   and which bytes spoke,
   not transcription quality, and this page will not pretend otherwise. Whether anybody
@@ -132,7 +147,8 @@ and what is not is exactly where a product page starts lying:
 ## What is not built, and is not stubbed
 
 Voice Clone with a consent checkbox, Voice Design, Dubbing, the
-agents tab, a light theme, and the marketing landing page are all **later slices of
+agents tab, and the marketing landing page are all **later slices of
 M3**. None of
 them is a greyed-out button or a "coming soon" card: a page that is not built is not on
-the site, and the dashboard's navigation lists only pages that answer.
+the site, and the dashboard's navigation lists only pages that answer. The light theme
+that used to be on this list is built: slice E, above.

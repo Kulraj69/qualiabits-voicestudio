@@ -1,0 +1,118 @@
+npm notice run qualiabits-voice-web@0.1.0 e2e
+npm notice run node e2e/dashboard.mjs --keep
+PASS  engine is up and answers /health
+PASS  the control plane is up on its own database
+PASS  the control plane can see the engine
+PASS  the dashboard builds
+PASS  the dashboard is up and rooted at /
+PASS  signup lands on the dashboard and greets the workspace
+PASS  the session token is not readable by page JavaScript
+PASS  the workspace name cookie is the only cookie the page can see
+PASS  home links to /speak
+PASS  home links to /voices
+PASS  home links to /transcribe
+PASS  home links to /jobs
+PASS  home links to /keys
+PASS  home links to /usage
+PASS  no dead links on home
+PASS  / answers 200 and has a heading
+PASS  /speak answers 200 and has a heading
+PASS  /voices answers 200 and has a heading
+PASS  /transcribe answers 200 and has a heading
+PASS  /keys answers 200 and has a heading
+PASS  /usage answers 200 and has a heading
+PASS  /jobs answers 200 and has a heading
+PASS  /projects answers 200 and has a heading
+PASS  every page takes a keyboard Tab onto a focusable control
+PASS  every page shows a visible focus outline
+PASS  the app contains no native select control on any page
+PASS  every page was captured as a screenshot
+PASS  the shipped theme is the one this context asked for
+PASS  the dark page states its own color-scheme
+PASS  dark body text clears WCAG AA against the page background
+PASS  dark muted text clears WCAG AA
+PASS  dark headings clear WCAG AA
+PASS  a reader whose system asks for light gets the light theme
+PASS  the light page states its own color-scheme
+PASS  light body text clears WCAG AA against the page background
+PASS  light muted text clears WCAG AA
+PASS  light headings clear WCAG AA
+PASS  the two themes really are different pages to look at
+PASS  the toggle is on the page and named for the theme it switches to
+PASS  the served HTML applies the theme before the page's own markup
+PASS  pressing the toggle switches the page to the other theme
+PASS  the choice is written where the no-flash script reads it
+PASS  a remembered choice survives a reload, over the system preference
+PASS  a stored choice is applied by the served HTML, before hydration
+PASS  every page renders light when light is asked for
+PASS  every page's text clears WCAG AA in light
+PASS  the home page's card rows all reach the row's edges
+PASS  the home page's tiles are a wrapping row, not fixed columns
+PASS  the voice list is served by the plane, not hard-coded
+PASS  the voice picker offers every voice the plane serves, and nothing else
+PASS  the Speak page returns real WAV bytes through the plane
+PASS  the audio has a download link
+PASS  the player reports the measured duration and size
+PASS  an unknown voice is refused by the plane with the engine's own sentence
+PASS  the spoken audio was read back out of the page for transcription
+PASS  the Transcribe page shows a transcript
+PASS  the plane measured the upload as the same length as the audio it returned
+PASS  the plane counted the transcript in its own counter, not the speech one
+PASS  the plane metered the upload's seconds under the same workspace
+PASS  the stub transcript is exactly what the stub says it heard
+PASS  the transcript downloads as .txt holding the text the page shows
+PASS  the transcript downloads as .srt with cues carrying the engine's own timings
+PASS  the transcript downloads as .json holding the engine's own payload
+PASS  an upload with no file is refused with a sentence that says so
+PASS  an upload past the plane's ceiling is refused with a sentence naming the limit
+PASS  the dashboard refused the oversized upload itself, so the plane never saw a request
+PASS  a minted key is shown once and looks like a key
+PASS  the key is not shown again after a reload
+PASS  the list shows the key's public id and never its secret
+PASS  revoking marks the key revoked in the list
+PASS  a revoked key is refused on the next request
+PASS  the voice library lists exactly the voices the plane serves
+PASS  the library's own count line agrees with the plane's catalogue
+PASS  the kind filter is present exactly when the plane reported more than one kind
+PASS  the kind filter is a labeled combobox, closed until it is opened
+PASS  Enter on the trigger opens a list holding every kind the plane reported, plus All
+PASS  Escape closes the kind filter without choosing anything
+PASS  typing into the filter's own search narrows the kinds to the one that matches
+PASS  choosing a kind with the keyboard narrows the cards to exactly that kind, and invents none
+PASS  the narrowed count line names how many of the plane's voices that kind holds
+PASS  choosing All kinds brings every voice the plane serves back
+PASS  searching the library narrows it to the voices that match, and invents none
+PASS  the narrowed count line names how many of the plane's voices are shown
+PASS  the library previews a voice it offered, and real WAV bytes come back through the plane
+PASS  the preview player reports the measured duration and size
+PASS  the preview was metered as exactly one more speech request under this workspace
+PASS  the preview's own measured seconds are the seconds the plane added to the meter
+PASS  Use in Speak carries the voice to the Speak page, which selects it
+PASS  a voice the plane does not have is not preselected, it falls back to the default
+PASS  the same credentials log in straight to the plane
+PASS  the Usage page's request count matches the plane's meter
+PASS  the per-key breakdown the plane records is shown, one row per key
+PASS  the Usage page shows the transcribed-character counter the plane keeps
+PASS  a cancelled job reads as cancelled and was never spoken
+PASS  cancelling a queued job did not move the meter
+PASS  the real worker drained the queue
+PASS  the plane records the spoken job as succeeded
+PASS  the job's stored audio comes back as a WAV
+PASS  the downloaded audio is the bytes the plane stored
+PASS  the jobs table shows one Done row
+PASS  an over-long manuscript is refused by the dashboard in the plane's own sentence
+PASS  the dashboard refuses it itself, so the plane never sees the request
+PASS  the plane split the manuscript into chapters and queued one job each
+PASS  no chapter has been spoken at the moment the manuscript is accepted
+PASS  the page's progress sentence is counted from the plane's chapter statuses
+PASS  the assembled audiobook is a 409 that names the chapters still waiting
+PASS  the real worker spoke every chapter
+PASS  the audiobook downloads from the page as one WAV holding every chapter
+PASS  the assembled file is the chapters' frames under one header, not two
+PASS  the page reports the finished project from the plane's own statuses
+PASS  the meter moved by one request per chapter, not one per project
+PASS  no uncaught JavaScript errors on any page
+
+112/112 checks passed
+evidence kept in /workspace/qualiabits-voicestudio/hosted/web/e2e/.evidence
+EXIT=0

@@ -9,9 +9,9 @@
   "transcription_model_source": null,
   "transcription_model_pinned": null,
   "revision": {
-    "tested_commit": "6dfc6806695b1c4b8ad0726af37700161b467ef3",
+    "tested_commit": "2073d1c40759a8539b68600e8cb51b5037dde9a2",
     "worktree_dirty": false,
-    "generated_at_utc": "2026-11-03T21:09:58.389Z"
+    "generated_at_utc": "2026-11-04T00:07:04.074Z"
   },
   "browser": "156.0.8078.4",
   "deployed": false,
@@ -32,7 +32,7 @@
     {
       "name": "the control plane can see the engine",
       "ok": true,
-      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:41233\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:37523\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
     },
     {
       "name": "the dashboard builds",
@@ -272,7 +272,7 @@
     {
       "name": "the Speak page returns real WAV bytes through the plane",
       "ok": true,
-      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":72044,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.015s · engine build sherpa-onnxDownload WAV\"}"
+      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":72044,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.009s · engine build sherpa-onnxDownload WAV\"}"
     },
     {
       "name": "the audio has a download link",
@@ -282,7 +282,7 @@
     {
       "name": "the player reports the measured duration and size",
       "ok": true,
-      "detail": "Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.015s · engine build sherpa-onnxDownload WAV"
+      "detail": "Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.009s · engine build sherpa-onnxDownload WAV"
     },
     {
       "name": "an unknown voice is refused by the plane with the engine's own sentence",
@@ -352,7 +352,7 @@
     {
       "name": "a minted key is shown once and looks like a key",
       "ok": true,
-      "detail": "qbv_b250c15961d2417d_VvvK6ozVSxduoV2ziuVmiVPY9RLrT4Xe2UVM9suiM_I"
+      "detail": "qbv_801ed4df1e0d592e_2MhLrDBr3iWPx90HejVuhpu3EOVZWbVfHYJepUEa5Ls"
     },
     {
       "name": "the key is not shown again after a reload",
@@ -442,7 +442,7 @@
     {
       "name": "the preview player reports the measured duration and size",
       "ok": true,
-      "detail": "Previewing: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.014sDownload W / preview-hf_alpha.wav"
+      "detail": "Previewing: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.004sDownload W / preview-hf_alpha.wav"
     },
     {
       "name": "the preview was metered as exactly one more speech request under this workspace",
@@ -487,7 +487,7 @@
     {
       "name": "a cancelled job reads as cancelled and was never spoken",
       "ok": true,
-      "detail": "#1Cancelledhf_alpha55Nov 03, 2026, 21:10:54never spoken—"
+      "detail": "#1Cancelledhf_alpha55Nov 04, 2026, 00:07:36never spoken—"
     },
     {
       "name": "cancelling a queued job did not move the meter",
@@ -497,7 +497,7 @@
     {
       "name": "the real worker drained the queue",
       "ok": true,
-      "detail": "2242550: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.016, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-2242550\"}\n"
+      "detail": "2519580: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.012, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-2519580\"}\n"
     },
     {
       "name": "the plane records the spoken job as succeeded",
@@ -552,7 +552,7 @@
     {
       "name": "the real worker spoke every chapter",
       "ok": true,
-      "detail": "2242922: job 4 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 2, \"engine_seconds\": 0.025, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 2, \"worker_id\": \"ip-172-31-19-105-2242922\"}\n"
+      "detail": "2519599: job 4 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 2, \"engine_seconds\": 0.015, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 2, \"worker_id\": \"ip-172-31-19-105-2519599\"}\n"
     },
     {
       "name": "the audiobook downloads from the page as one WAV holding every chapter",
@@ -586,7 +586,7 @@
     "version": "engine-stub"
   },
   "plane_health": {
-    "upstream_base_url": "http://127.0.0.1:41233",
+    "upstream_base_url": "http://127.0.0.1:37523",
     "reachable": true,
     "status": "ok",
     "device": "cpu",
@@ -800,7 +800,7 @@
     "upload_seconds_measured": 1.5,
     "transcript_characters_in_meter": 19,
     "segments": 1,
-    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.013s · engine build engine-stub",
+    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.007s · engine build engine-stub",
     "downloads": {
       "txt": {
         "filename": "spoken.transcript.txt",
@@ -857,11 +857,11 @@
   "diagnostics": [
     {
       "process": "web",
-      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:32995\n- Network:       http://127.0.0.1:32995\n✓ Ready in 392ms\n✓ Running next.config.mjs took 46ms\n"
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:41133\n- Network:       http://127.0.0.1:41133\n✓ Ready in 246ms\n✓ Running next.config.mjs took 32ms\n"
     },
     {
       "process": "control-plane",
-      "tail": "INFO:     127.0.0.1:52898 - \"GET /v1/projects/1 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52898 - \"GET /v1/jobs/3/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52898 - \"GET /v1/jobs/4/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52890 - \"GET /v1/projects/1/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:51190 - \"GET /v1/jobs/3/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52890 - \"GET /v1/jobs/4/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52890 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [2239162]\n"
+      "tail": "INFO:     127.0.0.1:43656 - \"GET /v1/projects/1 HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:43656 - \"GET /v1/jobs/3/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:43656 - \"GET /v1/jobs/4/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:54782 - \"GET /v1/projects/1/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:54810 - \"GET /v1/jobs/3/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:54782 - \"GET /v1/jobs/4/audio HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:54782 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [2519406]\n"
     },
     {
       "process": "engine",

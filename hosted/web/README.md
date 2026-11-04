@@ -11,8 +11,8 @@ Not deployed. Not public. No public URL, no real S3 bucket, no GPU. Everything
 runs on this machine on loopback.
 
 The fastest way to check the claims below without fetching a model: the two committed
-runs in this repository — `hermes-reports/M3-slot60-web-e2e-r1/result.json` (real
-engine, 97 checks) and `hermes-reports/M3-slot60-web-e2e-stub-r1/result.json` (stub, 91
+runs in this repository — `hermes-reports/M3-slot72-web-e2e-r1/result.json` (real
+engine, 118 checks) and `hermes-reports/M3-slot72-web-e2e-stub-r1/result.json` (stub, 112
 checks) — record every check's own verdict, the engine's identity and the
 sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) is the
 one command that re-takes the real one, and it refuses to run on weights other than
@@ -21,11 +21,11 @@ plane, the worker and the browser, and it deliberately proves nothing about spee
 
 The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
 this repository, and their transcripts are committed beside the two run files:
-`hermes-reports/V0-slot69-tests-r4.log` (the Python guard suite, 217 passed),
-`V0-slot69-web-unit-r3.log` (the web unit suite, 99 passed), `V0-slot69-pins-r2.log`
-(the pinned-bytes guard, 5 passed), `V0-slot69-coldclone-r1.log` (the same guards from
-a clone with no `.venv`, 30 passed), `V0-slot69-stub-run3.log` and
-`V0-slot69-real-run3.log` (the two browser runs the archives hold). A reader who
+`hermes-reports/V0-slot72-tests-r1.log` (the Python guard suite, 224 passed),
+`V0-slot72-web-unit-r1.log` (the web unit suite, 106 passed), `V0-slot72-pins-r1.log`
+(the pinned-bytes guard, 5 passed), `V0-slot72-coldclone-r1.log` (the same guards from
+a clone with no `.venv`, 30 passed), `V0-slot72-stub-run2.log` and
+`V0-slot72-real-run2.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 
 ## Do this, see that
@@ -141,11 +141,25 @@ Now walk it, and each step says what you should see:
    plane's own words, before any request leaves the page; the chapters are metered
    separately, so a two-chapter project is two requests, not one.
 
-Every page above is one click from home, every page is dark, and every page takes a
+Every page above is one click from home, and every page takes a
 keyboard Tab onto a control that shows a visible focus outline. That is what the two
 keyboard checks in the browser run prove — one focused control per page and a visible
 outline on it — and it is deliberately not the stronger sentence "every control is
 keyboard accessible", which one Tab per page cannot show.
+
+**The theme** is dark and light, and the switch is the button in the top bar. Dark is
+what the design is, and it is what you get until you say otherwise. Ask for light and
+you get light: a reader whose system asks for `prefers-color-scheme: light` starts on
+the light palette, and pressing the sun/moon button flips the page and remembers the
+choice, so the next load comes up in the theme you left it in. The button's own label
+names the theme you get, not the one you are in ("Switch to the light theme"), and it
+is an ordinary button, so Tab reaches it and Enter presses it. The theme is set on
+`<html>` by an inline script in `app/layout.jsx` before the stylesheet paints, which
+is why a remembered choice does not flash the other theme first. What the browser run
+proves here is not that the palettes look nice: it computes WCAG contrast from the
+colours the browser itself reports for both themes (16.8:1 dark, 16.45:1 light for body
+text), presses the button, reloads, and checks the served HTML carried `data-theme`
+before the page's own markup.
 
 ## Tests
 
@@ -164,7 +178,7 @@ turn an answer into a `.srt` (including the case where the engine returned no
 segments), the voice search and kind filter the library uses, the grouping and
 keyboard rules of the select control below, and the five
 library claims the browser run is supposed to make, and the plane's own upload
-ceiling and the sentence it is refused with. Ninety-nine checks, no browser —
+ceiling and the sentence it is refused with. One-hundred-six checks, no browser —
 nine of them read
 `e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
 browser run is supposed to record cannot be deleted without a test failing.
@@ -179,15 +193,16 @@ records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
-of the eight pages: **ninety-one checks on the stub path** and **ninety-seven against
-the real engine**. Without `--keep` the screenshot check has nowhere to write, so
+of the eight pages: **one-hundred-twelve checks on the stub path** and
+**one-hundred-eighteen against the real engine**. Without `--keep` the screenshot check
+has nowhere to write, so
 either path runs one check fewer; `--no-build` skips one more on top of that, the
 check that the build succeeds. Only the two `--keep` runs are quoted as numbers here,
 because they are the two that are committed: a judge pass was right that the shorter
 forms' totals were arithmetic the page stated as though they had been measured. The
 kept runs
-are `hermes-reports/M3-slot60-web-e2e-stub-r1/result.json` and
-`hermes-reports/M3-slot60-web-e2e-r1/result.json`, and a test reads the counts, the
+are `hermes-reports/M3-slot72-web-e2e-stub-r1/result.json` and
+`hermes-reports/M3-slot72-web-e2e-r1/result.json`, and a test reads the counts, the
 one-check difference and the seven-and-one difference below back out of those files
 rather than trusting this paragraph. The real path adds seven checks a constant-size
 stub cannot pass — the engine's own answers about itself, from its identity and

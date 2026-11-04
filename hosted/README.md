@@ -88,7 +88,9 @@ subtitle file would count timecodes as speech; its seconds are still recorded.
 ## The dashboard
 
 The dashboard has eight pages now — home, Speak, Voices, Transcribe, Jobs, Projects,
-Keys, Usage. The
+Keys, Usage. It is dark and light: dark is the default, the switch in the top bar
+flips it and remembers the choice, and a reader whose system asks for light starts on
+the light palette. The
 browser front end that speaks through this plane lives in
 [`hosted/web/`](web/README.md) — its own Next.js package, importing nothing from
 `backend/`, this plane's own routes being its only contact with it. Run it, and
