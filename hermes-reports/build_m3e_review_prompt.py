@@ -15,6 +15,7 @@ scoring an incomplete bundle scores the wrong thing.
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -54,12 +55,34 @@ def since_text() -> str:
     return "\n\n".join(p.read_text(encoding="utf-8", errors="replace") for p in files)
 
 
+def newest(pattern: str) -> Path:
+    """The newest artifact matching a pattern, refused if there is none.
+
+    A judge pass on the previous slot was shown a suite transcript from before the
+    fix that transcript recorded, and scored honesty down for the contradiction
+    the bundle itself had created. The bundle cannot be older than the work it
+    describes, so the newest log is chosen and its own timestamp is printed beside
+    it: a superseded transcript would then be visible in the bundle rather than
+    silent.
+    """
+    found = sorted(REPORTS.glob(pattern), key=lambda p: p.stat().st_mtime)
+    if not found:
+        raise SystemExit(f"missing artifact matching {pattern}")
+    return found[-1]
+
+
+def stamped(path: Path) -> str:
+    """A log with its own mtime and size in front of it, so staleness is visible."""
+    when = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(path.stat().st_mtime))
+    return f"(written {when}, {path.stat().st_size} bytes)\n" + show(path)
+
+
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
     evidence = REPORTS / f"{SLICE}-web-e2e-r1" / "result.json"
     stub = REPORTS / f"{SLICE}-web-e2e-stub-r1" / "result.json"
-    tests = REPORTS / "V0-slot75-tests-r1.log"
-    unit = REPORTS / "V0-slot75-web-unit-r1.log"
+    tests = newest("V0-slot75-tests-*.log")
+    unit = newest("V0-slot75-web-unit-*.log")
 
     parts = [
         f"# Judge pass {label} on M3 slice E (the light theme), cheap+ tier\n",
@@ -121,11 +144,10 @@ def main() -> None:
         e2e_summary(evidence), "\n",
         "## The end-to-end, stub engine (the default smoke path)\n",
         stub_summary(stub), "\n",
-        "## Suite results (tests/hosted, from a clean clone of the pushed revision)\n",
-        show(tests) if tests.exists() else "missing clean-clone suite log",
-        "\n",
-        "## Web unit tests (node --test)\n",
-        show(unit) if unit.exists() else "missing web unit log",
+        "## Suite results (tests/hosted, the newest transcript beside these runs)\n",
+        stamped(tests), "\n",
+        "## Web unit tests (node --test, the newest transcript)\n",
+        stamped(unit),
         "\n",
         "## Commits in this slice\n", git_log(10), "\n",
         "## The judge passes already run on this slice (D8)\n",

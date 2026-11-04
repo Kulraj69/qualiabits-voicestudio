@@ -28,11 +28,11 @@ plane, the worker and the browser, and it deliberately proves nothing about spee
 
 The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
 this repository, and their transcripts are committed beside the two run files:
-`hermes-reports/V0-slot72-tests-r1.log` (the Python guard suite, 224 passed),
-`V0-slot72-web-unit-r1.log` (the web unit suite, 106 passed), `V0-slot72-pins-r1.log`
-(the pinned-bytes guard, 5 passed), `V0-slot72-coldclone-r1.log` (the same guards from
-a clone with no `.venv`, 30 passed), `V0-slot72-stub-run2.log` and
-`V0-slot72-real-run2.log` (the two browser runs the archives hold). A reader who
+`hermes-reports/V0-slot75-tests-r2.log` (the Python guard suite, 224 passed),
+`V0-slot75-web-unit-r2.log` (the web unit suite, 106 passed), `V0-slot75-pins-r1.log`
+(the pinned-bytes guard, 5 passed), `V0-slot75-coldclone-r1.log` (the same guards from
+a clone with no `.venv`, 30 passed), `V0-slot75-stub-run3.log` and
+`V0-slot75-real-run2.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 
 ## Do this, see that
