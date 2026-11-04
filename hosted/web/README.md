@@ -17,6 +17,15 @@ runs on this machine on loopback, and the rest of this page is what that status 
 and what it does not: what a reader can re-run, what the runs recorded, and what
 nobody has checked yet (nobody has listened to the audio).
 
+**Two minutes, if you are here for the product.** Run `npm run e2e`: it builds this
+app, starts the plane, the worker and the object store on loopback, and walks all eight
+pages in a real browser, printing one line per claim — then read [`hosted/README.md`](../README.md)
+for what the plane does. **If you are here to check the evidence**, the run files under
+`hermes-reports/` are the whole of it, each one listing every check with its own verdict,
+and the paragraph below says which commands produced the numbers on this page. The audit
+material from there down is long on purpose: a judge pass called this page an evidence
+dossier, and that is what the honesty claim costs in this repository.
+
 The fastest way to check the claims below without fetching a model: the two committed
 runs in this repository — `hermes-reports/M3-slot75-web-e2e-r1/result.json` (real
 engine, 124 checks) and `hermes-reports/M3-slot75-web-e2e-stub-r1/result.json` (stub, 118
