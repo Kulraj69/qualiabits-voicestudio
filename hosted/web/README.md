@@ -40,8 +40,10 @@ The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run
 this repository, and their transcripts are committed beside the two run files:
 `hermes-reports/V0-slot77-tests-r1.log` (the Python guard suite, 241 passed),
 `V0-slot77-web-unit-r1.log` (the web unit suite, 112 passed), `V0-slot75-pins-r1.log`
-(the pinned-bytes guard, 5 passed), `V0-slot75-coldclone-r1.log` (the same guards from
-a clone with no `.venv`, 30 passed), `V0-slot77-stub-run1.log` and
+(the pinned-bytes guard, 5 passed), `V0-slot77-coldclone-r1.log` (the same guards twice
+from a clone of `3a820f474` with no `.venv`, no `node_modules` and no model: 29 passed
+with one skip the first time, because the box had run out of room for the 112 MB asset
+the download-branch guard stages, then 30 passed), `V0-slot77-stub-run1.log` and
 `V0-slot77-real-run1.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 

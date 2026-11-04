@@ -1,0 +1,16 @@
+$ git clone --local --single-branch --branch work/m1-headless /workspace/qualiabits-voicestudio /workspace/staging/clone77   # no .venv, no node_modules, no model
+done.
+Updating files:  60% (3238/5371)Updating files:  61% (3277/5371)Updating files:  62% (3331/5371)Updating files:  63% (3384/5371)Updating files:  64% (3438/5371)Updating files:  65% (3492/5371)Updating files:  66% (3545/5371)Updating files:  67% (3599/5371)Updating files:  68% (3653/5371)Updating files:  69% (3706/5371)Updating files:  70% (3760/5371)Updating files:  71% (3814/5371)Updating files:  72% (3868/5371)Updating files:  73% (3921/5371)Updating files:  74% (3975/5371)Updating files:  75% (4029/5371)Updating files:  76% (4082/5371)Updating files:  77% (4136/5371)Updating files:  78% (4190/5371)Updating files:  79% (4244/5371)Updating files:  80% (4297/5371)Updating files:  81% (4351/5371)Updating files:  82% (4405/5371)Updating files:  83% (4458/5371)Updating files:  84% (4512/5371)Updating files:  85% (4566/5371)Updating files:  86% (4620/5371)Updating files:  87% (4673/5371)Updating files:  88% (4727/5371)Updating files:  89% (4781/5371)Updating files:  90% (4834/5371)Updating files:  91% (4888/5371)Updating files:  92% (4942/5371)Updating files:  93% (4996/5371)Updating files:  94% (5049/5371)Updating files:  95% (5103/5371)Updating files:  96% (5157/5371)Updating files:  97% (5210/5371)Updating files:  98% (5264/5371)Updating files:  99% (5318/5371)Updating files: 100% (5371/5371)Updating files: 100% (5371/5371), done.
+$ git rev-parse HEAD
+3a820f47454091492b9a4de762370835d96fc466
+$ ls .venv node_modules 2>&1 | head -2
+ls: cannot access '.venv': No such file or directory
+ls: cannot access 'node_modules': No such file or directory
+$ /workspace/qualiabits-voicestudio/.venv/bin/python -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+29 passed, 1 skipped, 1 warning in 29.20s
+
+$ # and again, by hand, after the box had room for the 112 MB asset the download-branch guard stages
+$ cd /workspace/staging/clone77 && /workspace/qualiabits-voicestudio/.venv/bin/python -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+30 passed, 1 warning in 52.48s
