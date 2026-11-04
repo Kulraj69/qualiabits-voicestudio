@@ -79,9 +79,11 @@ rather than trusted: both paths' check counts, the one-check difference between
 them, and the shared-word count below all fail the suite if the page and the file
 disagree. A change to a measured directory, the harness included, is the other case:
 that fails the same guard, and a fresh browser run is owed. Concretely, for this
-pair: the two browser paths ran at `933aacf83`, the last commit that touched any
-measured directory is `3e7857d45`, and every commit after the run is prose, a
-transcript or an archive — which is the `git diff` the guard runs, not a promise.
+pair: the two browser paths ran at `933aacf83`; that commit is an ancestor of
+everything pushed since, and `git diff 933aacf83 <pushed HEAD> -- <measured
+directories>` is empty, which is the `git diff` the same guard runs. The pushed HEAD
+itself is read back from the remote into `hermes-reports/V0-slot77-push-r1.log`, so
+the chain runs run → commit → push and every link is a file a reader can open.
 
 | The plan asks for | Code | Tests | A check in the browser run |
 | --- | --- | --- | --- |

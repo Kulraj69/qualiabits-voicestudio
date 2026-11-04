@@ -59,7 +59,7 @@ but it does need a Python with pytest and the test extras — `uv sync --group d
 puts those in `.venv`. With an interpreter like that, from a bare clone:
 
 ```sh
-git clone --branch work/m1-headless <this repository> qb && cd qb
+git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git qb && cd qb
 <python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py \
     tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
 # 30 passed — no venv in that clone, no model, no browser. Transcript:
