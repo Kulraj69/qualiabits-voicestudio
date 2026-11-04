@@ -18,8 +18,8 @@ and what it does not: what a reader can re-run, what the runs recorded, and what
 nobody has checked yet (nobody has listened to the audio).
 
 The fastest way to check the claims below without fetching a model: the two committed
-runs in this repository — `hermes-reports/M3-slot72-web-e2e-r1/result.json` (real
-engine, 118 checks) and `hermes-reports/M3-slot72-web-e2e-stub-r1/result.json` (stub, 112
+runs in this repository — `hermes-reports/M3-slot75-web-e2e-r1/result.json` (real
+engine, 124 checks) and `hermes-reports/M3-slot75-web-e2e-stub-r1/result.json` (stub, 118
 checks) — record every check's own verdict, the engine's identity and the
 sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) is the
 one command that re-takes the real one, and it refuses to run on weights other than

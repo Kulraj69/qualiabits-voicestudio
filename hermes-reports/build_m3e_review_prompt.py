@@ -33,10 +33,13 @@ from build_m3_review_prompt import (  # noqa: E402
 )
 
 SLICE = "M3-slot75"
+#: Slice E spans two rotation slots, so the earlier passes on it are filed under
+#: the slot that opened it. Both are shown to the judge; none of them is rewritten.
+SLICES = ("M3-slot72", "M3-slot75")
 
 
 def review_files(limit: int = 3) -> str:
-    found = sorted(REPORTS.glob(f"{SLICE}-review*.txt"))
+    found = sorted(f for sl in SLICES for f in REPORTS.glob(f"{sl}-review*.txt"))
     if not found:
         return "no judge pass is committed yet; this is the first"
     return "\n\n".join(
@@ -45,7 +48,7 @@ def review_files(limit: int = 3) -> str:
 
 
 def since_text() -> str:
-    files = sorted(REPORTS.glob(f"{SLICE}-since-review*.txt"))
+    files = sorted(f for sl in SLICES for f in REPORTS.glob(f"{sl}-since-review*.txt"))
     if not files:
         return "nothing: this is the first pass on the slice"
     return "\n\n".join(p.read_text(encoding="utf-8", errors="replace") for p in files)
