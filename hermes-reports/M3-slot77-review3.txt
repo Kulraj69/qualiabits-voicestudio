@@ -1,0 +1,61 @@
+Hackathon rubric
+
+1. Originality: 3/5
+   The refusal ordering, separate transcription/speech metering, and explicit non-translation boundary are thoughtful. Re-voicing speech through transcription plus TTS is still a familiar dubbing pattern, with no especially memorable user-facing moment.
+
+2. Taste: 3/5
+   The product scope is sensibly narrowed, but the README and acceptance dossier are extremely long and repetitive. The evidence presentation is closer to an audit dump than a designed hackathon submission. The UI itself is not evidenced visually here.
+
+3. Human feel: 3/5
+   The writing contains specific, candid details, especially around transcription quality and missing features. It also has bullet-wall structure, frequent em-dashes, and phrases such as “evidence dossier” and “what that status costs,” which make it feel over-engineered rather than naturally written.
+
+4. Technical depth: 4/5
+   The slice has meaningful server composition, ordering guarantees, workspace isolation, metering, migrations, history, upload bounds, negative tests, browser coverage, and real-engine checks. The real audio loop is weakly validated: only two of five Hindi words were shared by the second transcription pass.
+
+5. Criteria fit: 2/5
+   Evidence covers a substantial part of M2 and M3, plus testing work from M4. It does not evidence the full V0 goal or several milestone items:
+   - M1: no complete VoiceStudio architecture/run-breakage report is shown here.
+   - M3: Voice Clone and Voice Design are explicitly absent.
+   - M4: no Playwright coverage for every planned page or full regression scope.
+   - M5: agents, browser testing, SIP/phone calls, and call logs are absent.
+   - M6: no deployment, public HTTPS URL, signup on production, health checks, or GPU autoscaling.
+   - M7: landing page, comparison page, measured competitive numbers, lead lists, and drafted posts are absent.
+   - Real S3/object storage is absent; the README explicitly says there is no real bucket.
+
+6. Reviewer path: 3/5
+   The README gives unusually detailed reproduction steps, but the path is not genuinely quick or fresh-clone friendly. It requires roughly 2.6 GB of Python dependencies, 360 MB of Node dependencies, model assets, multiple processes, and manual model preparation. The clone command contains `<this repository>` rather than a usable URL, and the cited cold-clone run borrowed a sibling checkout’s virtual environment.
+
+7. Honesty: 2/5
+   The submission is unusually candid about non-deployment, model provenance, missing features, and transcription quality. However, the revision evidence is not coherent enough for a pass:
+   - `result.json` records commit `933aacf834aea5adbca641b22f3429463e3a6a2b`.
+   - `hosted/M3-ACCEPTANCE.md` says the measured directories were last touched at `3e7857d45`.
+   - `V0-slot77-push-r1.log` reads back remote SHA `adacec33433aabf10c1ab08bd0aa2b71d446b4ef`.
+   - `V0-slot77-coldclone-r1.log` uses clone revision `3a820f47454091492b9a4de762370835d96fc466`.
+   
+   Those records do not establish D8’s claimed single, clean, pushed revision for both browser paths. Since D8 is an explicit slice claim, this is an honesty/provenance failure, not merely missing polish.
+
+Result: FAIL
+
+Five most damaging flaws
+
+1. Revision/provenance mismatch
+   Files: `result.json`, `hosted/M3-ACCEPTANCE.md`, `V0-slot77-push-r1.log`, `V0-slot77-coldclone-r1.log`.
+   The browser-run, measured-code, pushed-remote, and cold-clone revisions differ. D8 specifically requires one verified revision and a remote SHA read-back.
+
+2. It is not the stated live hosted product
+   File: `hosted/web/README.md`, “Not deployed. Not public.”
+   There is no public URL, HTTPS, real S3 bucket, production signup, health check, or autoscaling GPU deployment. This misses the central V0 goal.
+
+3. Large portions of the milestone are absent
+   File: `hosted/web/README.md`, “What is not here, and is not stubbed.”
+   Voice cloning, voice design, agents, phone calls, billing, deployment, and the M7 growth work are explicitly missing. The submission is a narrow M3 slice, not evidence for the stated V0 target.
+
+4. Reproduction is expensive and not truly cold-clone simple
+   Files: `hosted/web/README.md`, `V0-slot77-coldclone-r1.log`.
+   The reviewer needs heavy dependency installation, model assets, several services, and a manual model-fetch path. The cold-clone run borrowed a sibling environment, so it does not fully prove independent setup.
+
+5. Real dubbing quality is not demonstrated
+   File: `hosted/M3-ACCEPTANCE.md`, the paragraph beginning “The voice is machine-checked, never human-checked.”
+   The real loop shared only two of five Hindi words, with several transcription errors, and nobody listened to the output. The wiring is tested, but the customer-facing dubbing result is not convincingly validated.
+
+What would make it win: produce a clean, independently replayed run and push at one verified revision, then show the deployed product at a public HTTPS URL with a short human-listenable demo and evidence for the missing V0 capabilities.

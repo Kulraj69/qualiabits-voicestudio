@@ -1,0 +1,49 @@
+Verdict: FAIL
+
+1. Originality: 4/5
+The core “same words, re-spoken in another voice” idea is familiar, but the memorable part is the execution policy: reject unknown voices before transcription, reject empty transcripts, and meter the ear and mouth separately.
+
+2. Taste: 3/5
+The product concept is focused, and the dubbing flow is clear. The README is overloaded into an evidence dossier, contains contradictory product-status copy, and buries the actual reviewer path under audit prose.
+
+3. Human feel: 4/5
+The writing is unusually specific and candid about limitations. It still has em-dash-heavy sentences, long bullet/table walls, and defensive qualification throughout, which makes it feel edited for an evaluator rather than written for a customer.
+
+4. Technical depth: 5/5
+The supplied evidence shows substantial implementation: upload bounds, ordering guarantees, workspace isolation, migrations, separate metering, persisted audio, history, API routes, browser coverage, and 241 hosted plus 112 web-unit checks. The refusal paths are tested rather than merely described.
+
+5. Criteria fit: 3/5
+The dubbing slice maps well to D1–D7, but D8 is not fully evidenced. The M3 milestone also explicitly requires Voice Clone with consent and Voice Design, while the acceptance document says both are not built. The broader V0 requirements still lack evidence here for deployment, public HTTPS signup, voice agents/phone calls, and the complete VoiceStudio feature set.
+
+6. Reviewer path: 3/5
+The README has useful “do X → see Y” instructions, but the claimed fresh-clone path is not cleanly fresh: it describes borrowing a sibling checkout’s `.venv`, while also calling the clone dependency-free. The real-engine path requires large environments and model assets, and the README’s nine-page/product-status language conflicts with its own “dubbing is not here” section.
+
+7. Honesty: 1/5
+There is a direct contradiction in `hosted/web/README.md`, section “What is not here, and is not stubbed”: it says “dubbing” is not here even though the README earlier describes `/dub`, and `hosted/M3-ACCEPTANCE.md` records Slice F as implemented. The supplied evidence also does not establish the complete D8 claim of two or more cheap+ judge rounds with every fixable finding fixed.
+
+Five most damaging flaws
+
+1. Product-status contradiction
+   - `hosted/web/README.md`, section “What is not here, and is not stubbed”
+   - Says: “Voice cloning, voice design, dubbing ... are all later slices.”
+   - This directly contradicts the `/dub` instructions and `hosted/M3-ACCEPTANCE.md` Slice F.
+
+2. D8’s judge-round requirement is unproven
+   - D8 evidence claim; supplied `result.json` and test logs
+   - The supplied logs prove test/browser runs, not “two or more cheap+ judge rounds with every fixable finding fixed.” The builder’s round log is absent, so this acceptance item cannot be credited.
+
+3. Evidence is not consistently tied to one revision
+   - `result.json`: commit `933aacf834aea5adbca641b22f3429463e3a6a2b`
+   - `V0-slot75-coldclone-r1.log`: clone at `4990b93f27092a6eb34d84f19c6cd2a5ba9085c2`
+   - `hosted/M3-ACCEPTANCE.md`: admits the repository is usually ahead of the measured revision.
+   - That conflicts with D8’s “both browser paths re-taken at ONE revision” requirement.
+
+4. Required M3 pages are knowingly missing
+   - `hosted/M3-ACCEPTANCE.md`, Slice F introduction and final not-built section
+   - Voice Clone with consent and Voice Design are explicitly absent. This is a direct gap against the owner’s M3 dashboard milestone.
+
+5. The “fresh clone” reviewer path is misleadingly framed
+   - `hosted/web/README.md`, “What a fresh clone can do before you install anything heavy”
+   - It calls the path a fresh clone while the cited cold-clone run uses a borrowed sibling `.venv`; the real browser flow also requires substantial dependencies and model assets. That is not a reproducible few-minute path for a stranger without clarifying the exact prerequisites and environment.
+
+What would make it win: remove the contradictory documentation, implement or clearly scope the missing M3 pages, rerun both browser paths plus the required judge rounds at one clean SHA, and publish a genuinely reproducible cold-clone command with independently verifiable evidence.

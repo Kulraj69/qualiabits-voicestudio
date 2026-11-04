@@ -1702,3 +1702,40 @@ slice must not claim the whole milestone done.
 
 ROUND 1 — resume verification and real app evidence.
 
+
+### Slot 77 closeout — the self-loop finished, four judge passes, and the push
+
+The run that opened this slice stopped after Round 1 with the code committed at `3e7857d45`
+and everything else in the working tree; this one resumed it and finished the loop rather
+than opening a second slice. Three guards were failing against the tree as it stood, and all
+three were right: the M2 acceptance table still quoted `m2d1` after the migration moved it
+to `m2f1`, the web README still said the real path adds seven checks and drops one (the dub
+adds two stub-impossible claims, so it is eight and two), and the acceptance page claimed
+three of five Hindi words where the run it cites records two (एक, है). Fixed where they were
+wrong; a new guard now reads the README's "not here" section both ways so a built page can
+never be named there again.
+
+The browser pair was re-taken at ONE revision, `933aacf83`, over clean trees with the
+archives staged outside the repository: stub 127/127, real engine 133/133, each
+`worktree_dirty false`, each committed beside its own transcript. Tests at the pushed
+revision: `tests/hosted` 242 passed, web unit 112 pass / 0 fail, the pinned-bytes guard 5
+passed, a cold clone with no venv, no node_modules and no model 29 passed + 1 out-of-room
+skip then 30 passed.
+
+Four cheap+ judge passes on bundles built from the real artifacts (prompts and outputs
+committed as `hermes-reports/M3-slot77-review{1..4}*`): 23/35 with honesty 1 (it found a
+real contradiction — this repository's web README called dubbing a later slice while the
+same page walks `/dub`), then 23/35 with the contradiction gone, then 20/35 (provenance:
+four revisions with nothing tying them), then **26/35 with honesty 4 and no honesty flaw**,
+technical depth 5, taste 4, human feel 4, reviewer path 4. Every fixable finding from the
+first three passes is closed; the two rows under 4 are the owner's (originality 3 needs a
+product differentiator, criteria fit 2 is the whole V0 milestone, most of which this
+repository does not have and says so).
+
+Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless`: `24b091756..adacec334`,
+`adacec334..c52dc236f`, `c52dc236f..13861e238`, remote SHA read back equal each time
+(`hermes-reports/V0-slot77-push-r1.log`). Not done, no pass claimed: the epic's gate needs
+the owner's GPU runtime with a hard spending limit and the listening check on the committed
+WAVs, one product differentiator, a deployment and object-store decision, the next M3 page,
+and the official criteria file if this is entered anywhere. Nothing was deployed, published,
+messaged, submitted, spent or priced; no GPU, no provider call, no terms accepted.

@@ -1,0 +1,46 @@
+Verdict: FAIL
+
+1. Originality: 3/5
+The implementation has a memorable integrity rule: validate the voice before transcription, and refuse empty transcripts before synthesis. But “transcribe, then re-speak in another voice” is a familiar composition rather than a novel product idea.
+
+2. Taste: 4/5
+The slice is focused, named clearly, and avoids pretending that translation, cloning, or voice design exists. The UI scope is appropriately narrow. The evidence documentation is overbuilt and visually reads like an audit dump rather than a polished product submission.
+
+3. Human feel: 3/5
+The writing is unusually specific and candid, especially around the weak Hindi transcription result. However, `hosted/web/README.md` contains long bullet/table walls, repeated qualification, and frequent em-dash constructions. It reads more like defensive evidence management than a concise builder-written product explanation.
+
+4. Technical depth: 5/5
+The slice composes real transcription and speech paths, enforces ordering, separates metering, persists history, checks workspace isolation, adds migration coverage, and has substantial hosted, browser, unit, stub, real-engine, and cold-clone evidence. The reported 242 hosted tests and 112 web tests passed.
+
+5. Criteria fit: 2/5
+The slice supplies strong evidence for one M3 feature, but the stated milestone is much larger. No evidence is supplied here for:
+
+- Voice cloning with consent.
+- Voice design.
+- Voice agents, browser testing, SIP/phone calls, or call logs.
+- Public AWS/Vercel deployment, HTTPS, signup on a public URL, or autoscaling.
+- S3-backed hosted storage.
+- The complete VoiceStudio feature set and all required fixes.
+- M7 landing/comparison page, real competitor measurements, lead lists, or drafted posts.
+
+`hosted/M3-ACCEPTANCE.md`, “What is not here, and is not stubbed,” explicitly confirms several of these omissions.
+
+6. Reviewer path: 3/5
+The README contains strong runnable commands and expected outcomes, but it does not provide a direct numbered manual “go to `/dub` → upload → choose voice → press Dub → verify transcript/audio/download” path. The main manual walkthrough covers transcription and projects but omits dubbing as its own step. Setup also requires roughly 2.6 GB of Python dependencies, 360 MB of Node dependencies, and potentially separate model assets. The cold-clone evidence initially borrowed a sibling environment and only later completed after disk space was available.
+
+7. Honesty: 3/5
+Most claims are handled honestly: local-only status, no public deployment, no human audio validation, imperfect ASR, stub substitution, and unbuilt pages are all disclosed. But D8 claims “a push with the remote SHA read back,” while the supplied `result.json` summaries and logs show no remote URL/SHA readback evidence. That leaves an explicit acceptance claim unverified and is an honesty failure under this rubric.
+
+Five most damaging flaws
+
+1. `hosted/M3-ACCEPTANCE.md`, “What is not here, and is not stubbed”: the milestone still lacks cloning, voice design, agents, deployment, billing/deployment infrastructure, and other required V0 capabilities.
+
+2. D8 / supplied `result.json` summaries: the required pushed-remote SHA readback is not present in the evidence supplied. A local commit and clean worktree do not prove a push.
+
+3. `hosted/web/README.md`, “Do this, see that”: there is no dedicated manual dubbing verification path despite dubbing being the claimed slice.
+
+4. `hosted/M3-ACCEPTANCE.md`, honesty limitations paragraph: the real-engine proof is machine-checked only; the closed-loop transcription produced substitutions such as “यह” → “यहा” and “वाक्य” → “वाग के.” No human has verified that the resulting audio is acceptable.
+
+5. `hosted/web/README.md`, setup and audit sections: the reviewer path is burdened by large dependency/model requirements and a very long evidence dossier. It is technically reproducible but not a quick, low-friction hackathon demo.
+
+What would make it win: deploy the verified dubbing flow publicly, add a short direct reviewer path and remote-push evidence, then complete the missing M3/V0 capabilities—especially cloning, voice design, agents, and deployment—without weakening the current honesty disclosures.

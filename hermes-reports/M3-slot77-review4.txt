@@ -1,0 +1,59 @@
+Judgment: FAIL
+
+Scores
+
+1. Originality: 3/5
+   Re-voicing a recording through existing transcription and speech APIs is useful, but dubbing/re-voicing is familiar. The strongest memorable detail is the explicit “same words, not translation” constraint.
+
+2. Taste: 4/5
+   The product language, refusal states, counters, and transcript/audio pairing are deliberate. The README is overlong for a first reviewer and reads more like an evidence dossier than a focused product introduction.
+
+3. Human feel: 4/5
+   Specific terminology and candid limitations make it feel authored. It loses a point for the enormous README, repeated qualification, and frequent em-dash constructions that make parts feel lawyered rather than naturally narrated.
+
+4. Technical depth: 5/5
+   The implementation covers ordering of validation, separate metering, tenancy isolation, migrations, stored audio, API history, browser paths, real-engine checks, and substantial regression coverage. The refusal-before-transcription path is a meaningful technical detail.
+
+5. Criteria fit: 2/5
+   It demonstrates a credible M3 dubbing slice, but not the owner’s V0 goal of a live full-stack ElevenLabs competitor. No evidence here shows:
+   - Voice cloning
+   - Voice design
+   - Voice agents
+   - SIP/phone calls or dialer
+   - Public deployment, HTTPS, signup on a public URL, or health checks
+   - Autoscaling-to-zero GPU hosting
+   - A recorded public demo
+   - Growth/landing/comparison work with real measured competitor numbers
+   - The full VoiceStudio model-manager feature set
+
+   The README explicitly says these are not built, and that nothing is deployed.
+
+6. Reviewer path: 4/5
+   The README gives concrete do-X/see-Y steps, committed evidence, test commands, and a cold-clone path. The real path still requires roughly gigabytes of dependencies, manually available model assets, and substantial CPU time, so it is not a genuinely quick fresh-clone demonstration for most reviewers.
+
+7. Honesty: 4/5
+   The work is unusually candid: it labels the stub, says the system is loopback-only, says nobody listened to the audio, disclaims translation, and reports imperfect shared-word recognition. The evidence chain is complicated by the browser runs being recorded at 933aacf while the pushed revision is later c52dc236, even though the README says measured directories were unchanged and guards enforce that. I find no demonstrated invented statistic or concealed stub, so this is not an honesty failure.
+
+Most damaging flaws
+
+1. Missing most of the milestone
+   File: hosted/web/README.md, “What is not here, and is not stubbed”
+   Voice cloning, voice design, agents, phone calls, billing, deployment, and the marketing/comparison surface remain absent. This is a strong slice, not the stated V0 product.
+
+2. Not live or publicly reviewable
+   File: hosted/web/README.md, “Not deployed. Not public.”
+   The milestone explicitly calls for AWS/Vercel/ECS deployment, HTTPS, health checks, working public signup, and a demo. All evidence is local loopback.
+
+3. Audio quality is not validated by a human
+   File: hosted/web/README.md, the paragraph beginning “The voice is machine-checked, never human-checked.”
+   The real loop recovered only two shared words in the cited Hindi run, with several transcription errors. The run proves plumbing and bytes, not that the dubbing result is commercially usable.
+
+4. Reproducibility is heavier and weaker than the headline path suggests
+   File: hermes-reports/V0-slot77-coldclone-r1.log and hosted/web/README.md, “What a fresh clone can do”
+   The first cold-clone attempt skipped a guard because of disk space, the successful replay relied on a sibling checkout’s environment according to the supplied log description, and the real path requires large manually supplied/pinned model assets. This is documented, but it materially raises the reviewer burden.
+
+5. Evidence is split across revisions and requires trust in guard logic
+   Files: the supplied result.json records and hermes-reports/V0-slot77-push-r1.log
+   Browser evidence is recorded at 933aacf834…, while the remote read-back is c52dc236…. The README explains why this is acceptable, but a judge must inspect the guard implementation and measured-directory diff rather than simply matching the run revision to the pushed revision.
+
+What would make it win: finish the missing V0 capabilities and ship this tested dubbing flow at a public HTTPS URL, with a short human-listened demo proving the output is good rather than merely wired correctly.
