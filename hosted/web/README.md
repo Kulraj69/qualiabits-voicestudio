@@ -148,11 +148,21 @@ Now walk it, and each step says what you should see:
    bytes you sent and the seconds the engine spent. **Download .txt / .srt / .json**
    take it away. A file the engine cannot read, or one over the size ceiling, is
    refused with a sentence that names the limit.
-7. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
+7. **Dub** at `/dub` — send a recording in (a WAV from the Speak page works), choose
+   a voice, press **Dub**. The engine's own transcript of what it heard is shown
+   beside the player, unedited, and the same words come back spoken in the voice you
+   picked, as one **Download WAV**. The meter counts it as two requests — one heard,
+   one spoken — on its own two counters. It is *not* a translation: the dub is in the
+   language the engine heard, and the page says so. Ask for a voice the plane does
+   not offer and it is refused **before** the recording is read, so a dead voice
+   costs no transcription; send a recording the engine hears no words in and it is
+   refused rather than spoken. The demo dub in the browser run is a real one: a Hindi
+   sentence spoken by the real engine, uploaded back, transcribed, and dubbed.
+8. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
    the plane's own notes about what each counter means. **Characters** and
    **characters transcribed** are separate lines on purpose: one is text you asked
    the engine to say, the other is text it handed back.
-8. **Projects** at `/projects` — paste a manuscript, give it a title, choose a
+9. **Projects** at `/projects` — paste a manuscript, give it a title, choose a
    voice, press **Create project**. The plane splits the text at paragraph ends
    first, then sentence ends, then spaces — never inside a word — and queues one
    ordinary job per chapter; the row shows *n of m chapters spoken* counted from the
