@@ -47,8 +47,10 @@ RUN_RE = re.compile(r"hermes-reports/(M3-slot\d+-web-e2e(?:-stub)?-r\d+)/result\
 #: The page spells its small numbers out, so they are read back the same way.
 WORD_NUMBERS = {
     "one": 1,
+    "two": 2,
     "six": 6,
     "seven": 7,
+    "eight": 8,
     "ninety": 90,
     "ninety-one": 91,
     "ninety-six": 96,
@@ -58,6 +60,8 @@ WORD_NUMBERS = {
     "one-hundred-twelve": 112,
     "one-hundred-eighteen": 118,
     "one-hundred-twenty-four": 124,
+    "one-hundred-twenty-seven": 127,
+    "one-hundred-thirty-three": 133,
 }
 
 SCREENSHOT_CHECK = "every page was captured as a screenshot"
@@ -162,15 +166,15 @@ def test_the_stated_counts_are_the_counts_in_the_two_runs():
     )
 
     for word, expected in (
-        ("one-hundred-eighteen", stub_keep),
-        ("one-hundred-twenty-four", real_keep),
+        ("one-hundred-twenty-seven", stub_keep),
+        ("one-hundred-thirty-three", real_keep),
     ):
         assert word in text, f"the page no longer states {word!r}"
         assert WORD_NUMBERS[word] == expected, (
             f"the page says {word!r} ({WORD_NUMBERS[word]}) and the runs record {expected}"
         )
-    assert "one-hundred-eighteen checks on the stub path" in flat(text)
-    assert "one-hundred-twenty-four against the real engine" in flat(text)
+    assert "one-hundred-twenty-seven checks on the stub path" in flat(text)
+    assert "one-hundred-thirty-three against the real engine" in flat(text)
     # The un-kept totals are not asserted against the page: the harness only writes
     # result.json when it is asked to keep evidence, so there is no committed run to
     # read them from, and a judge pass was right that the page should not quote
@@ -191,10 +195,19 @@ def test_the_stated_difference_is_the_real_difference_between_the_two_runs():
     added = set(real_names) - set(stub_names)
     dropped = set(stub_names) - set(real_names)
 
-    assert "seven checks a constant-size stub cannot pass" in flat(text)
-    assert "drops the one check that only a stub can satisfy" in flat(text)
-    assert len(added) == 7, f"the real path adds {len(added)} checks, not seven: {sorted(added)}"
-    assert len(dropped) == 1, f"the real path drops {len(dropped)}, not one: {sorted(dropped)}"
+    added_word = next(w for w, n in WORD_NUMBERS.items() if n == len(added))
+    dropped_word = next(w for w, n in WORD_NUMBERS.items() if n == len(dropped))
+    assert f"{added_word} checks a constant-size stub cannot pass" in flat(text), (
+        f"the page no longer says the real path adds {len(added)} checks"
+    )
+    assert f"drops the {dropped_word} checks that only a stub can satisfy" in flat(text), (
+        f"the page no longer says the real path drops {len(dropped)}"
+    )
+    assert len(added) == 8, f"the real path adds {len(added)} checks, not eight: {sorted(added)}"
+    assert len(dropped) == 2, f"the real path drops {len(dropped)}, not two: {sorted(dropped)}"
+    assert f"{added_word}-and-{dropped_word} difference" in flat(text), (
+        "the page no longer names the difference by its two parts"
+    )
     assert "so the two totals differ by six" in flat(text), (
         "the page no longer says how the totals differ"
     )

@@ -1,9 +1,10 @@
 # The QualiaBits Voice dashboard
 
-The browser front end for the hosted control plane in [`hosted/`](../). Eight pages,
+The browser front end for the hosted control plane in [`hosted/`](../). Nine pages,
 each one a real thing a customer does: sign up and sign in; speak text and hear it;
 browse the engine's own voice catalogue and preview any of them; send a recording in
-and read the transcript back; mint and revoke API keys; watch a queued job and
+and read the transcript back; dub a recording — hear the same words said back in a
+voice you pick — mint and revoke API keys; watch a queued job and
 download what it made; paste in a manuscript and get one audiobook back; read the
 meter the plane keeps.
 
@@ -18,7 +19,7 @@ and what it does not: what a reader can re-run, what the runs recorded, and what
 nobody has checked yet (nobody has listened to the audio).
 
 **Two minutes, if you are here for the product.** Run `npm run e2e`: it builds this
-app, starts the plane, the worker and the object store on loopback, and walks all eight
+app, starts the plane, the worker and the object store on loopback, and walks all nine
 pages in a real browser, printing one line per claim — then read [`hosted/README.md`](../README.md)
 for what the plane does. **If you are here to check the evidence**, the run files under
 `hermes-reports/` are the whole of it, each one listing every check with its own verdict,
@@ -27,8 +28,8 @@ material from there down is long on purpose: a judge pass called this page an ev
 dossier, and that is what the honesty claim costs in this repository.
 
 The fastest way to check the claims below without fetching a model: the two committed
-runs in this repository — `hermes-reports/M3-slot75-web-e2e-r1/result.json` (real
-engine, 124 checks) and `hermes-reports/M3-slot75-web-e2e-stub-r1/result.json` (stub, 118
+runs in this repository — `hermes-reports/M3-slot77-web-e2e-r1/result.json` (real
+engine, 133 checks) and `hermes-reports/M3-slot77-web-e2e-stub-r1/result.json` (stub, 127
 checks) — record every check's own verdict, the engine's identity and the
 sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) is the
 one command that re-takes the real one, and it refuses to run on weights other than
@@ -37,11 +38,11 @@ plane, the worker and the browser, and it deliberately proves nothing about spee
 
 The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
 this repository, and their transcripts are committed beside the two run files:
-`hermes-reports/V0-slot75-tests-r2.log` (the Python guard suite, 224 passed),
-`V0-slot75-web-unit-r2.log` (the web unit suite, 106 passed), `V0-slot75-pins-r1.log`
+`hermes-reports/V0-slot77-tests-r1.log` (the Python guard suite, 241 passed),
+`V0-slot77-web-unit-r1.log` (the web unit suite, 112 passed), `V0-slot75-pins-r1.log`
 (the pinned-bytes guard, 5 passed), `V0-slot75-coldclone-r1.log` (the same guards from
-a clone with no `.venv`, 30 passed), `V0-slot75-stub-run3.log` and
-`V0-slot75-real-run2.log` (the two browser runs the archives hold). A reader who
+a clone with no `.venv`, 30 passed), `V0-slot77-stub-run1.log` and
+`V0-slot77-real-run1.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 
 ## Do this, see that
@@ -179,7 +180,7 @@ before the page's own markup.
 
 Script off is its own path, and it is driven rather than asserted. A second pair of
 browser contexts runs with `javaScriptEnabled: false`, one asking for light and one for
-dark, over all eight pages. With no script `data-theme` is never written — the run
+dark, over all nine pages. With no script `data-theme` is never written — the run
 checks that no page carries it — so what a reader sees comes from the
 `prefers-color-scheme` fallback in `globals.css` alone; the palette is read back out of
 the browser over the DevTools protocol, because a page with no script has nothing to
@@ -207,40 +208,43 @@ turn an answer into a `.srt` (including the case where the engine returned no
 segments), the voice search and kind filter the library uses, the grouping and
 keyboard rules of the select control below, and the five
 library claims the browser run is supposed to make, and the plane's own upload
-ceiling and the sentence it is refused with. One-hundred-six checks, no browser —
-nine of them read
+ceiling and the sentence it is refused with. One-hundred-twelve checks, no browser —
+fifteen of them read
 `e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
 browser run is supposed to record cannot be deleted without a test failing.
 
 `npm run e2e` is the honest one. It builds the app, then starts **the real
 control plane** (its own SQLite file and object store), **the real web server**
 (the production Next build) and **real headless Chromium**, signs up through the
-form, speaks, browses the voice library and previews a voice from it, mints and
+form, speaks, browses the voice library and previews a voice from it, sends a
+recording in and reads the transcript back, dubs that recording into another voice,
+mints and
 revokes a key, queues, cancels and speaks a job with the
 real `run_worker.py --once`, and checks all of it **against the plane's own
 records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
-of the eight pages: **one-hundred-eighteen checks on the stub path** and
-**one-hundred-twenty-four against the real engine**. Without `--keep` the screenshot check
+of the nine pages: **one-hundred-twenty-seven checks on the stub path** and
+**one-hundred-thirty-three against the real engine**. Without `--keep` the screenshot check
 has nowhere to write, so
 either path runs one check fewer; `--no-build` skips one more on top of that, the
 check that the build succeeds. Only the two `--keep` runs are quoted as numbers here,
 because they are the two that are committed: a judge pass was right that the shorter
 forms' totals were arithmetic the page stated as though they had been measured. The
 kept runs
-are `hermes-reports/M3-slot75-web-e2e-stub-r1/result.json` and
-`hermes-reports/M3-slot75-web-e2e-r1/result.json`, and a test reads the counts, the
-one-check difference and the seven-and-one difference below back out of those files
-rather than trusting this paragraph. The real path adds seven checks a constant-size
+are `hermes-reports/M3-slot77-web-e2e-stub-r1/result.json` and
+`hermes-reports/M3-slot77-web-e2e-r1/result.json`, and a test reads the counts, the
+one-check difference and the eight-and-two difference below back out of those files
+rather than trusting this paragraph. The real path adds eight checks a constant-size
 stub cannot pass — the engine's own answers about itself, from its identity and
-active backend to the sha256 of its model files — and drops the one check that only a
-stub can satisfy, so the two totals differ by six. This path also checks the transcript's three
+active backend to the sha256 of its model files, plus the two claims a stub cannot
+honestly make about its own hearing and speaking — and drops the two checks that only
+a stub can satisfy, so the two totals differ by six. This path also checks the transcript's three
 downloads (each one a real click and a real file read back off disk) and sends one byte
 past the plane's own 25 MiB upload ceiling, refused with the sentence that names
 the limit. `--keep` writes `result.json`, the process logs and a full-page screenshot of
-each of the eight pages to `e2e/.evidence/`.
+each of the nine pages to `e2e/.evidence/`.
 
 **The one substitution** is the engine: `e2e/engine_stub.py`, the same shape as
 the stub the Python suite uses, so the browser run needs no model download. The

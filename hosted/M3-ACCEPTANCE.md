@@ -12,7 +12,7 @@ rather than a claim: nothing in this repository measures itself against a commer
 voice product, no such product has been run or quoted, and the two comparisons the
 project does have are wall-clock timings against another local engine.
 
-Five slices are built. **Slice A** is the four things a customer does first — sign
+Six slices are built. **Slice A** is the four things a customer does first — sign
 up, speak, mint keys, see what was used. **Slice B** is transcription: a recording in,
 the engine's transcript out, metered in its own counters. **Slice C** is the Voice
 Library: every voice the plane reports, searchable, each one previewable through the
@@ -42,13 +42,26 @@ no script has nothing to ask. That is a readable fallback rather than a working
 dashboard without script: a scriptless reader gets the landing page and the sign-in
 page, and signing in needs script. Slice E also fixed the hole a judge pass on
 slice D pointed at: the home page's card row wraps now, so the seventh tile fills its
-row to the edges instead of leaving two columns empty beside it. Three of the pages
-M3 names — Voice Clone with a consent checkbox, Voice Design and Dubbing — are
+row to the edges instead of leaving two columns empty beside it. **Slice F** is
+dubbing: a recording in, the engine's own transcript out, and the same words spoken
+back in a voice the customer picks, kept as one downloadable WAV. It composes the
+plane's two existing engine calls rather than adding an engine capability, so what it
+owns is the order that keeps the composition honest — the voice is checked against the
+catalogue *before* the recording is read, so a voice the plane would never offer costs
+no transcription, and a recording the engine heard no words in is refused rather than
+spoken, so an empty dub is impossible. The ear and the mouth stay separate in the
+meter: a dub writes one transcription event and one speech event, and the row keeps
+each call's own engine seconds apart. It is **not** a translation — there is no
+translation model in this repository and none is called — so the dub is in the
+language it heard, and the page says so rather than implying otherwise; the engine's
+transcript is shown beside the player unedited, because that is what the file will
+say. Two of the pages
+M3 names — Voice Clone with a consent checkbox and Voice Design — are
 **not built**, and the last section of this page says so
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot75-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot77-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -117,6 +130,18 @@ that fails the same guard, and a fresh browser run is owed.
 | Chapters are metered, not projects: one request per spoken chapter | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_projects.py` | `the meter moved by one request per chapter, not one per project` |
 | Another workspace can never read a project, a chapter or its audio | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_projects.py` | no run evidence: the browser run signs one workspace up |
 | An older database gains the two new tables, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | no run evidence: the browser run creates a fresh database |
+| Dubbing: a recording heard, the same words said back in another voice, one downloadable file | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_dubbing.py` | `the Dub page shows the engine's own transcript of the recording` |
+| The ear and the mouth are metered separately, not as one blended request | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_dubbing.py` | `a dub moved the meter by two requests — one heard, one spoken` |
+| The dubbed file is the bytes the engine produced, kept in the store and readable by id | `hosted/control_plane/db.py` | `tests/hosted/test_hosted_dubbing.py` | `the dubbed audio comes back through the plane as real WAV bytes` |
+| The dub keeps a history for the workspace, newest first | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_dubbing.py` | `the plane keeps the dub in this workspace's history` |
+| A recording is dubbed through the page, transcript shown beside the audio | `hosted/web/components/DubView.jsx` | `hosted/web/test/dubbing.test.mjs` | `the dub offers a download named for the plane's own id` |
+| A voice the plane would never offer is refused before the recording is read | `hosted/control_plane/dubbing.py` | `tests/hosted/test_hosted_dubbing.py` | no run evidence: the refusal happens before the engine is called, so a browser run cannot reach it |
+| A recording the engine heard no words in is refused, never spoken empty | `hosted/control_plane/dubbing.py` | `tests/hosted/test_hosted_dubbing.py` | no run evidence: the stub always hears words, so a browser run cannot reach it |
+| A dub speaks the language it heard: no translation model exists or is called | `hosted/control_plane/dubbing.py` | `tests/hosted/test_hosted_dubbing.py` | no run evidence: the absence of a translation call is a property of the code |
+| The dub's speech ceiling is the speech route's own, so the two cannot drift apart | `hosted/control_plane/dubbing.py` | `tests/hosted/test_hosted_dubbing.py` | no run evidence: two constants compared by a unit test |
+| Another workspace can never read a dub, or learn that one exists | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_dubbing.py` | no run evidence: the browser run signs one workspace up |
+| An older database gains the dubs table, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | no run evidence: the browser run creates a fresh database |
+| On the real engine the dub says the words it heard from the audio that was spoken | `hosted/web/e2e/dashboard.mjs` | `hosted/web/test/harness.test.mjs` | `the real engine's dub is the words it heard from the audio that was spoken` |
 
 Two sentences that belong beside that table, because the gap between what is proven
 and what is not is exactly where a product page starts lying:
