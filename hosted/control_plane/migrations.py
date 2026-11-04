@@ -31,14 +31,15 @@ from typing import Callable
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Connection
 
-from .db import Base, Database, Job, Project, ProjectChapter
+from .db import Base, Database, Dub, Job, Project, ProjectChapter
 
 #: Oldest first. A database is stamped with the last entry it has been brought to.
 #: m2a1 — slice A (workspaces, api_keys, session_tokens, usage_events).
 #: m2b1 — slice B (adds the jobs queue).
 #: m2c1 — slice C (adds usage_events.transcript_characters).
 #: m2d1 — slice D (adds projects and project_chapters).
-KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1", "m2c1", "m2d1")
+#: m2f1 — slice F (adds dubs). Slice E added no table, so it has no step here.
+KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1", "m2c1", "m2d1", "m2f1")
 
 MIGRATION_VERSION = KNOWN_VERSIONS[-1]
 
@@ -109,12 +110,25 @@ def _add_projects(connection: Connection) -> None:
     ProjectChapter.__table__.create(connection, checkfirst=True)
 
 
+def _add_dubs(connection: Connection) -> None:
+    """m2f1: dubbing — a recording, and the same words in another voice.
+
+    One new table and no change to anything that already exists. A dub writes
+    two ordinary usage events (a transcription and a speech request), so the
+    ledger grows no new column, exactly as the projects step added none.
+    ``checkfirst=True`` gives the same "re-running changes nothing" property the
+    steps above have.
+    """
+    Dub.__table__.create(connection, checkfirst=True)
+
+
 #: (version this step produces, work to do). Order matters; the stamp is written
 #: in the same transaction as the work.
 MIGRATIONS: tuple[tuple[str, Callable[[Connection], None]], ...] = (
     ("m2b1", _add_jobs_table),
     ("m2c1", _add_transcript_characters),
     ("m2d1", _add_projects),
+    ("m2f1", _add_dubs),
 )
 
 

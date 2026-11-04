@@ -267,6 +267,50 @@ class ProjectChapter(Base):
     characters: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class Dub(Base):
+    """One recording heard, and the same words said back in another voice.
+
+    A dub is the only receipt in this database that two engine calls produced.
+    Both are kept apart rather than blended: ``transcribe_seconds`` is what the
+    ear cost and ``speech_seconds`` is what the mouth cost, because a customer
+    reading "3.1 s of engine time" cannot tell which half to optimise. The
+    transcript that was actually spoken is stored here, not re-derived later —
+    the page shows what the file says, and the file is not kept as text.
+
+    ``object_key`` points at the dubbed WAV in the object store; when a dub
+    succeeds it is always set, and a dub is only written after the speech call
+    delivered bytes, so there is no half-done row that reads like a success.
+    """
+
+    __tablename__ = "dubs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    api_key_id: Mapped[int | None] = mapped_column(
+        ForeignKey("api_keys.id", ondelete="SET NULL"), nullable=True
+    )
+    voice: Mapped[str] = mapped_column(String(120), default="")
+    response_format: Mapped[str] = mapped_column(String(16), default="wav")
+    #: The recording as it arrived, described by its own bytes.
+    source_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    source_sha256: Mapped[str] = mapped_column(String(64), default="")
+    #: What the engine heard, unedited, and the same string's length.
+    transcript: Mapped[str] = mapped_column(Text, default="")
+    transcript_characters: Mapped[int] = mapped_column(Integer, default=0)
+    spoken_characters: Mapped[int] = mapped_column(Integer, default=0)
+    object_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    object_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    audio_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
+    audio_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    transcribe_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
+    speech_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+
+
 class Database:
     """Engine + session factory, owned by the app and closed on shutdown."""
 

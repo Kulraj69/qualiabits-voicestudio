@@ -31,6 +31,11 @@ Routes and who may call them:
     DELETE /v1/projects/{id}        session or key — cancel its queued chapters
     GET    /v1/projects/{id}/audio  session or key — the assembled audiobook, when
                                      every chapter has been spoken
+    POST   /v1/dubs                 API key — a recording in, the engine's words
+                                     out, and those words spoken back in a voice
+    GET    /v1/dubs                 session or key — your dubs, newest first
+    GET    /v1/dubs/{id}            session or key — one dub
+    GET    /v1/dubs/{id}/audio      session or key — the dubbed WAV
 
 Two deliberate omissions. There is no public signup-then-speak shortcut: speaking
 always needs a key, so every byte of audio is attributable to a key. (A job may be
@@ -63,10 +68,20 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
-from . import jobs, metering, projects, security, storage, voices as voice_catalogue
+from . import dubbing, jobs, metering, projects, security, storage, voices as voice_catalogue
 from .auth import Principal, principal
 from .config import Settings
-from .db import ApiKey, Database, Job, Project, ProjectChapter, SessionToken, Workspace, utcnow
+from .db import (
+    ApiKey,
+    Database,
+    Dub,
+    Job,
+    Project,
+    ProjectChapter,
+    SessionToken,
+    Workspace,
+    utcnow,
+)
 from .upstream import UpstreamClient, UpstreamResult
 
 #: ``starlette.datastructures.UploadFile``, not ``fastapi.UploadFile``: the latter
@@ -85,6 +100,7 @@ INPUT_MAX_CHARS = 5000
 JOB_BODY_MAX_CHARS = 100_000
 SPEECH_ROUTE = "/v1/audio/speech"
 TRANSCRIBE_ROUTE = "/v1/audio/transcriptions"
+DUB_ROUTE = "/v1/dubs"
 #: The engine's own option names on its OpenAI-shaped STT route. A client that
 #: sends something else has that field dropped rather than forwarded: the plane
 #: proxies this shape, it does not invent parameters for it.
@@ -243,6 +259,22 @@ def _own_project_row(session: Session, project_id: int, workspace_id: int) -> Pr
     return row
 
 
+def _own_dub_row(session: Session, dub_id: int, workspace_id: int) -> Dub:
+    """One of this workspace's dubs, or a 404 — the same shape as a job row.
+
+    A dub id that belongs to somebody else answers exactly like one that does not
+    exist, so the route cannot be used to learn that a given id is real.
+    """
+    row = session.execute(
+        select(Dub).where(Dub.id == dub_id, Dub.workspace_id == workspace_id)
+    ).scalar_one_or_none()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No such dub."
+        )
+    return row
+
+
 def _chapter_rows(session: Session, project_id: int) -> list[tuple[ProjectChapter, Job]]:
     """A project's chapters in reading order, each with the job that speaks it.
 
@@ -361,6 +393,56 @@ def transcript_characters(result: UpstreamResult) -> int:
         return 0
     text = payload.get("text") if isinstance(payload, dict) else None
     return len(text) if isinstance(text, str) else 0
+
+
+def _json_body(result: UpstreamResult) -> dict | None:
+    """The engine's JSON object, when that is what it delivered, else ``None``.
+
+    A non-JSON body (a subtitle file, a WAV) is not an error here: it simply is
+    not a transcript, and the caller treats ``None`` the way it treats silence.
+    """
+    if not result.delivered:
+        return None
+    content_type = (result.media_type or "").split(";")[0].strip().lower()
+    if content_type != "application/json":
+        return None
+    try:
+        payload = json.loads(result.body or b"")
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _engine_refusal(result: UpstreamResult) -> dict:
+    """The engine's own refusal, ready to hand back as an HTTP detail."""
+    body = _json_body(result)
+    if body:
+        return body
+    return {
+        "detail": "The engine refused this request and did not say why in JSON.",
+        "engine_status": result.status,
+    }
+
+
+def dub_dict(row: Dub) -> dict:
+    """One dub as a caller reads it. Both engine calls' seconds stay separate."""
+    return {
+        "id": row.id,
+        "voice": row.voice,
+        "response_format": row.response_format,
+        "source_bytes": row.source_bytes,
+        "source_sha256": row.source_sha256,
+        "transcript": row.transcript,
+        "transcript_characters": row.transcript_characters,
+        "spoken_characters": row.spoken_characters,
+        "audio_seconds": row.audio_seconds,
+        "audio_bytes": row.audio_bytes,
+        "transcribe_seconds": row.transcribe_seconds,
+        "speech_seconds": row.speech_seconds,
+        "object_sha256": row.object_sha256,
+        "audio_url": f"{DUB_ROUTE}/{row.id}/audio" if row.object_key else None,
+        "created_at": row.created_at.isoformat(),
+    }
 
 
 def create_app(
@@ -1133,6 +1215,303 @@ def create_app(
             content=result.body or b"",
             status_code=result.status,
             media_type=result.media_type or "application/json",
+            headers=headers,
+        )
+
+    # ── dubbing: what was heard, said back in another voice ───────────────────
+    @app.post(DUB_ROUTE, status_code=status.HTTP_201_CREATED)
+    async def create_dub(request: Request, session: DbSession) -> dict:
+        """A recording in, the engine's words out, and those words spoken back.
+
+        Speaking needs a key here for the same reason it does on
+        ``/v1/audio/speech``: this route produces audio, and every byte produced
+        must be attributable. The order of the two engine calls is the feature.
+        The voice is checked against the catalogue *before* the recording is read,
+        so a voice the plane would never offer costs no transcription; the speech
+        call happens only once there is a transcript to speak, so an empty or
+        unreadable answer is refused rather than spoken. Each call is metered on
+        its own route, so "speech in" and "speech out" stay separate counters, and
+        the row keeps each call's own engine seconds apart.
+        """
+        who = principal(session, request, allow="api_key")
+        api_key = who.require_api_key()
+        ceiling = state.settings.transcribe_max_bytes
+        allowance = f"An upload is at most {_window_of(ceiling)}."
+
+        declared = request.headers.get("content-length", "").strip()
+        if declared.isdigit() and int(declared) > ceiling:
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=413, error="declared upload too large",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=f"That upload is larger than {_window_of(ceiling)}. {allowance}",
+            )
+
+        try:
+            form = await request.form()
+        except Exception:  # noqa: BLE001 — a malformed body is the caller's, not ours
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=400, error="unreadable multipart body",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Send the recording as multipart/form-data, with the audio in a "
+                       "'file' part and the voice as a 'voice' field.",
+            ) from None
+
+        part = form.get("file")
+        voice_raw = form.get("voice")
+        voice = voice_raw.strip() if isinstance(voice_raw, str) else ""
+        asked_format = form.get("response_format")
+        asked_format = asked_format.strip().lower() if isinstance(asked_format, str) else ""
+
+        if not isinstance(part, UploadFile):
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=400, error="no file part",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="There is no 'file' part in this request. The recording goes in "
+                       "a 'file' part.",
+            )
+        if not voice:
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=400, error="missing voice",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="'voice' must name one of the voices the plane offers. "
+                       "GET /v1/voices lists them.",
+            )
+        if asked_format and asked_format != "wav":
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=400, error="unsupported format",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"A dub is spoken as 'wav', not {asked_format!r}.",
+            )
+
+        # The voice first, before the recording is read: a recording is the
+        # expensive half to hear, and a voice we would never offer is knowable
+        # without it. A catalogue we cannot read does not refuse (see
+        # ``dubbing.voice_is_known``); the engine answers for itself then.
+        _, catalogue = await state.upstream.json_get("/v1/audio/voices")
+        _, engines = await state.upstream.json_get("/engines/tts")
+        offered = voice_catalogue.compose(catalogue, engines)
+        if not dubbing.voice_is_known(voice, offered):
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=400, error="unknown voice",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"The engine does not offer a voice called {voice!r}. "
+                       "GET /v1/voices lists the ones it does.",
+            )
+
+        content = await part.read()
+        if len(content) > ceiling:
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=413, error="upload over the ceiling",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=f"That upload is {len(content)} bytes and the limit is "
+                       f"{_window_of(ceiling)}. {allowance}",
+            )
+        if not content:
+            metering.record(
+                session, workspace_id=who.workspace_id, api_key_id=api_key.id,
+                route=DUB_ROUTE, status_code=400, error="empty upload",
+            )
+            session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The 'file' part was empty, so there is nothing to hear.",
+            )
+
+        fields: dict[str, str] = {}
+        for name in TRANSCRIBE_FIELDS:
+            value = form.get(name)
+            if isinstance(value, str) and value.strip():
+                fields[name] = value.strip()
+
+        # 1. Hear it. Metered on the transcription route, because that is the
+        #    work: what a customer handed us, counted in transcript characters.
+        heard = await state.upstream.transcribe(
+            filename=part.filename or "recording",
+            content=content,
+            content_type=part.content_type or "application/octet-stream",
+            fields=fields,
+        )
+        metering.touch_key(session, api_key)
+        heard_text = dubbing.transcript_text(_json_body(heard))
+        metering.record(
+            session,
+            workspace_id=who.workspace_id,
+            api_key_id=api_key.id,
+            route=TRANSCRIBE_ROUTE,
+            status_code=heard.status,
+            transcript_characters=len(heard_text),
+            upload=content,
+            engine_seconds=heard.elapsed_seconds,
+            error=heard.error,
+        )
+        session.commit()
+
+        if not heard.delivered:
+            if heard.status in (502, 504):
+                raise HTTPException(
+                    status_code=heard.status,
+                    detail={"detail": "The transcription engine did not answer.",
+                            "reason": heard.error},
+                )
+            raise HTTPException(
+                status_code=heard.status, detail=_engine_refusal(heard)
+            )
+
+        try:
+            spoken = dubbing.speakable_transcript(heard_text)
+        except dubbing.NothingHeard as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
+            ) from exc
+        except dubbing.TooLongToSpeak as exc:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE, detail=str(exc)
+            ) from exc
+
+        # 2. Say it, in the chosen voice, through the same route a direct speech
+        #    request uses, and metered on that route.
+        said = await state.upstream.speech(
+            {"input": spoken, "voice": voice, "response_format": "wav"}
+        )
+        metering.record(
+            session,
+            workspace_id=who.workspace_id,
+            api_key_id=api_key.id,
+            route=SPEECH_ROUTE,
+            status_code=said.status,
+            characters=len(spoken),
+            body=said.body if said.delivered else None,
+            engine_seconds=said.elapsed_seconds,
+            error=said.error,
+        )
+        session.commit()
+
+        if not said.delivered:
+            if said.status in (502, 504):
+                raise HTTPException(
+                    status_code=said.status,
+                    detail={"detail": "The speech engine did not answer.",
+                            "reason": said.error},
+                )
+            raise HTTPException(status_code=said.status, detail=_engine_refusal(said))
+
+        # 3. Keep it. The row is written only after the speech call delivered
+        #    bytes, so a failed dub never leaves a row that reads like a success.
+        body = said.body or b""
+        stored = state.store.put(body, content_type=said.media_type or "audio/wav")
+        row = Dub(
+            workspace_id=who.workspace_id,
+            api_key_id=api_key.id,
+            voice=voice,
+            response_format="wav",
+            source_bytes=len(content),
+            source_sha256=hashlib.sha256(content).hexdigest(),
+            transcript=heard_text,
+            transcript_characters=len(heard_text),
+            spoken_characters=len(spoken),
+            object_key=stored.key,
+            object_sha256=stored.sha256,
+            audio_seconds=metering.wav_seconds(body),
+            audio_bytes=len(body),
+            transcribe_seconds=heard.elapsed_seconds,
+            speech_seconds=said.elapsed_seconds,
+        )
+        session.add(row)
+        session.commit()
+        return {
+            "dub": dub_dict(row),
+            "spoke_via": who.via,
+            "note": (
+                "The ear and the mouth are metered separately: this dub wrote one "
+                f"transcription request of {len(heard_text)} characters and one speech "
+                f"request of {len(spoken)}. The transcript is the engine's own, "
+                "unedited — the same words, heard again, in another voice."
+            ),
+        }
+
+    @app.get(DUB_ROUTE)
+    def list_dubs(
+        request: Request,
+        session: DbSession,
+        limit: int = Query(default=20, ge=1, le=50),
+    ) -> dict:
+        who = principal(session, request, allow="any")
+        rows = session.execute(
+            select(Dub)
+            .where(Dub.workspace_id == who.workspace_id)
+            .order_by(Dub.id.desc())
+            .limit(limit)
+        ).scalars().all()
+        total = session.execute(
+            select(func.count(Dub.id)).where(Dub.workspace_id == who.workspace_id)
+        ).scalar_one()
+        return {
+            "dubs": [dub_dict(row) for row in rows],
+            "returned": len(rows),
+            "limit": limit,
+            "workspace_total": total,
+        }
+
+    @app.get(DUB_ROUTE + "/{dub_id}")
+    def get_dub(dub_id: int, request: Request, session: DbSession) -> dict:
+        who = principal(session, request, allow="any")
+        row = _own_dub_row(session, dub_id, who.workspace_id)
+        return {"dub": dub_dict(row)}
+
+    @app.get(DUB_ROUTE + "/{dub_id}/audio")
+    def dub_audio(dub_id: int, request: Request, session: DbSession) -> Response:
+        who = principal(session, request, allow="any")
+        row = _own_dub_row(session, dub_id, who.workspace_id)
+        if not row.object_key:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This dub has no stored audio.",
+            )
+        try:
+            # Read from the object store at request time: the file is the record.
+            body = state.store.get(row.object_key)
+        except storage.StorageError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"The stored audio could not be read: {exc}",
+            ) from exc
+        headers = {
+            "X-Qualiabits-Dub": str(row.id),
+            "X-Qualiabits-Object-Sha256": row.object_sha256 or "",
+        }
+        if row.audio_seconds is not None:
+            headers["X-Qualiabits-Audio-Seconds"] = str(row.audio_seconds)
+        return Response(
+            content=body,
+            media_type=storage.content_type_for_key(row.object_key),
             headers=headers,
         )
 

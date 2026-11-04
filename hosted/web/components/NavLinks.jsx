@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/speak", label: "Speak" },
   { href: "/voices", label: "Voices" },
   { href: "/transcribe", label: "Transcribe" },
+  { href: "/dub", label: "Dub" },
   { href: "/jobs", label: "Jobs" },
   { href: "/projects", label: "Projects" },
   { href: "/keys", label: "Keys" },

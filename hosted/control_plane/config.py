@@ -23,7 +23,10 @@ from pathlib import Path
 #: m2d1 — slice D: adds ``projects`` and ``project_chapters``, so a manuscript can
 #:        be queued as chapters and assembled back into one file. No existing table
 #:        is changed: the chapters are ordinary jobs.
-SCHEMA_VERSION = "m2d1"
+#: m2f1 — slice F: adds ``dubs``, so a recording and the same words in another
+#:        voice are one receipt rather than two unrelated engine calls. (Slice E,
+#:        the light theme, added no table and needed no migration.)
+SCHEMA_VERSION = "m2f1"
 
 DEFAULT_UPSTREAM = "http://127.0.0.1:3900"
 DEFAULT_SESSION_TTL_SECONDS = 12 * 60 * 60

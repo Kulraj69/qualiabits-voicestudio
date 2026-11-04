@@ -25,6 +25,12 @@ const TILES = [
     body: "Send a recording and read the engine's transcript, with the plane's own numbers for the request.",
   },
   {
+    href: "/dub",
+    kicker: "Speech to speech",
+    title: "Dub",
+    body: "Send a recording and hear the same words back in another voice — the engine's own transcript shown beside the audio it produced, unedited.",
+  },
+  {
     href: "/jobs",
     kicker: "The queue",
     title: "Jobs",

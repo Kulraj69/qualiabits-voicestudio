@@ -73,6 +73,11 @@ const ENGINE_CMD = process.env.QB_E2E_ENGINE_CMD || "";
 const TRANSCRIBE_TIMEOUT_MS = Number(
   process.env.QB_E2E_TRANSCRIBE_TIMEOUT_MS || (ENGINE_CMD ? 600000 : 30000),
 );
+// A dub is two engine calls in one request — a transcription and a synthesis —
+// so its budget is both at once, and the real engine's warm-up is in both.
+const DUB_TIMEOUT_MS = Number(
+  process.env.QB_E2E_DUB_TIMEOUT_MS || (ENGINE_CMD ? 600000 : 30000),
+);
 
 /**
  * Words worth comparing between what was spoken and what came back.
@@ -550,7 +555,7 @@ async function main() {
 
     // ── every page reachable in one click from home ─────────────────────────
     const hrefs = await page.$$eval(".main a[href^='/']", (nodes) => [...new Set(nodes.map((n) => n.getAttribute("href")))]);
-    for (const href of ["/speak", "/voices", "/transcribe", "/jobs", "/keys", "/usage"]) {
+    for (const href of ["/speak", "/voices", "/transcribe", "/dub", "/jobs", "/keys", "/usage"]) {
       check(`home links to ${href}`, hrefs.includes(href), hrefs.join(", "));
     }
     let deadLinks = [];
@@ -565,7 +570,7 @@ async function main() {
     // /speak (its focus) and let the other three pages be covered by inference.
     // A judge was right to call that narrower than the claim, so each page is
     // now visited, tabbed into and, when evidence is kept, captured.
-    const PAGES = ["/", "/speak", "/voices", "/transcribe", "/keys", "/usage", "/jobs", "/projects"];
+    const PAGES = ["/", "/speak", "/voices", "/transcribe", "/dub", "/keys", "/usage", "/jobs", "/projects"];
     const shotDir = path.join(runDir, "screenshots");
     if (KEEP) mkdirSync(shotDir, { recursive: true });
     result.pages = [];
@@ -1098,6 +1103,98 @@ async function main() {
     check("the dashboard refused the oversized upload itself, so the plane never saw a request",
       usageAfterCeiling.requests === usageBeforeCeiling.requests,
       `${usageBeforeCeiling.requests} -> ${usageAfterCeiling.requests}`);
+
+    // ── dub: the audio that was spoken, heard, and said back in another voice ─
+    // The recording is the same bytes the Speak page played, not a fixture: on
+    // the real engine the transcription engine reads the speech engine's own
+    // WAV, and then the speech engine says those words again in a voice that is
+    // not the one it used the first time. What the run checks is the loop —
+    // audio in, words out, words spoken back — and that the plane kept both
+    // halves apart in the meter. It is not a fidelity claim: the word the engine
+    // heard is the word the dub says, mistakes included, and the run records both.
+    await page.goto(`${webBase}/dub`, { waitUntil: "load" });
+    await page.setInputFiles('[data-testid="dub-file"]', {
+      name: "spoken.wav",
+      mimeType: "audio/wav",
+      buffer: spokenBytes || Buffer.alloc(0),
+    });
+    // A different voice from the one the sentence was spoken in, chosen from the
+    // plane's own catalogue rather than hard-coded, so the two halves of the loop
+    // are audibly two voices and the picker is offered something it really has.
+    const dubVoice = (planeCatalogue?.voices || []).map((voice) => voice.id)
+      .find((id) => id !== SPEAK_VOICE) || SPEAK_VOICE;
+    await chooseSelect(page, "dub-voice", dubVoice);
+    // The same language the transcription step used, so the two steps read the
+    // same audio the same way and the comparison between them means something.
+    await chooseSelect(page, "dub-language", TRANSCRIBE_LANGUAGE);
+    const usageBeforeDub = (await plane(planeBase, "/v1/usage", { token: transcriptSession })).data?.usage;
+    await page.click('[data-testid="dub-submit"]');
+    await page.waitForSelector('[data-testid="dub-transcript"]', { timeout: DUB_TIMEOUT_MS });
+    const dubbed = await page.evaluate(async () => {
+      const transcript = (document.querySelector('[data-testid="dub-transcript"]')?.textContent || "").trim();
+      const audio = document.querySelector(".player audio") || document.querySelector("audio");
+      const download = document.querySelector('[data-testid="dub-download"]')?.getAttribute("download") || "";
+      let header = "", bytes = 0;
+      if (audio) {
+        const response = await fetch(audio.getAttribute("src"));
+        const buffer = new Uint8Array(await response.arrayBuffer());
+        bytes = buffer.length;
+        header = String.fromCharCode(...buffer.slice(0, 4));
+      }
+      return {
+        transcript,
+        header,
+        bytes,
+        download,
+        meta: (document.querySelector('[data-testid="dub-meta"]')?.textContent || "").trim(),
+      };
+    });
+    check("the Dub page shows the engine's own transcript of the recording",
+      dubbed.transcript.length > 0, dubbed.transcript.slice(0, 80));
+    check("the dubbed audio comes back through the plane as real WAV bytes",
+      dubbed.header === "RIFF" && dubbed.bytes > 44, `${dubbed.bytes} bytes, header ${dubbed.header}`);
+    check("the dub offers a download named for the plane's own id",
+      /^dub-\d+\.wav$/.test(dubbed.download), dubbed.download);
+    const usageAfterDub = (await plane(planeBase, "/v1/usage", { token: transcriptSession })).data?.usage;
+    check("a dub moved the meter by two requests — one heard, one spoken",
+      usageAfterDub.requests === usageBeforeDub.requests + 2,
+      `${usageBeforeDub.requests} -> ${usageAfterDub.requests}`);
+    check("a dub counted both halves on their own counters, not one blended number",
+      usageAfterDub.transcript_characters - usageBeforeDub.transcript_characters === dubbed.transcript.length
+        && usageAfterDub.characters - usageBeforeDub.characters === dubbed.transcript.length,
+      `heard ${usageAfterDub.transcript_characters - usageBeforeDub.transcript_characters}, `
+        + `spoken ${usageAfterDub.characters - usageBeforeDub.characters}, transcript ${dubbed.transcript.length}`);
+    const dubListed = (await plane(planeBase, "/v1/dubs", { token: transcriptSession })).data;
+    check("the plane keeps the dub in this workspace's history",
+      (dubListed?.dubs?.length ?? 0) >= 1 && dubListed.dubs[0].transcript === dubbed.transcript,
+      `${dubListed?.dubs?.length ?? 0} dubs, first ${JSON.stringify(dubListed?.dubs?.[0]?.transcript || "")}`);
+    if (ENGINE_CMD) {
+      // Real weights both ways: the transcription engine read the speech engine's
+      // own audio, and the words it heard are the words the dub now says. A small
+      // Whisper on a short clip is not a clean transcript, so the bar is that the
+      // sentence is recognisably there — the same bar the transcription step uses.
+      const sharedDub = words(dubbed.transcript).filter((token) => spokenWords.includes(token));
+      check("the real engine's dub is the words it heard from the audio that was spoken",
+        sharedDub.length >= 2 && sharedDub.some((token) => token.length >= 2),
+        `said ${JSON.stringify(SPEAK_TEXT)}, heard ${JSON.stringify(dubbed.transcript)}, shared ${JSON.stringify(sharedDub)}`);
+    } else {
+      check("the stub dub speaks exactly what the stub says it heard",
+        dubbed.transcript === "यह स्टब का जवाब है।", dubbed.transcript);
+    }
+    result.dub = {
+      engine_is_stub: !ENGINE_CMD,
+      voice: dubVoice,
+      spoken_voice: SPEAK_VOICE,
+      transcript_text: dubbed.transcript,
+      audio_bytes: dubbed.bytes,
+      download_name: dubbed.download,
+      meta: dubbed.meta,
+      meter_requests_before: usageBeforeDub.requests,
+      meter_requests_after: usageAfterDub.requests,
+      transcript_characters_delta: usageAfterDub.transcript_characters - usageBeforeDub.transcript_characters,
+      spoken_characters_delta: usageAfterDub.characters - usageBeforeDub.characters,
+      workspace_total: dubListed?.workspace_total ?? null,
+    };
 
 
     // ── keys: shown once, listed as a prefix, revoked on the next request ───

@@ -96,6 +96,21 @@ test("the library is one of the pages the run visits, tabs into and captures", (
   assert.match(HARNESS, /const PAGES = \["\/", "\/speak", "\/voices"/);
 });
 
+test("the run dubs the audio it spoke, and checks both halves of the loop", () => {
+  // The page the run visits and the control that starts a dub.
+  assert.match(HARNESS, /"\/transcribe", "\/dub"/);
+  assert.match(HARNESS, /\[data-testid="dub-file"\]/);
+  assert.match(HARNESS, /\[data-testid="dub-submit"\]/);
+  // The transcript the engine returned is read off the page, not assumed.
+  assert.match(HARNESS, /\[data-testid="dub-transcript"\]/);
+  // The dubbed bytes are fetched and their header read, and the download is named.
+  assert.match(HARNESS, /\[data-testid="dub-download"\]/);
+  assert.match(HARNESS, /header === "RIFF" && dubbed\.bytes > 44/);
+  // A dub is two engine calls, and the run says so on the meter.
+  assert.match(HARNESS, /usageAfterDub\.requests === usageBeforeDub\.requests \+ 2/);
+  assert.match(HARNESS, /result\.dub = \{/);
+});
+
 test("the long-form page is visited, and the run queues a real manuscript on it", () => {
   assert.match(HARNESS, /"\/jobs", "\/projects"\]/);
   assert.match(HARNESS, /await page\.goto\(`\$\{webBase\}\/projects`/);

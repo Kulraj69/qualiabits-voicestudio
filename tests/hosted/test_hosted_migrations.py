@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy import inspect
 
-from conftest import PASSWORD, login, usage
+from conftest import PASSWORD, login, make_wav, usage
 from hosted.control_plane import jobs, security
 from hosted.control_plane.config import SCHEMA_VERSION, Settings
 from hosted.control_plane.db import Database, Job, Workspace
@@ -107,10 +107,11 @@ def write_slice_a_database(path: Path, *, email: str = "old@example.com") -> Non
 def test_a_fresh_database_is_created_at_the_current_version(tmp_path):
     db = Database(f"sqlite:///{tmp_path / 'fresh.db'}")
     assert migrate(db, expected_version=SCHEMA_VERSION) == "created"
-    assert db.schema_version() == SCHEMA_VERSION == "m2d1"
+    assert db.schema_version() == SCHEMA_VERSION == "m2f1"
     assert inspect(db.engine).has_table("jobs")
     assert inspect(db.engine).has_table("projects")
     assert inspect(db.engine).has_table("project_chapters")
+    assert inspect(db.engine).has_table("dubs")
     assert "transcript_characters" in {
         column["name"] for column in inspect(db.engine).get_columns("usage_events")
     }
@@ -122,8 +123,8 @@ def test_a_slice_a_database_is_brought_forward_and_keeps_every_row(tmp_path):
     db = Database(f"sqlite:///{path}")
 
     assert db.schema_version() == "m2a1"
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2d1"
-    assert db.schema_version() == "m2d1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2f1"
+    assert db.schema_version() == "m2f1"
     assert inspect(db.engine).has_table("jobs")
 
     with db.session() as session:
@@ -150,7 +151,7 @@ def test_upgrading_twice_changes_nothing_the_second_time(tmp_path):
     write_slice_a_database(path)
     db = Database(f"sqlite:///{path}")
 
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2d1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2f1"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     with db.session() as session:
@@ -177,9 +178,15 @@ def test_a_step_can_be_run_again_without_failing(tmp_path):
         steps["m2d1"](connection)
     with db.engine.begin() as connection:
         steps["m2d1"](connection)
+    # And slice F's, the same way.
+    with db.engine.begin() as connection:
+        steps["m2f1"](connection)
+    with db.engine.begin() as connection:
+        steps["m2f1"](connection)
     assert inspect(db.engine).has_table("jobs")
     assert inspect(db.engine).has_table("projects")
     assert inspect(db.engine).has_table("project_chapters")
+    assert inspect(db.engine).has_table("dubs")
     assert "transcript_characters" in {
         column["name"] for column in inspect(db.engine).get_columns("usage_events")
     }
@@ -248,7 +255,7 @@ def test_the_app_upgrades_a_slice_a_database_in_place_and_the_customer_still_log
     write_slice_a_database(tmp_path / "control-plane.db")
     with app_client(tmp_path, engine) as client:
         health = client.get("/healthz").json()
-        assert health["schema_state"] == "upgraded:m2a1->m2d1"
+        assert health["schema_state"] == "upgraded:m2a1->m2f1"
         assert health["schema_version"] == SCHEMA_VERSION
 
         # The customer who signed up under slice A signs in with the same password.
@@ -292,6 +299,28 @@ def test_the_app_upgrades_a_slice_a_database_in_place_and_the_customer_still_log
         assert project.json()["project"]["chapter_count"] == 2
         # Two chapter jobs, on top of the one job queued above.
         assert client.get("/healthz").json()["jobs"] == {"queued": 3}
+
+        # And the slice-F feature works on the same old database: a recording is
+        # heard and said back, using a table the old ledger has never had. A key
+        # is minted for it because dubbing, like speaking, produces audio and so
+        # needs a credential to attribute it to.
+        key = client.post(
+            "/v1/api-keys",
+            json={"label": "old customer"},
+            headers={"Authorization": f"Bearer {token}"},
+        ).json()["api_key_record"]["api_key"]
+        dubbed = client.post(
+            "/v1/dubs",
+            files={"file": ("clip.wav", make_wav(1.25), "audio/wav")},
+            data={"voice": "hf_alpha"},
+            headers={"Authorization": f"Bearer {key}"},
+        )
+        assert dubbed.status_code == 201, dubbed.text
+        assert dubbed.json()["dub"]["transcript"] == engine.transcript
+        assert client.get(
+            f"/v1/dubs/{dubbed.json()['dub']['id']}",
+            headers={"Authorization": f"Bearer {token}"},
+        ).status_code == 200
 
 
 def test_the_health_route_says_created_for_a_fresh_database(client):

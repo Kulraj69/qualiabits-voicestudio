@@ -344,6 +344,37 @@ def transcribe(
     )
 
 
+def dub(
+    client: TestClient,
+    credential: str,
+    content: bytes | None = None,
+    *,
+    voice: str = "hf_alpha",
+    filename: str = "clip.wav",
+    content_type: str = "audio/wav",
+    **fields,
+):
+    """One call to the plane's metered dubbing route.
+
+    ``content=None`` sends a real WAV, because a test that measures the upload
+    needs bytes with a header; ``b""`` sends an empty part on purpose.
+    """
+    payload = make_wav(1.25) if content is None else content
+    data = {"voice": voice, **{key: str(value) for key, value in fields.items()}}
+    return client.post(
+        "/v1/dubs",
+        files={"file": (filename, payload, content_type)},
+        data=data,
+        headers={"Authorization": f"Bearer {credential}"},
+    )
+
+
+def fetch_dub_audio(client: TestClient, credential: str, dub_id: int):
+    return client.get(
+        f"/v1/dubs/{dub_id}/audio", headers={"Authorization": f"Bearer {credential}"}
+    )
+
+
 def create_job(client: TestClient, credential: str, text: str, **extra) -> dict:
     response = queue_job(client, credential, text, **extra)
     assert response.status_code == 202, response.text
