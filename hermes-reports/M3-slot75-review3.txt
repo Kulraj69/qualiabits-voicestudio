@@ -1,0 +1,50 @@
+Overall: FAIL — 22/35. Originality and criteria fit are below 4, and the supplied evidence contains an honesty/evidence-consistency flaw.
+
+1. Originality — 2/5
+
+A dark/light dashboard, tokenized CSS, contrast checks, and responsive card wrapping are conventional product work. The project itself admits this in `hosted/M3-ACCEPTANCE.md` (“a theme is not a novel idea”). The real-engine closed loop is technically careful, but it is evidence quality rather than a memorable user-facing idea.
+
+2. Taste — 4/5
+
+The UI has a restrained palette, one accent, coherent spacing, clear navigation, visible focus states, and no fake placeholder pages for unbuilt features. The copy is unusually candid and specific. The README is still hundreds of lines of audit material, with repeated caveats and dense verification detail, so it is less elegant than the product itself.
+
+3. Human feel — 4/5
+
+The writing has a recognizable maintainer voice, especially phrases such as “a page that is not built is not on the site” and the candid reporting of imperfect Hindi transcription. It avoids most generic AI language and does not oversell the result. However, repeated evidence narration, parenthetical qualifications, and long defensive passages make parts read like an audit dossier rather than a concise human project story.
+
+4. Technical depth — 4/5
+
+The implementation covers real theme resolution, pre-paint application, storage failure handling, token parity, browser contrast checks, script-disabled browser contexts, geometry checks, metering, key revocation, workers, transcription, and audiobook assembly. The real-engine result records 124 checks and model hashes, while web unit tests report 106 passes. This falls short of 5 because the repository’s acceptance guards shown in the supplied log fail five tests, including provenance, cited-run selection, and stated-count consistency.
+
+5. Criteria fit — 2/5
+
+The slice has strong evidence for D1–D7’s light-theme scope, but the owner’s V0 milestone also requires voice cloning, voice design, dubbing, voice agents, phone calls, deployment, public HTTPS, real S3, GPU operation, demo video, comparison material, lead lists, and drafted growth posts. Those are explicitly absent in `hosted/web/README.md` and `hosted/M3-ACCEPTANCE.md`. No official hackathon rules file is supplied, so fit can only be judged against the owner’s milestone, where substantial requirements have no evidence.
+
+6. Reviewer path — 4/5
+
+The README gives concrete commands, expected behavior, route-by-route checks, stub-versus-real distinctions, and committed result files. The stub path is reasonably accessible. The strongest reproduction path still requires roughly 2.6 GB of Python dependencies, about 360 MB of web dependencies, model assets, and potentially long CPU execution, which weakens the “few minutes” requirement.
+
+7. Honesty — 2/5
+
+The project is honest about deployment, GPU, S3, human listening, and unbuilt features. However, the supplied evidence contradicts the claims it asks the judge to trust: `tests/hosted/test_m3_acceptance_matrix.py:152` reports the cited run as dirty, line 201 reports the prose says two shared words while the run records three, `test_web_pages_claims.py:105` finds four cited runs instead of two, line 125 finds a dirty cited run, and line 169 finds stated counts of 118/124 versus a recorded 112. The supplied Python suite therefore reports `219 passed, 5 failed`, not the README’s claimed clean 224-pass verification; that is an evidence-integrity flaw even if the underlying implementation is sound.
+
+Five most damaging flaws
+
+1. Acceptance evidence is currently inconsistent: `tests/hosted/test_m3_acceptance_matrix.py:152,201` and `tests/hosted/test_web_pages_claims.py:105,125,169`.
+2. The README and acceptance page claim clean, measured run counts while the supplied guard transcript shows five failures and count/provenance mismatches.
+3. Originality is structurally below the required threshold: the slice is a conventional theme/accessibility refinement, as acknowledged in `hosted/M3-ACCEPTANCE.md`.
+4. The V0 milestone remains far from complete: cloning, design, dubbing, agents, phone calls, deployment, public URL, real S3, GPU execution, and growth deliverables are absent.
+5. The reviewer path is heavy: substantial dependency/model staging and long CPU execution remain necessary to reproduce the strongest claims.
+
+D-item status
+
+- D1: Demonstrated — dark default, light system preference, remembered choice, and both palettes are exercised in the browser results.
+- D2: Demonstrated — the result records the inline theme script before page markup.
+- D3: Demonstrated — keyboard-reachable toggle, destination-theme label, persistence, and localStorage failure handling are covered.
+- D4: Demonstrated — token parity is guarded, and script-disabled light/dark browser contexts read back the computed palettes over DevTools.
+- D5: Demonstrated — body, muted, and heading contrast is measured above WCAG AA across all eight light pages.
+- D6: Demonstrated — browser geometry checks verify the trailing card row.
+- D7: Partly demonstrated — the documentation exists and describes Slice E, but the cited counts and provenance fail the supplied acceptance guards.
+- D8: Partly demonstrated — two prior judge verdicts are supplied and the no-script flaw was addressed, but the current evidence does not establish that every fixable flaw was fixed because the acceptance suite still fails.
+
+What would make it win: introduce a distinctive voice-user workflow, complete the missing V0 capabilities, and retake the two browser runs from a clean revision with all documentation and acceptance guards passing consistently.

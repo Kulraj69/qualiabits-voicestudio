@@ -1,0 +1,54 @@
+Overall: FAIL — 26/35
+
+1. Originality — 2/5
+
+A dark/light dashboard, contrast validation, and responsive card wrapping are standard product work, not a memorable hackathon idea. The project itself concedes this: `hosted/M3-ACCEPTANCE.md:31-38` says originality is expected to remain below 4 because a theme is not novel. The real-engine closed loop is technically careful, but it is evidence quality rather than a surprising user-facing concept.
+
+2. Taste — 4/5
+
+The UI has a coherent palette, one restrained accent, consistent spacing tokens, visible focus states, and navigation limited to implemented pages. The copy is unusually candid about scope and limitations. The README is still several hundred lines of audit material, repeated caveats, and implementation detail, so it reads more like an evidence dossier than a polished reviewer experience.
+
+3. Human feel — 4/5
+
+The writing has a specific maintainer voice, especially phrases such as “a page that is not built is not on the site” and the candid account of imperfect Hindi transcription. It avoids generic startup language, fabricated success, and promotional claims. The repeated qualification blocks, long parenthetical explanations, and dense test narration make parts feel mechanically assembled rather than naturally narrated.
+
+4. Technical depth — 5/5
+
+The real browser run records 124 passing checks, including real engine identity, pinned model hashes, metering, key revocation, transcription, worker execution, project assembly, browser downloads, theme resolution, contrast, no-script rendering, and card geometry. The supporting suites report 224 Python tests and 106 web unit tests passing. The tests exercise refusal paths and cross-check page values against plane records rather than only testing happy paths.
+
+5. Criteria fit — 2/5
+
+This slice strongly evidences D1-D7, but the stated milestone is the much larger V0 product. There is no evidence here for voice cloning, voice design, dubbing, voice agents, phone calls, deployment, public HTTPS, real S3, GPU autoscaling, hosted signup, a demo video, comparison pages, lead lists, or growth work. The omissions are explicitly recorded in `hosted/web/README.md:351-355` and `hosted/M3-ACCEPTANCE.md:147-151`; the real run also records `deployed: false`, `public_url: null`, `gpu: false`, and `real_s3: false`.
+
+6. Reviewer path — 4/5
+
+The README gives concrete setup commands, expected results, routes, test counts, and separate stub and real-engine paths. The committed result files make the principal claims inspectable without immediately staging the full environment. Reproduction still requires approximately 2.6 GB of Python dependencies, about 360 MB of web dependencies, model assets for the strongest path, and potentially lengthy CPU execution, which weakens the “see the claimed result in a few minutes” requirement.
+
+7. Honesty — 5/5
+
+Claims are carefully bounded and backed by code or run artifacts. The project clearly labels the stub path, records model hashes, exposes the imperfect transcription result, and states that it is not deployed, has no public URL, uses no real S3 bucket, has no GPU, and has not had human audio listening validation. No honesty flaw is apparent, and no unsupported pricing, user, performance, deployment, or prize claim is present.
+
+Five most damaging flaws
+
+1. No novel user-facing idea — `hosted/M3-ACCEPTANCE.md:31-38`. The slice is a polished conventional theme/accessibility improvement, so originality cannot reach the required 4.
+
+2. Large V0 scope gap — `hosted/web/README.md:351-355`; `hosted/M3-ACCEPTANCE.md:147-151`. Cloning, voice design, dubbing, agents, phone calls, deployment, public HTTPS, real S3, GPU operation, and growth deliverables remain absent.
+
+3. Heavy reproduction path — `hosted/web/README.md`, “What a fresh clone can do before you install anything heavy” and the real-engine section. The committed evidence is easy to inspect, but independently reproducing the strongest claim is expensive and CPU-heavy.
+
+4. Evidence-first presentation — `hosted/web/README.md` and `hosted/M3-ACCEPTANCE.md`. The product is surrounded by extensive logs, caveats, byte-level provenance, and repeated qualifications. This improves auditability but makes the stranger’s path to the product’s value unnecessarily long.
+
+5. The strongest evidence is historical rather than freshly reproducible by a reviewer — `hermes-reports/M3-slot75-web-e2e-r1/result.json` records revision `46b304413`, while later commits include `4990b93f2` and `8847bdec1`. The artifacts honestly explain this, and guards protect the cited claims, but a reviewer still has to understand the revision boundary before treating the run as evidence for the current tree.
+
+D-item status
+
+- D1: Demonstrated — dark default, system light preference, remembered choice, and light rendering are covered by browser checks.
+- D2: Demonstrated — the inline theme script precedes page markup; the run records the byte positions.
+- D3: Demonstrated — the toggle is keyboard reachable, names the destination theme, persists the choice, and handles storage failure.
+- D4: Demonstrated — token parity is guarded against tampering, and JavaScript-disabled light and dark contexts read the computed palettes over DevTools.
+- D5: Demonstrated — body, muted, and heading contrast is measured above WCAG AA on all eight light pages.
+- D6: Demonstrated — browser geometry verifies the trailing card row reaches the container edges.
+- D7: Demonstrated — both READMEs and `hosted/M3-ACCEPTANCE.md` describe Slice E and cite committed counts and runs.
+- D8: Demonstrated — two prior cheap+ judge rounds are supplied, the identified fixable no-script flaw was addressed, and the later bundle states which remaining flaws are owner-dependent or structural.
+
+What would make it win: add a genuinely distinctive voice workflow and complete the missing V0 capabilities with a lightweight public demo, while preserving this level of evidence discipline.
