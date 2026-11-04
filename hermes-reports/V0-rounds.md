@@ -1682,3 +1682,23 @@ NEEDS-KULRAJ (exact actions, unchanged, priority order)
 
 Nothing was deployed, published, messaged, submitted, spent or priced; no GPU, no provider call,
 no terms accepted.
+
+## Rotation slot 77 — V0-build — 2026-11-04 — M3 slice F dubbing self-loop
+
+PLAN before touching code: resume the already-started M3 slice F rather than opening a second
+slice. Its definition of done is a real hosted dubbing path: recording in, the engine's own
+transcript shown, the selected catalogue voice speaks those words back, one downloadable WAV,
+separate transcription/speech metering, workspace isolation, refusal before reading for unknown
+voices, refusal for empty transcripts, no translation claim, migrations, tests, browser evidence,
+README/acceptance evidence, and a stranger-readable fresh-clone path. Run the real app and real
+engine evidence already staged for this slice, verify all tests from the current clean revision,
+then perform at least two independent cheap+ reviews against the actual artifacts. Fix every
+fixable review finding, repeat the tests and review, log each round, and push only to the existing
+Kulraj69 fork branch after secret and worktree checks.
+
+Judging targets: originality, taste, human feel, technical depth, criteria fit, reviewer path,
+and honesty. The full V0 milestone remains subject to its owner/runtime/deployment gates; this
+slice must not claim the whole milestone done.
+
+ROUND 1 — resume verification and real app evidence.
+
