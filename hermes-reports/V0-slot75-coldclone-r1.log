@@ -1,0 +1,11 @@
+$ git clone --local --single-branch --branch work/m1-headless /workspace/qualiabits-voicestudio /workspace/qb-cold75   # a clone with no .venv, no node_modules, no model
+Updating files:  62% (3342/5327)Updating files:  63% (3357/5327)Updating files:  64% (3410/5327)Updating files:  65% (3463/5327)Updating files:  66% (3516/5327)Updating files:  67% (3570/5327)Updating files:  68% (3623/5327)Updating files:  69% (3676/5327)Updating files:  70% (3729/5327)Updating files:  71% (3783/5327)Updating files:  72% (3836/5327)Updating files:  73% (3889/5327)Updating files:  74% (3942/5327)Updating files:  75% (3996/5327)Updating files:  76% (4049/5327)Updating files:  77% (4102/5327)Updating files:  78% (4156/5327)Updating files:  79% (4209/5327)Updating files:  80% (4262/5327)Updating files:  81% (4315/5327)Updating files:  82% (4369/5327)Updating files:  83% (4422/5327)Updating files:  84% (4475/5327)Updating files:  85% (4528/5327)Updating files:  86% (4582/5327)Updating files:  87% (4635/5327)Updating files:  88% (4688/5327)Updating files:  89% (4742/5327)Updating files:  90% (4795/5327)Updating files:  91% (4848/5327)Updating files:  92% (4901/5327)Updating files:  93% (4955/5327)Updating files:  94% (5008/5327)Updating files:  95% (5061/5327)Updating files:  96% (5114/5327)Updating files:  97% (5168/5327)Updating files:  98% (5221/5327)Updating files:  99% (5274/5327)Updating files: 100% (5327/5327)Updating files: 100% (5327/5327), done.
+$ git rev-parse HEAD
+4990b93f27092a6eb34d84f19c6cd2a5ba9085c2
+$ ls .venv node_modules 2>&1 | head -2
+ls: cannot access '.venv': No such file or directory
+ls: cannot access 'node_modules': No such file or directory
+$ /workspace/qualiabits-voicestudio/.venv/bin/python -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+30 passed, 1 warning in 48.64s
