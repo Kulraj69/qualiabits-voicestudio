@@ -1,0 +1,4 @@
+$ .venv/bin/python -m pytest tests/hosted/test_real_engine_pins_are_enforced.py -q   # at 1d1977e93a5563aba4acb94e6ea6a61b6e200161
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+5 passed, 1 warning in 44.27s

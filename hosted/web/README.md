@@ -7,8 +7,15 @@ and read the transcript back; mint and revoke API keys; watch a queued job and
 download what it made; paste in a manuscript and get one audiobook back; read the
 meter the plane keeps.
 
-Not deployed. Not public. No public URL, no real S3 bucket, no GPU. Everything
-runs on this machine on loopback.
+It is the customer-facing half of the product: a business signs in, works inside its
+own metered allowance, and hands API keys to its own systems. The speech in these runs
+comes from the engine this repository runs, on this machine — the dashboard's only
+network call is to its own control plane.
+
+**Not deployed. Not public.** No public URL, no real S3 bucket, no GPU. Everything
+runs on this machine on loopback, and the rest of this page is what that status costs
+and what it does not: what a reader can re-run, what the runs recorded, and what
+nobody has checked yet (nobody has listened to the audio).
 
 The fastest way to check the claims below without fetching a model: the two committed
 runs in this repository — `hermes-reports/M3-slot72-web-e2e-r1/result.json` (real

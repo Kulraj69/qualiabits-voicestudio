@@ -1,0 +1,13 @@
+$ git clone --local --single-branch --branch work/m1-headless /workspace/qualiabits-voicestudio /tmp/qb-slot72-cold   # a clone with no .venv, no node_modules, no model
+done.
+Updating files:  64% (3394/5293)Updating files:  65% (3441/5293)Updating files:  66% (3494/5293)Updating files:  67% (3547/5293)Updating files:  68% (3600/5293)Updating files:  69% (3653/5293)Updating files:  70% (3706/5293)Updating files:  71% (3759/5293)Updating files:  72% (3811/5293)Updating files:  73% (3864/5293)Updating files:  74% (3917/5293)Updating files:  75% (3970/5293)Updating files:  76% (4023/5293)Updating files:  77% (4076/5293)Updating files:  78% (4129/5293)Updating files:  79% (4182/5293)Updating files:  80% (4235/5293)Updating files:  81% (4288/5293)Updating files:  82% (4341/5293)Updating files:  83% (4394/5293)Updating files:  84% (4447/5293)Updating files:  85% (4500/5293)Updating files:  86% (4552/5293)Updating files:  87% (4605/5293)Updating files:  88% (4658/5293)Updating files:  89% (4711/5293)Updating files:  90% (4764/5293)Updating files:  91% (4817/5293)Updating files:  92% (4870/5293)Updating files:  93% (4923/5293)Updating files:  94% (4976/5293)Updating files:  95% (5029/5293)Updating files:  96% (5082/5293)Updating files:  97% (5135/5293)Updating files:  98% (5188/5293)Updating files:  99% (5241/5293)Updating files: 100% (5293/5293)Updating files: 100% (5293/5293), done.
+$ git rev-parse HEAD
+1d1977e93a5563aba4acb94e6ea6a61b6e200161
+$ ls .venv node_modules 2>&1 | head -2
+ls: cannot access '.venv': No such file or directory
+ls: cannot access 'node_modules': No such file or directory
+$ /workspace/qualiabits-voicestudio/.venv/bin/python -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+30 passed, 1 warning in 44.32s
