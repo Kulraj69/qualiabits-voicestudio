@@ -190,14 +190,14 @@ failed and why.
 
 ## Measured
 
-From `hermes-reports/M2-slot77-e2e-r1/result.json` — engine, plane and worker processes all started fresh by the
+From `hermes-reports/M2-slot79-e2e-r1/result.json` — engine, plane and worker processes all started fresh by the
 harness on one CPU box (x86_64, 2 CPUs, Python 3.12.3, no
 GPU). This is the **hosted layer's own** end-to-end run, not browser evidence about
 the dashboard: the dashboard's own run, with its own checks and its own engine, is
 the one `hosted/M3-ACCEPTANCE.md` cites. The section is rendered from that file by
 `hosted/scripts/render_measured.py`, and a test fails if the page and the file
 disagree. The run records the commit it tested
-(3e7857d45, worktree clean), the model hashes below, and the
+(370e78743, worktree clean), the model hashes below, and the
 sha256 of every tracked file as it was at run time -- so a run over edited code
 cannot pass itself off as a run of the pushed revision.
 
@@ -211,24 +211,24 @@ itself dirty and its numbers would be worth less than these.
 ```
 
 ```
-engine ready 11.5 s   control plane ready 13.6 s   whole run 229.5 s
+engine ready 11.7 s   control plane ready 13.8 s   whole run 257.6 s
 process shutdown, as the run recorded it:
-  engine         signal SIGTERM, exit -15 after 15.830 s of a 60.0 s budget (clean, the app said so)
+  engine         signal SIGTERM, exit -15 after 39.632 s of a 60.0 s budget (clean, the app said so)
   control plane  signal SIGTERM, exit -15 after 0.415 s of a 60.0 s budget (clean, the app said so)
 
 three direct requests through the control plane, workspace A:
-  hf_alpha  hi   1.832 s audio, 24 kHz mono, peak 0.79   engine took 21.8 s
-  hm_omega  hi   1.825 s audio, 24 kHz mono, peak 0.79   engine took 11.1 s
-  hf_alpha  en   3.490 s audio, 24 kHz mono, peak 0.79   engine took 17.9 s
+  hf_alpha  hi   1.832 s audio, 24 kHz mono, peak 0.79   engine took 21.1 s
+  hm_omega  hi   1.826 s audio, 24 kHz mono, peak 0.78   engine took 10.6 s
+  hf_alpha  en   3.490 s audio, 24 kHz mono, peak 0.80   engine took 17.6 s
   plus one request for a voice the model does not have, refused 400 by the
   engine and passed through with the engine's own message naming its 54 voices.
 
 one queued job, spoken by a separate worker process (run_worker.py --once):
-  job 1  hm_omega  hi   208 characters -> 16.461 s of 24 kHz mono audio,
-                         790,156 bytes, engine took 108.3 s
+  job 1  hm_omega  hi   208 characters -> 16.471 s of 24 kHz mono audio,
+                         790,630 bytes, engine took 112.2 s
   worker counters: claimed 1, succeeded 1, failed 0, requeued 0, lost_lease 0
   the object on disk, the job's receipt and the download all hash to
-  b9165585a5d09bcefd64c98d9d6005086674e9c9285ce8fa987e7887978519ec
+  c0dfcf1a509f0521300b8e355ba17e1d47f603e1d79e1a23d079fa70d4802aca
 
 one refused job (a voice the model does not have):
   failed 400 after 1 attempt, no retry, no audio served (409), error is the
@@ -236,28 +236,28 @@ one refused job (a voice the model does not have):
 one cancelled job:
   never claimed by the next worker pass, and it moved the meter by nothing
 
-meter for A, at the end of the run: 6 requests, 388 characters, 23.609 s audio,
-              1,133,386 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
+meter for A, at the end of the run: 6 requests, 388 characters, 23.619 s audio,
+              1,133,872 bytes, failed_requests 2, by_status {"200": 4, "400": 2},
               requests_without_audio_seconds 2
-              by_key: one key, label "a", same 6 requests and 23.609 s
+              by_key: one key, label "a", same 6 requests and 23.619 s
 meter for B, at the end: 0 requests, 0 characters, 0.000 s audio
 
 same English request straight at the engine, for comparison:
-  direct 3.485 s / 167,342 bytes   through the plane 3.490 s / 167,588 bytes
+  direct 3.486 s / 167,348 bytes   through the plane 3.490 s / 167,586 bytes
 
 the engine's refusal for an unknown voice, taken both ways:
   sha256 both f9426105824c9597…, 699 bytes, byte-for-byte identical
 
 engine seconds spent per second of speech, the number that decides whether this
 is sellable on a box like this one:
-  hindi_hf_alpha     11.9 s
-  hindi_hm_omega     6.1 s
-  english            5.1 s
+  hindi_hf_alpha     11.5 s
+  hindi_hm_omega     5.8 s
+  english            5.0 s
 ```
 
 The English lines differ because the engine samples: the two numbers above are the
 same request taken both ways, and they differ by
-246 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
+238 bytes. No byte-for-byte claim is made anywhere for speech. What is compared byte for byte is a response the engine
 computes deterministically: its refusal, checked against the real engine on every
 run; the 200 path is compared against a deterministic stub in the unit suite.
 
@@ -266,7 +266,7 @@ downloads and hash-checks (`tokens.txt` 6ebb6bb2…, `voices.bin` 1c5a5b98…); 
 recorded the same hashes plus the commit it tested, in the same file.
 
 The CPU is not production, and the rates above are the clearest evidence of it: the
-queued job spent 108.3 s of engine time on 16.461 s of audio, about 6.6 s
+queued job spent 112.2 s of engine time on 16.471 s of audio, about 6.8 s
 per second. That is why the GPU run is the owner's to approve, and exactly what
 this layer cannot work around — the plane can hold a request open for a paragraph,
 but nothing here makes the engine faster.

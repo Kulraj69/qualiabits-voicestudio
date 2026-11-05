@@ -62,6 +62,8 @@ WORD_NUMBERS = {
     "one-hundred-twenty-four": 124,
     "one-hundred-twenty-seven": 127,
     "one-hundred-thirty-three": 133,
+    "one-hundred-forty-two": 142,
+    "one-hundred-forty-eight": 148,
 }
 
 SCREENSHOT_CHECK = "every page was captured as a screenshot"
@@ -166,15 +168,15 @@ def test_the_stated_counts_are_the_counts_in_the_two_runs():
     )
 
     for word, expected in (
-        ("one-hundred-twenty-seven", stub_keep),
-        ("one-hundred-thirty-three", real_keep),
+        ("one-hundred-forty-two", stub_keep),
+        ("one-hundred-forty-eight", real_keep),
     ):
         assert word in text, f"the page no longer states {word!r}"
         assert WORD_NUMBERS[word] == expected, (
             f"the page says {word!r} ({WORD_NUMBERS[word]}) and the runs record {expected}"
         )
-    assert "one-hundred-twenty-seven checks on the stub path" in flat(text)
-    assert "one-hundred-thirty-three against the real engine" in flat(text)
+    assert "one-hundred-forty-two checks on the stub path" in flat(text)
+    assert "one-hundred-forty-eight against the real engine" in flat(text)
     # The un-kept totals are not asserted against the page: the harness only writes
     # result.json when it is asked to keep evidence, so there is no committed run to
     # read them from, and a judge pass was right that the page should not quote

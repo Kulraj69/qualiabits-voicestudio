@@ -1,0 +1,1355 @@
+{
+  "run": "qualiabits voice — browser dashboard end to end",
+  "engine": "sherpa-onnx on kokoro-int8-multi-lang-v1_0 (QB_E2E_ENGINE_CMD)",
+  "engine_model_source": "found at /workspace/m1-models/kokoro-int8-multi-lang-v1_0",
+  "engine_command": "/workspace/qualiabits-voicestudio/.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port {port}",
+  "engine_is_stub": false,
+  "engine_model": {
+    "directory": "/workspace/m1-models/kokoro-int8-multi-lang-v1_0",
+    "files": {
+      "model.int8.onnx": "75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e",
+      "tokens.txt": "6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425",
+      "voices.bin": "1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29"
+    }
+  },
+  "transcription_model": {
+    "directory": "/workspace/m1-models/faster-whisper-small",
+    "files": {
+      "model.bin": "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671",
+      "config.json": "b55496ac7940a7ae47d2c01eab40edfd8701feec1229d9cce3b40014383fb828",
+      "tokenizer.json": "fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab",
+      "vocabulary.txt": "34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913"
+    }
+  },
+  "transcription_model_source": "found at /workspace/m1-models/faster-whisper-small",
+  "transcription_model_pinned": "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671",
+  "revision": {
+    "tested_commit": "370e7874355ff4921daa3fb5495e340e0a9e0a8a",
+    "worktree_dirty": false,
+    "generated_at_utc": "2026-11-05T00:50:31.909Z"
+  },
+  "browser": "156.0.8078.4",
+  "deployed": false,
+  "public_url": null,
+  "gpu": false,
+  "real_s3": false,
+  "checks": [
+    {
+      "name": "engine is up and answers /health",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"0.5.7\"}"
+    },
+    {
+      "name": "the engine is a real backend, not the suite's stub",
+      "ok": true,
+      "detail": "{\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"0.5.7\"}"
+    },
+    {
+      "name": "the engine reports a model directory that exists",
+      "ok": true,
+      "detail": "{\"directory\":\"/workspace/m1-models/kokoro-int8-multi-lang-v1_0\",\"files\":{\"model.int8.onnx\":\"75635ea3b85a32d00094dcdd61a258aba87c160f7c264c304a7b3ae9d734195e\",\"tokens.txt\":\"6ebb6bb288f20f3ae8d004d3c2ca27697da27c037d75e81a60e2a6a663f95425\",\"voices.bin\":\"1c5a5b983d3d50d8586d437a51f3faa2da7919ce76a013c081e65671a3447c29\"}}"
+    },
+    {
+      "name": "the engine declares the voices the picker can offer",
+      "ok": true,
+      "detail": "sherpa-onnx: 54 voices"
+    },
+    {
+      "name": "the engine reports a transcription model directory with weights in it",
+      "ok": true,
+      "detail": "{\"directory\":\"/workspace/m1-models/faster-whisper-small\",\"files\":{\"model.bin\":\"3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671\",\"config.json\":\"b55496ac7940a7ae47d2c01eab40edfd8701feec1229d9cce3b40014383fb828\",\"tokenizer.json\":\"fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab\",\"vocabulary.txt\":\"34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913\"}}"
+    },
+    {
+      "name": "the transcription model on disk is the one this run pins",
+      "ok": true,
+      "detail": "pinned 3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671, on disk 3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671"
+    },
+    {
+      "name": "the control plane is up on its own database",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the control plane can see the engine",
+      "ok": true,
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:37423\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"0.5.7\"}"
+    },
+    {
+      "name": "the dashboard builds",
+      "ok": true,
+      "detail": "bs\n├ ƒ /api/dubs/[id]/audio\n├ ƒ /api/jobs\n├ ƒ /api/jobs/[id]\n├ ƒ /api/jobs/[id]/audio\n├ ƒ /api/keys\n├ ƒ /api/keys/[id]\n├ ƒ /api/limits\n├ ƒ /api/projects\n├ ƒ /api/projects/[id]\n├ ƒ /api/projects/[id]/audio\n├ ƒ /api/speech\n├ ƒ /api/transcribe\n├ ƒ /dub\n├ ƒ /jobs\n├ ƒ /keys\n├ ƒ /login\n├ ƒ /projects\n├ ƒ /signup\n├ ƒ /speak\n├ ƒ /transcribe\n├ ƒ /usage\n└ ƒ /voices\n\n\nƒ  (Dynamic)  server-rendered on demand\n\n"
+    },
+    {
+      "name": "the dashboard is up and rooted at /",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "signup lands on the dashboard and greets the workspace",
+      "ok": true,
+      "detail": "Browser E2E"
+    },
+    {
+      "name": "the session token is not readable by page JavaScript",
+      "ok": true,
+      "detail": "{\"localStorage\":\"[]\",\"cookie\":\"qb_ws={\\\"id\\\":1,\\\"email\\\":\\\"browser-e2e@example.com\\\",\\\"display_name\\\":\\\"Browser E2E\\\"}\",\"hasSecret\":false}"
+    },
+    {
+      "name": "the workspace name cookie is the only cookie the page can see",
+      "ok": true,
+      "detail": "qb_ws={\"id\":1,\"email\":\"browser-e2e@example.com\",\"display_name\":\"Browser E2E\"}"
+    },
+    {
+      "name": "home links to /speak",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /dub, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /voices",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /dub, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /transcribe",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /dub, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /dub",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /dub, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /jobs",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /dub, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /keys",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /dub, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "home links to /usage",
+      "ok": true,
+      "detail": "/speak, /voices, /transcribe, /dub, /jobs, /projects, /keys, /usage"
+    },
+    {
+      "name": "no dead links on home",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "/ answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Browser E2E\""
+    },
+    {
+      "name": "/speak answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Speak\""
+    },
+    {
+      "name": "/voices answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Voice library\""
+    },
+    {
+      "name": "/transcribe answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Transcribe\""
+    },
+    {
+      "name": "/dub answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Dub\""
+    },
+    {
+      "name": "/keys answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"API keys\""
+    },
+    {
+      "name": "/usage answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Usage\""
+    },
+    {
+      "name": "/jobs answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Jobs\""
+    },
+    {
+      "name": "/projects answers 200 and has a heading",
+      "ok": true,
+      "detail": "status 200, heading \"Projects\""
+    },
+    {
+      "name": "every page takes a keyboard Tab onto a focusable control",
+      "ok": true,
+      "detail": "[[\"/\",\"A\"],[\"/speak\",\"A\"],[\"/voices\",\"A\"],[\"/transcribe\",\"A\"],[\"/dub\",\"A\"],[\"/keys\",\"A\"],[\"/usage\",\"A\"],[\"/jobs\",\"A\"],[\"/projects\",\"A\"]]"
+    },
+    {
+      "name": "every page shows a visible focus outline",
+      "ok": true,
+      "detail": "[[\"/\",\"solid 2px\"],[\"/speak\",\"solid 2px\"],[\"/voices\",\"solid 2px\"],[\"/transcribe\",\"solid 2px\"],[\"/dub\",\"solid 2px\"],[\"/keys\",\"solid 2px\"],[\"/usage\",\"solid 2px\"],[\"/jobs\",\"solid 2px\"],[\"/projects\",\"solid 2px\"]]"
+    },
+    {
+      "name": "the app contains no native select control on any page",
+      "ok": true,
+      "detail": "[[\"/\",0],[\"/speak\",0],[\"/voices\",0],[\"/transcribe\",0],[\"/dub\",0],[\"/keys\",0],[\"/usage\",0],[\"/jobs\",0],[\"/projects\",0]]"
+    },
+    {
+      "name": "every page was captured as a screenshot",
+      "ok": true,
+      "detail": "[[\"/\",210280],[\"/speak\",144644],[\"/voices\",656771],[\"/transcribe\",144329],[\"/dub\",155873],[\"/keys\",140086],[\"/usage\",243600],[\"/jobs\",155773],[\"/projects\",178557]]"
+    },
+    {
+      "name": "the shipped theme is the one this context asked for",
+      "ok": true,
+      "detail": "{\"theme\":\"dark\",\"color_scheme\":\"dark\",\"toggle_label\":\"Switch to the light theme\",\"toggle_glyph\":\"☀\",\"body_color\":\"rgb(236, 234, 246)\",\"body_background\":\"rgb(8, 8, 14)\",\"h1_color\":\"rgb(236, 234, 246)\",\"lede_color\":\"rgb(169, 165, 194)\"}"
+    },
+    {
+      "name": "the dark page states its own color-scheme",
+      "ok": true,
+      "detail": "dark"
+    },
+    {
+      "name": "dark body text clears WCAG AA against the page background",
+      "ok": true,
+      "detail": "16.8:1 (rgb(236, 234, 246) on rgb(8, 8, 14))"
+    },
+    {
+      "name": "dark muted text clears WCAG AA",
+      "ok": true,
+      "detail": "8.42:1"
+    },
+    {
+      "name": "dark headings clear WCAG AA",
+      "ok": true,
+      "detail": "16.8:1"
+    },
+    {
+      "name": "a reader whose system asks for light gets the light theme",
+      "ok": true,
+      "detail": "{\"theme\":\"light\",\"color_scheme\":\"light\",\"toggle_label\":\"Switch to the light theme\",\"toggle_glyph\":\"☀\",\"body_color\":\"rgb(23, 22, 42)\",\"body_background\":\"rgb(246, 246, 250)\",\"h1_color\":\"rgb(23, 22, 42)\",\"lede_color\":\"rgb(78, 75, 99)\"}"
+    },
+    {
+      "name": "the light page states its own color-scheme",
+      "ok": true,
+      "detail": "light"
+    },
+    {
+      "name": "light body text clears WCAG AA against the page background",
+      "ok": true,
+      "detail": "16.45:1 (rgb(23, 22, 42) on rgb(246, 246, 250))"
+    },
+    {
+      "name": "light muted text clears WCAG AA",
+      "ok": true,
+      "detail": "7.76:1"
+    },
+    {
+      "name": "light headings clear WCAG AA",
+      "ok": true,
+      "detail": "16.45:1"
+    },
+    {
+      "name": "the two themes really are different pages to look at",
+      "ok": true,
+      "detail": "light 0.9240649223586723, dark 0.0025699607977939147"
+    },
+    {
+      "name": "the toggle is on the page and named for the theme it switches to",
+      "ok": true,
+      "detail": "label \"Switch to the light theme\", glyph \"☀\""
+    },
+    {
+      "name": "the served HTML applies the theme before the page's own markup",
+      "ok": true,
+      "detail": "script at byte 1059, first markup at byte 1418"
+    },
+    {
+      "name": "pressing the toggle switches the page to the other theme",
+      "ok": true,
+      "detail": "{\"theme\":\"dark\",\"label\":\"Switch to the light theme\"}"
+    },
+    {
+      "name": "the choice is written where the no-flash script reads it",
+      "ok": true,
+      "detail": "\"dark\""
+    },
+    {
+      "name": "a remembered choice survives a reload, over the system preference",
+      "ok": true,
+      "detail": "{\"theme\":\"dark\"}"
+    },
+    {
+      "name": "a stored choice is applied by the served HTML, before hydration",
+      "ok": true,
+      "detail": "data-theme at domcontentloaded: \"light\" (this context asks for dark)"
+    },
+    {
+      "name": "every page renders light when light is asked for",
+      "ok": true,
+      "detail": "[{\"route\":\"/\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/speak\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/voices\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/transcribe\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/dub\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/keys\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/usage\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/jobs\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45},{\"route\":\"/projects\",\"theme\":\"light\",\"background\":\"rgb(246, 246, 250)\",\"contrast\":16.45}]"
+    },
+    {
+      "name": "every page's text clears WCAG AA in light",
+      "ok": true,
+      "detail": "[[\"/\",16.45],[\"/speak\",16.45],[\"/voices\",16.45],[\"/transcribe\",16.45],[\"/dub\",16.45],[\"/keys\",16.45],[\"/usage\",16.45],[\"/jobs\",16.45],[\"/projects\",16.45]]"
+    },
+    {
+      "name": "with script switched off, no page carries a data-theme attribute",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "with script switched off, every page still answers 200 with its heading",
+      "ok": true,
+      "detail": "[[\"/\",200,\"A dashboard for the voice plane.\"],[\"/speak\",200,\"Sign in\"],[\"/voices\",200,\"Sign in\"],[\"/transcribe\",200,\"Sign in\"],[\"/dub\",200,\"Sign in\"],[\"/keys\",200,\"Sign in\"],[\"/usage\",200,\"Sign in\"],[\"/jobs\",200,\"Sign in\"],[\"/projects\",200,\"Sign in\"]]"
+    },
+    {
+      "name": "with script switched off, a light preference paints the light palette on every page",
+      "ok": true,
+      "detail": "[[\"/\",\"rgb(246, 246, 250)\"],[\"/speak\",\"rgb(246, 246, 250)\"],[\"/voices\",\"rgb(246, 246, 250)\"],[\"/transcribe\",\"rgb(246, 246, 250)\"],[\"/dub\",\"rgb(246, 246, 250)\"],[\"/keys\",\"rgb(246, 246, 250)\"],[\"/usage\",\"rgb(246, 246, 250)\"],[\"/jobs\",\"rgb(246, 246, 250)\"],[\"/projects\",\"rgb(246, 246, 250)\"]]"
+    },
+    {
+      "name": "with script switched off, a dark preference paints the dark palette on every page",
+      "ok": true,
+      "detail": "[[\"/\",\"rgb(8, 8, 14)\"],[\"/speak\",\"rgb(8, 8, 14)\"],[\"/voices\",\"rgb(8, 8, 14)\"],[\"/transcribe\",\"rgb(8, 8, 14)\"],[\"/dub\",\"rgb(8, 8, 14)\"],[\"/keys\",\"rgb(8, 8, 14)\"],[\"/usage\",\"rgb(8, 8, 14)\"],[\"/jobs\",\"rgb(8, 8, 14)\"],[\"/projects\",\"rgb(8, 8, 14)\"]]"
+    },
+    {
+      "name": "with script switched off, every page's text still clears WCAG AA",
+      "ok": true,
+      "detail": "[[\"/\",16.45],[\"/speak\",16.45],[\"/voices\",16.45],[\"/transcribe\",16.45],[\"/dub\",16.45],[\"/keys\",16.45],[\"/usage\",16.45],[\"/jobs\",16.45],[\"/projects\",16.45],[\"/\",16.8],[\"/speak\",16.8],[\"/voices\",16.8],[\"/transcribe\",16.8],[\"/dub\",16.8],[\"/keys\",16.8],[\"/usage\",16.8],[\"/jobs\",16.8],[\"/projects\",16.8]]"
+    },
+    {
+      "name": "with script switched off, the page still states its own color-scheme",
+      "ok": true,
+      "detail": "[[\"/\",\"light\"],[\"/speak\",\"light\"],[\"/voices\",\"light\"],[\"/transcribe\",\"light\"],[\"/dub\",\"light\"],[\"/keys\",\"light\"],[\"/usage\",\"light\"],[\"/jobs\",\"light\"],[\"/projects\",\"light\"]]"
+    },
+    {
+      "name": "the home page's card rows all reach the row's edges",
+      "ok": true,
+      "detail": "{\"container_width\":1016,\"cards\":8,\"rows\":[{\"top\":429,\"count\":3,\"left\":132,\"right\":1148},{\"top\":634,\"count\":3,\"left\":132,\"right\":1148},{\"top\":861,\"count\":2,\"left\":132,\"right\":1148}]}"
+    },
+    {
+      "name": "the home page's tiles are a wrapping row, not fixed columns",
+      "ok": true,
+      "detail": "{\"cards\":8,\"row_sizes\":[3,3,2]}"
+    },
+    {
+      "name": "the voice list is served by the plane, not hard-coded",
+      "ok": true,
+      "detail": "af_alloy,af_aoede,af_bella,af_heart,af_jessica,af_kore,af_nicole,af_nova,af_river,af_sarah,af_sky,am_adam,am_echo,am_eric,am_fenrir,am_liam,am_michael,am_onyx,am_puck,am_santa,bf_alice,bf_emma,bf_isabella,bf_lily,bm_daniel,bm_fable,bm_george,bm_lewis,ef_dora,em_alex,ff_siwis,hf_alpha,hf_beta,hm_omega,hm_psi,if_sara,im_nicola,jf_alpha,jf_gongitsune,jf_nezumi,jf_tebukuro,jm_kumo,pf_dora,pm_alex,pm_santa,zf_xiaobei,zf_xiaoni,zf_xiaoxiao,zf_xiaoyi,zm_yunjian,zm_yunxi,zm_yunxia,zm_yunyang,em_santa,alloy,ash,ballad,cedar,coral,echo,fable,marin,nova,onyx,sage,shimmer,verse,demo0001"
+    },
+    {
+      "name": "the voice picker offers every voice the plane serves, and nothing else",
+      "ok": true,
+      "detail": "68 rows vs 68 from the plane"
+    },
+    {
+      "name": "the Speak page returns real WAV bytes through the plane",
+      "ok": true,
+      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":87720,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.826583 s of audio · 87,720 bytes · engine took 22.345s · engine build 0.5.7Download WAV\"}"
+    },
+    {
+      "name": "the audio has a download link",
+      "ok": true,
+      "detail": "speech-hf_alpha.wav"
+    },
+    {
+      "name": "the player reports the measured duration and size",
+      "ok": true,
+      "detail": "Spoken: hf_alpha1.826583 s of audio · 87,720 bytes · engine took 22.345s · engine build 0.5.7Download WAV"
+    },
+    {
+      "name": "an unknown voice is refused by the plane with the engine's own sentence",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"error\":{\"message\":\"Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.\",\"type\":\"invalid_request_error\",\"param\":\"input\",\"code\":null},\"detail\":\"Unknown voice 'definitely-not-a-voice' for the loaded sherpa-onnx model. It declares 54 voices; families: af (11), am (9), bf (4), bm (4), ef (1), em (2), ff (1), hf (2), hm (2), if (1), im (1), jf (4), jm (1), pf (1), pm (2), zf (4), zm (4). Pass a voice name (for example af_alloy) or its numeric id.\"}}"
+    },
+    {
+      "name": "the spoken audio was read back out of the page for transcription",
+      "ok": true,
+      "detail": "87720 bytes"
+    },
+    {
+      "name": "the Transcribe page shows a transcript",
+      "ok": true,
+      "detail": "यहा एक हिन्दी वाग के है"
+    },
+    {
+      "name": "the plane measured the upload as the same length as the audio it returned",
+      "ok": true,
+      "detail": "1.826583 s spoken vs 1.826583 s uploaded"
+    },
+    {
+      "name": "the plane counted the transcript in its own counter, not the speech one",
+      "ok": true,
+      "detail": "23 vs 23 characters"
+    },
+    {
+      "name": "the plane metered the upload's seconds under the same workspace",
+      "ok": true,
+      "detail": "3.653 s in the meter"
+    },
+    {
+      "name": "the real transcription engine heard words that were actually spoken",
+      "ok": true,
+      "detail": "said \"यह एक हिन्दी वाक्य है।\", heard \"यहा एक हिन्दी वाग के है\", shared [\"एक\",\"हिन्दी\",\"है\"]"
+    },
+    {
+      "name": "the transcript downloads as .txt holding the text the page shows",
+      "ok": true,
+      "detail": "spoken.transcript.txt: यहा एक हिन्दी वाग के है"
+    },
+    {
+      "name": "the transcript downloads as .srt with cues carrying the engine's own timings",
+      "ok": true,
+      "detail": "spoken.transcript.srt: 1 / 00:00:00,000 --> 00:00:02,000 / यहा एक हिन्दी वाग के है / "
+    },
+    {
+      "name": "the transcript downloads as .json holding the engine's own payload",
+      "ok": true,
+      "detail": "spoken.transcript.json: {\n  \"task\": \"transcribe\",\n  \"language\": \"hi\",\n  \"duration\": "
+    },
+    {
+      "name": "an upload with no file is refused with a sentence that says so",
+      "ok": true,
+      "detail": "{\"status\":400,\"body\":{\"detail\":\"Choose a recording first. A WAV from the Speak page is a good one.\"}}"
+    },
+    {
+      "name": "an upload past the plane's ceiling is refused with a sentence naming the limit",
+      "ok": true,
+      "detail": "413 \"That upload is larger than 25 MiB. An upload is at most 25 MiB.\""
+    },
+    {
+      "name": "the dashboard refused the oversized upload itself, so the plane never saw a request",
+      "ok": true,
+      "detail": "3 -> 3"
+    },
+    {
+      "name": "the Dub page shows the engine's own transcript of the recording",
+      "ok": true,
+      "detail": "यहा एक हिन्दी वाग के है"
+    },
+    {
+      "name": "the dubbed audio comes back through the plane as real WAV bytes",
+      "ok": true,
+      "detail": "95068 bytes, header RIFF"
+    },
+    {
+      "name": "the dub offers a download named for the plane's own id",
+      "ok": true,
+      "detail": "dub-1.wav"
+    },
+    {
+      "name": "a dub moved the meter by two requests — one heard, one spoken",
+      "ok": true,
+      "detail": "3 -> 5"
+    },
+    {
+      "name": "a dub counted both halves on their own counters, not one blended number",
+      "ok": true,
+      "detail": "heard 23, spoken 23, transcript 23"
+    },
+    {
+      "name": "the plane keeps the dub in this workspace's history",
+      "ok": true,
+      "detail": "1 dubs, first \"यहा एक हिन्दी वाग के है\""
+    },
+    {
+      "name": "the real engine's dub is the words it heard from the audio that was spoken",
+      "ok": true,
+      "detail": "said \"यह एक हिन्दी वाक्य है।\", heard \"यहा एक हिन्दी वाग के है\", shared [\"एक\",\"हिन्दी\",\"है\"]"
+    },
+    {
+      "name": "a minted key is shown once and looks like a key",
+      "ok": true,
+      "detail": "qbv_4ecd5d560d25d386_0uDx3KHhe_4tT_pKxPfqC9NfseUxGf65H_2IBLZSoQs"
+    },
+    {
+      "name": "the key is not shown again after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the list shows the key's public id and never its secret",
+      "ok": true,
+      "detail": "6 cells, secret length 43"
+    },
+    {
+      "name": "revoking marks the key revoked in the list",
+      "ok": true,
+      "detail": "revoked"
+    },
+    {
+      "name": "a revoked key is refused on the next request",
+      "ok": true,
+      "detail": "status 401"
+    },
+    {
+      "name": "the voice library lists exactly the voices the plane serves",
+      "ok": true,
+      "detail": "68 cards vs 68 from the plane"
+    },
+    {
+      "name": "the library's own count line agrees with the plane's catalogue",
+      "ok": true,
+      "detail": "68 of 68 voices. Every card here is a voice the engine repor"
+    },
+    {
+      "name": "the kind filter is present exactly when the plane reported more than one kind",
+      "ok": true,
+      "detail": "3 kinds from the plane, filter present"
+    },
+    {
+      "name": "the kind filter is a labeled combobox, closed until it is opened",
+      "ok": true,
+      "detail": "{\"tag\":\"button\",\"role\":\"combobox\",\"label\":\"Kind of voice\",\"expanded\":\"false\",\"name\":\"All kinds (68)\"}"
+    },
+    {
+      "name": "Enter on the trigger opens a list holding every kind the plane reported, plus All",
+      "ok": true,
+      "detail": "4 rows: All kinds (68) | Engine voices (54) | OpenAI aliases (13) | Saved profiles (1)"
+    },
+    {
+      "name": "Escape closes the kind filter without choosing anything",
+      "ok": true,
+      "detail": "All kinds (68) — 68 cards"
+    },
+    {
+      "name": "typing into the filter's own search narrows the kinds to the one that matches",
+      "ok": true,
+      "detail": "1: Engine voices (54)"
+    },
+    {
+      "name": "choosing a kind with the keyboard narrows the cards to exactly that kind, and invents none",
+      "ok": true,
+      "detail": "54 cards badged Engine voices (the filter says 54) of 68"
+    },
+    {
+      "name": "the narrowed count line names how many of the plane's voices that kind holds",
+      "ok": true,
+      "detail": "54 of 68 voices. Every card here is a voice the engine repor"
+    },
+    {
+      "name": "choosing All kinds brings every voice the plane serves back",
+      "ok": true,
+      "detail": "68 of 68 cards"
+    },
+    {
+      "name": "searching the library narrows it to the voices that match, and invents none",
+      "ok": true,
+      "detail": "2 of 68: hf_alpha,hf_beta"
+    },
+    {
+      "name": "the narrowed count line names how many of the plane's voices are shown",
+      "ok": true,
+      "detail": "2 of 68 voices. Every card here is a voice the engine report"
+    },
+    {
+      "name": "the library previews a voice it offered, and real WAV bytes come back through the plane",
+      "ok": true,
+      "detail": "{\"voice\":\"hf_alpha\",\"header\":\"RIFF\",\"bytes\":193572}"
+    },
+    {
+      "name": "the preview player reports the measured duration and size",
+      "ok": true,
+      "detail": "Previewing: hf_alpha4.031833 s of audio · 193,572 bytes · engine took 26.199sDow / preview-hf_alpha.wav"
+    },
+    {
+      "name": "the preview was metered as exactly one more speech request under this workspace",
+      "ok": true,
+      "detail": "5 -> 6"
+    },
+    {
+      "name": "the preview's own measured seconds are the seconds the plane added to the meter",
+      "ok": true,
+      "detail": "page says 4.031833 s, plane added 4.032 s"
+    },
+    {
+      "name": "Use in Speak carries the voice to the Speak page, which selects it",
+      "ok": true,
+      "detail": "hf_alpha vs hf_alpha"
+    },
+    {
+      "name": "a voice the plane does not have is not preselected, it falls back to the default",
+      "ok": true,
+      "detail": "af_alloy"
+    },
+    {
+      "name": "the same credentials log in straight to the plane",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the Usage page's request count matches the plane's meter",
+      "ok": true,
+      "detail": "6 vs 6"
+    },
+    {
+      "name": "the per-key breakdown the plane records is shown, one row per key",
+      "ok": true,
+      "detail": "per-key rows 1, plane keys 1"
+    },
+    {
+      "name": "the Usage page shows the transcribed-character counter the plane keeps",
+      "ok": true,
+      "detail": "46 vs 46"
+    },
+    {
+      "name": "a cancelled job reads as cancelled and was never spoken",
+      "ok": true,
+      "detail": "#1Cancelledhf_alpha55Nov 05, 2026, 00:55:39never spoken—"
+    },
+    {
+      "name": "cancelling a queued job did not move the meter",
+      "ok": true,
+      "detail": "6->6, 113->113"
+    },
+    {
+      "name": "the real worker drained the queue",
+      "ok": true,
+      "detail": "20: job 2 succeeded, 6.30575 s of audio (stored db/7a/db7a96c8adb580d2f0123139a69bea78993a40bed167c57e17645c797c9bd695.wav)\n{\"claimed\": 1, \"engine_seconds\": 36.935, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-1494720\"}\n"
+    },
+    {
+      "name": "the plane records the spoken job as succeeded",
+      "ok": true,
+      "detail": "[\"succeeded\",\"cancelled\"]"
+    },
+    {
+      "name": "the job's stored audio comes back as a WAV",
+      "ok": true,
+      "detail": "{\"status\":200,\"header\":\"RIFF\",\"bytes\":302720}"
+    },
+    {
+      "name": "the downloaded audio is the bytes the plane stored",
+      "ok": true,
+      "detail": "302720 vs 302720"
+    },
+    {
+      "name": "the jobs table shows one Done row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the real engine made more audio for the paragraph than for the one-liner",
+      "ok": true,
+      "detail": "87720 then 302720 bytes"
+    },
+    {
+      "name": "an over-long manuscript is refused by the dashboard in the plane's own sentence",
+      "ok": true,
+      "detail": "page: 'input' is 180004 characters and a project takes at most 180000. Send it as more than one project, or shorten it. | plane: 413 'input' is 180004 characters and a project takes at most 180000. Send it as more than one project, or shorten it."
+    },
+    {
+      "name": "the dashboard refuses it itself, so the plane never sees the request",
+      "ok": true,
+      "detail": "button disabled=true, plane answered 413"
+    },
+    {
+      "name": "the plane split the manuscript into chapters and queued one job each",
+      "ok": true,
+      "detail": "{\"chapters\":2,\"jobs\":[3,4]}"
+    },
+    {
+      "name": "no chapter has been spoken at the moment the manuscript is accepted",
+      "ok": true,
+      "detail": "{\"status\":\"queued\",\"spoken\":0}"
+    },
+    {
+      "name": "the page's progress sentence is counted from the plane's chapter statuses",
+      "ok": true,
+      "detail": "0 of 2 chapters spoken; 2 still queued."
+    },
+    {
+      "name": "the assembled audiobook is a 409 that names the chapters still waiting",
+      "ok": true,
+      "detail": "{\"status\":409,\"detail\":{\"project_status\":\"queued\",\"detail\":\"This project has no assembled audio yet.\",\"waiting\":[{\"chapter\":1,\"status\":\"queued\",\"error\":\"\"},{\"chapter\":2,\"status\":\"queued\",\"error\":\"\"}],\"spoken_chapters\":0,\"chapter_count\":2}}"
+    },
+    {
+      "name": "the real worker spoke every chapter",
+      "ok": true,
+      "detail": "ob 4 succeeded, 128.932583 s of audio (stored e8/42/e842bb6b900ecdf0263d9fbaaee7ee409f57073eaebd84bae8b927da147f0f57.wav)\n{\"claimed\": 2, \"engine_seconds\": 1358.027, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 2, \"worker_id\": \"ip-172-31-19-105-1494846\"}\n"
+    },
+    {
+      "name": "the audiobook downloads from the page as one WAV holding every chapter",
+      "ok": true,
+      "detail": "{\"status\":200,\"header\":\"RIFF\",\"bytes\":11832160,\"chapters\":\"2\",\"seconds\":246.502,\"payload_bytes\":11832116,\"payload_sha256\":\"74ebf794e2d0913b1d5146c4fcd4f8b78a32c24c9abf06813587bc4fca4546a3\",\"chapter_count\":2,\"chapter_ok\":2,\"chapters_joined_sha256\":\"74ebf794e2d0913b1d5146c4fcd4f8b78a32c24c9abf06813587bc4fca4546a3\"}"
+    },
+    {
+      "name": "the assembled file is the chapters' frames under one header, not two",
+      "ok": true,
+      "detail": "11832160 bytes against 11832204 summed from the chapters, 246.502 s against 246.50241599999998 s; the plane's own file is 11832160 bytes, payload 11832116 against 11832116 from the chapters, 2/2 chapter files fetched, the page's own bytes same, frames identical"
+    },
+    {
+      "name": "the page reports the finished project from the plane's own statuses",
+      "ok": true,
+      "detail": "2 of 2 chapters spoken — the audiobook is one file."
+    },
+    {
+      "name": "the meter moved by one request per chapter, not one per project",
+      "ok": true,
+      "detail": "7 -> 9"
+    },
+    {
+      "name": "a workspace starts with no ceiling and no rate, and says the window is fixed",
+      "ok": true,
+      "detail": "{\"character_ceiling\":null,\"characters_used\":3075,\"characters_remaining\":null,\"characters_settled\":3075,\"characters_reserved\":0,\"counter_committed\":0,\"period_start\":\"2026-11-01T00:00:00+00:00\",\"period_resets_at\":\"2026-12-01T00:00:00+00:00\",\"requests_per_minute\":null,\"rate_window_seconds\":60,\"rate_window_kind\":\"fixed\",\"ceiling_note\":\"Characters you asked the engine to speak this UTC calendar month. Transcriptions count here as zero characters: they add none to the ceiling and are bounded by the rate instead.\",\"rate_note\":\"Requests per API key per fixed one-minute window. Refused requests still spend their slot; a refused request costs no characters.\"}"
+    },
+    {
+      "name": "the run minted a key so the rate can be tested per key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the workspace sets its own rate, and the plane reports the change",
+      "ok": true,
+      "detail": "{\"limits\":{\"character_ceiling\":null,\"characters_used\":3075,\"characters_remaining\":null,\"characters_settled\":3075,\"characters_reserved\":0,\"counter_committed\":0,\"period_start\":\"2026-11-01T00:00:00+00:00\",\"period_resets_at\":\"2026-12-01T00:00:00+00:00\",\"requests_per_minute\":2,\"rate_window_seconds\":60,\"rate_window_kind\":\"fixed\",\"ceiling_note\":\"Characters you asked the engine to speak this UTC calendar month. Transcriptions count here as zero characters: they add none to the ceiling and are bounded by the rate instead.\",\"rate_note\":\"Requests per API key per fixed one-minute window. Refused requests still spend their slot; a refused request costs no characters.\"},\"changed\":[\"requests_per_minute\"],\"note\":\"A lower ceiling takes effect on the next request; characters already charged this period are not unspent by lowering it.\"}"
+    },
+    {
+      "name": "the third request in the minute is refused 429 with a real Retry-After",
+      "ok": true,
+      "detail": "statuses 200,200,429 retry-after 15"
+    },
+    {
+      "name": "the refusal carries a machine-readable code and the numbers behind it",
+      "ok": true,
+      "detail": "{\"error\":\"request_rate_exceeded\",\"detail\":\"This key has made 2 requests in the minute beginning 2026-11-05T01:19:00+00:00, and the workspace allows 2. The window is fixed, not sliding: waiting out Retry-After always clears it.\",\"limit\":2,\"used\":2,\"remaining\":0,\"retry_after\":15}"
+    },
+    {
+      "name": "a refused request costs no characters and shows up in the meter as 429",
+      "ok": true,
+      "detail": "characters 3075 -> 3101, 429 rows 1"
+    },
+    {
+      "name": "the ceiling is set to three characters of headroom, and the rate is cleared",
+      "ok": true,
+      "detail": "{\"character_ceiling\":3104,\"characters_used\":3101,\"characters_remaining\":3,\"characters_settled\":3101,\"characters_reserved\":0,\"counter_committed\":0,\"period_start\":\"2026-11-01T00:00:00+00:00\",\"period_resets_at\":\"2026-12-01T00:00:00+00:00\",\"requests_per_minute\":null,\"rate_window_seconds\":60,\"rate_window_kind\":\"fixed\",\"ceiling_note\":\"Characters you asked the engine to speak this UTC calendar month. Transcriptions count here as zero characters: they add none to the ceiling and are bounded by the rate instead.\",\"rate_note\":\"Requests per API key per fixed one-minute window. Refused requests still spend their slot; a refused request costs no characters.\"}"
+    },
+    {
+      "name": "a request over the ceiling is refused 402 with the headroom it has left",
+      "ok": true,
+      "detail": "{\"detail\":{\"error\":\"character_ceiling_exceeded\",\"detail\":\"This request needs 13 characters and this workspace has 3 left in the ceiling of 3104 for 2026-11-01. The ceiling resets on 2026-12-01 (UTC); the dashboard's Usage page shows it, and a workspace can change its own.\",\"limit\":3104,\"used\":3101,\""
+    },
+    {
+      "name": "the ceiling refusal is a ledger row with zero characters, not a silent drop",
+      "ok": true,
+      "detail": "characters 3101 -> 3101, 402 rows 1"
+    },
+    {
+      "name": "the Usage page shows the ceiling, what is charged against it and what is left",
+      "ok": true,
+      "detail": "{\"ceiling\":\"3,104\",\"used\":\"3,101\",\"remaining\":\"3\",\"rate\":\"none\",\"note\":\"LimitsA ceiling on what this workspace may ask the engine to speak in a UTC calendar month, and a rate on each API key. They are yours to set; nothing here is a bill.Character ceiling3,104resets Dec 01, 2026, 05:30:00Characters charged3,101from the meter, not a second countRemaining3nothing reserved by a request in flightRate per keynonefixed one-minute window; a refused request spends its slot and costs no charactersCharacter ceilingRequests per minute, per keySave limitsAn empty box means no limit. A limit bites the next request; characters already charged this month are not unspent by lowering it.\"}"
+    },
+    {
+      "name": "the Usage page names the rate and says the window is fixed",
+      "ok": true,
+      "detail": "none"
+    },
+    {
+      "name": "the Usage page says a refused request costs no characters",
+      "ok": true,
+      "detail": "LimitsA ceiling on what this workspace may ask the engine to speak in a UTC calendar month, and a rate on each API key. They are yours to set; nothing here is a"
+    },
+    {
+      "name": "the dashboard shows the plane's own ceiling sentence, not [object Object]",
+      "ok": true,
+      "detail": "The plane refused itThis request needs 13 characters and this workspace has 3 left in the ceiling of 3104 for 2026-11-01. The ceiling resets on 2026-12-01 (UTC); the dashboard's Usage page shows it, a"
+    },
+    {
+      "name": "clearing both limits works, and the page then says none",
+      "ok": true,
+      "detail": "{\"character_ceiling\":null,\"characters_used\":3101,\"characters_remaining\":null,\"characters_settled\":3101,\"characters_reserved\":0,\"counter_committed\":3101,\"period_start\":\"2026-11-01T00:00:00+00:00\",\"period_resets_at\":\"2026-12-01T00:00:00+00:00\",\"requests_per_minute\":null,\"rate_window_seconds\":60,\"rate_window_kind\":\"fixed\",\"ceiling_note\":\"Characters you asked the engine to speak this UTC calendar month. Transcriptions count here as zero characters: they add none to the ceiling and are bounded by the rate instead.\",\"rate_note\":\"Requests per API key per fixed one-minute window. Refused requests still spend their slot; a refused request costs no characters.\"}"
+    },
+    {
+      "name": "with no limits set the page says none rather than zero",
+      "ok": true,
+      "detail": "{\"ceiling\":\"none\",\"rate\":\"none\"}"
+    },
+    {
+      "name": "no uncaught JavaScript errors on any page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "engine_health": {
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "engine_active": "sherpa-onnx",
+  "engine_voice_count": 54,
+  "plane_health": {
+    "upstream_base_url": "http://127.0.0.1:37423",
+    "reachable": true,
+    "status": "ok",
+    "device": "cpu",
+    "version": "0.5.7"
+  },
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Browser E2E",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/home.png",
+      "screenshot_bytes": 210280
+    },
+    {
+      "route": "/speak",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Speak",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/speak.png",
+      "screenshot_bytes": 144644
+    },
+    {
+      "route": "/voices",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Voice library",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/voices.png",
+      "screenshot_bytes": 656771
+    },
+    {
+      "route": "/transcribe",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Transcribe",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/transcribe.png",
+      "screenshot_bytes": 144329
+    },
+    {
+      "route": "/dub",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Dub",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/dub.png",
+      "screenshot_bytes": 155873
+    },
+    {
+      "route": "/keys",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "API keys",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/keys.png",
+      "screenshot_bytes": 140086
+    },
+    {
+      "route": "/usage",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Usage",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/usage.png",
+      "screenshot_bytes": 243600
+    },
+    {
+      "route": "/jobs",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Jobs",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/jobs.png",
+      "screenshot_bytes": 155773
+    },
+    {
+      "route": "/projects",
+      "status": 200,
+      "focus_tag": "A",
+      "focus_outline": "solid 2px",
+      "heading": "Projects",
+      "native_selects": 0,
+      "screenshot": "e2e/.evidence/screenshots/projects.png",
+      "screenshot_bytes": 178557
+    }
+  ],
+  "theme": {
+    "dark": {
+      "theme": "dark",
+      "color_scheme": "dark",
+      "toggle_label": "Switch to the light theme",
+      "toggle_glyph": "☀",
+      "body_color": "rgb(236, 234, 246)",
+      "body_background": "rgb(8, 8, 14)",
+      "h1_color": "rgb(236, 234, 246)",
+      "lede_color": "rgb(169, 165, 194)"
+    },
+    "light": {
+      "theme": "light",
+      "color_scheme": "light",
+      "toggle_label": "Switch to the light theme",
+      "toggle_glyph": "☀",
+      "body_color": "rgb(23, 22, 42)",
+      "body_background": "rgb(246, 246, 250)",
+      "h1_color": "rgb(23, 22, 42)",
+      "lede_color": "rgb(78, 75, 99)"
+    },
+    "contrast": {
+      "dark": {
+        "body": 16.8,
+        "lede": 8.42,
+        "h1": 16.8
+      },
+      "light": {
+        "body": 16.45,
+        "lede": 7.76,
+        "h1": 16.45
+      }
+    },
+    "pages_light": [
+      {
+        "route": "/",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/speak",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/voices",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/transcribe",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/dub",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/keys",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/usage",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/jobs",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      },
+      {
+        "route": "/projects",
+        "theme": "light",
+        "background": "rgb(246, 246, 250)",
+        "contrast": 16.45
+      }
+    ],
+    "no_javascript": {
+      "light": [
+        {
+          "route": "/",
+          "status": 200,
+          "heading": "A dashboard for the voice plane.",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/speak",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/voices",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/transcribe",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/dub",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/keys",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/usage",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/jobs",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        },
+        {
+          "route": "/projects",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(246, 246, 250)",
+          "text": "rgb(23, 22, 42)",
+          "color_scheme": "light",
+          "contrast": 16.45,
+          "toggle_present": true
+        }
+      ],
+      "dark": [
+        {
+          "route": "/",
+          "status": 200,
+          "heading": "A dashboard for the voice plane.",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/speak",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/voices",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/transcribe",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/dub",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/keys",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/usage",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/jobs",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        },
+        {
+          "route": "/projects",
+          "status": 200,
+          "heading": "Sign in",
+          "data_theme": false,
+          "background": "rgb(8, 8, 14)",
+          "text": "rgb(236, 234, 246)",
+          "color_scheme": "dark",
+          "contrast": 16.8,
+          "toggle_present": true
+        }
+      ]
+    },
+    "no_javascript_toggle": [
+      [
+        "/",
+        true
+      ],
+      [
+        "/speak",
+        true
+      ],
+      [
+        "/voices",
+        true
+      ],
+      [
+        "/transcribe",
+        true
+      ],
+      [
+        "/dub",
+        true
+      ],
+      [
+        "/keys",
+        true
+      ],
+      [
+        "/usage",
+        true
+      ],
+      [
+        "/jobs",
+        true
+      ],
+      [
+        "/projects",
+        true
+      ]
+    ]
+  },
+  "home_grid": {
+    "container_width": 1016,
+    "cards": 8,
+    "rows": [
+      {
+        "top": 429,
+        "count": 3,
+        "left": 132,
+        "right": 1148
+      },
+      {
+        "top": 634,
+        "count": 3,
+        "left": 132,
+        "right": 1148
+      },
+      {
+        "top": 861,
+        "count": 2,
+        "left": 132,
+        "right": 1148
+      }
+    ]
+  },
+  "transcript": {
+    "engine_is_stub": false,
+    "spoken_text": "यह एक हिन्दी वाक्य है।",
+    "transcript_text": "यहा एक हिन्दी वाग के है",
+    "shared_words": [
+      "एक",
+      "हिन्दी",
+      "है"
+    ],
+    "spoken_words": [
+      "यह",
+      "एक",
+      "हिन्दी",
+      "वाक्य",
+      "है"
+    ],
+    "spoken_seconds": 1.826583,
+    "upload_seconds_measured": 1.826583,
+    "transcript_characters_in_meter": 23,
+    "segments": 1,
+    "meta": "1.826583 s measured · 23 characters · 85.7 KiB sent · engine took 68.751s · engine build 0.5.7",
+    "downloads": {
+      "txt": {
+        "filename": "spoken.transcript.txt",
+        "bytes": 59
+      },
+      "srt": {
+        "filename": "spoken.transcript.srt",
+        "bytes": 93
+      },
+      "json": {
+        "filename": "spoken.transcript.json",
+        "bytes": 444
+      }
+    }
+  },
+  "dub": {
+    "engine_is_stub": false,
+    "voice": "af_alloy",
+    "spoken_voice": "hf_alpha",
+    "transcript_text": "यहा एक हिन्दी वाग के है",
+    "audio_bytes": 95068,
+    "download_name": "dub-1.wav",
+    "meta": "the engine spent 45.63 s hearing it and 37.01 s saying it · 1.98 s of audio back · 23 characters heard",
+    "meter_requests_before": 3,
+    "meter_requests_after": 5,
+    "transcript_characters_delta": 23,
+    "spoken_characters_delta": 23,
+    "workspace_total": 1
+  },
+  "library": {
+    "plane_voices": 68,
+    "cards": 68,
+    "narrowed": 2,
+    "previewed": "hf_alpha",
+    "preview_bytes": 193572,
+    "preview_seconds": 4.031833,
+    "requests_before": 5,
+    "requests_after": 6,
+    "handed_over": "hf_alpha"
+  },
+  "usage": {
+    "plane_transcript_characters": 46,
+    "page_transcript_characters": 46,
+    "plane_requests": 6,
+    "page_requests": 6,
+    "plane_keys": 1,
+    "page_per_key_rows": 1,
+    "page_all_table_rows": 3
+  },
+  "audio": {
+    "engine_is_stub": false,
+    "sentence_bytes": 87720,
+    "paragraph_bytes": 302720,
+    "paragraph_seconds": 6.30575
+  },
+  "projects": {
+    "chapter_ceiling": 180000,
+    "chapters": 2,
+    "chapter_bytes": 11832204,
+    "audiobook_bytes": 11832160,
+    "audiobook_seconds": 246.502,
+    "meter_before": 7,
+    "meter_after": 9
+  },
+  "limits": {
+    "ceiling_set": 3104,
+    "ceiling_refusal_status": 402,
+    "rate_refusal_status": 429,
+    "retry_after": 15,
+    "characters_before": 3075,
+    "characters_after_first_two": 3101,
+    "characters_after_refusal": 3101,
+    "page_ceiling": "3,104",
+    "page_remaining": "3",
+    "page_rate": "none",
+    "refusal_sentence": "The plane refused itThis request needs 13 characters and this workspace has 3 left in the ceiling of 3104 for 2026-11-01. The ceiling resets on 2026-12-01 (UTC); the dashboard's Usage page shows it, a"
+  },
+  "passed": 148,
+  "failed": 0,
+  "ok": true,
+  "diagnostics": [
+    {
+      "process": "web",
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:38991\n- Network:       http://127.0.0.1:38991\n✓ Ready in 431ms\n✓ Running next.config.mjs took 35ms\n"
+    },
+    {
+      "process": "control-plane",
+      "tail": "INFO:     127.0.0.1:49334 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:37576 - \"GET /v1/limits HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49334 - \"GET /v1/voices HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49334 - \"POST /v1/audio/speech HTTP/1.1\" 402 Payment Required\nINFO:     127.0.0.1:37588 - \"PUT /v1/limits HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:49334 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:37576 - \"GET /v1/limits HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [1493619]\n"
+    },
+    {
+      "process": "engine",
+      "tail": "  File \"<frozen runpy>\", line 88 in _run_code\n  File \"<frozen runpy>\", line 198 in _run_module_as_main\nINFO:     127.0.0.1:58542 - \"POST /v1/audio/speech HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:60584 - \"POST /v1/audio/speech HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:60584 - \"POST /v1/audio/speech HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:60584 - \"GET /v1/audio/voices HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:60584 - \"GET /engines/tts HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\n2026-11-05 06:49:52,784 INFO [omnivoice.api] Shutdown: cleaning up…\n2026-11-05 06:49:52,842 INFO [mcp.server.streamable_http_manager] StreamableHTTP session manager shutting down\n"
+    }
+  ]
+}

@@ -187,14 +187,15 @@ and what is not is exactly where a product page starts lying:
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
   the real engine — that a second engine could hear words it had said. In the run this
-  page cites, two of the five words of the Hindi sentence came back — एक and है —
-  and a guard below reads that number back out of the run's own
+  page cites, three of the five words of the Hindi sentence came back — एक, हिन्दी and
+  है — and a guard below reads that number back out of the run's own
   `transcript.shared_words` rather than trusting this sentence. The count moves
-  between runs of the *same code*: this run and the one two before it
-  (`hermes-reports/M3-slot72-web-e2e-r1`: एक and है) came back with two, where the
-  run in between (`hermes-reports/M3-slot75-web-e2e-r1`: एक, हिन्दी and है) and the
-  run before those (`hermes-reports/M3-slot56-web-e2e-r1`: यह, एक and है) came back
-  with three. This run heard यह as *यहा*, हिन्दी as *हिंदी* and वाक्य as *वाग के*.
+  between runs of the *same code*: the run before this one
+  (`hermes-reports/M3-slot77-web-e2e-r1`: एक and है) came back with two, the two before
+  that (`hermes-reports/M3-slot75-web-e2e-r1`: एक, हिन्दी and है) with three, its
+  predecessor (`hermes-reports/M3-slot72-web-e2e-r1`: एक and है) with two, and the
+  earliest of them (`hermes-reports/M3-slot56-web-e2e-r1`: यह, एक and है) with three.
+  This run heard यह as *यहा* and वाक्य as *वाग के*.
   It is not a transcription-quality claim, and the page
   does not make one; what is stable is the loop: the wiring, the metering
   and which bytes spoke,
