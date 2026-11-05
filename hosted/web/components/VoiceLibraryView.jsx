@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { filterVoices, KIND_LABELS, kindCounts, PREVIEW_TEXT } from "../lib/voices.js";
+import { planeDetail } from "../lib/controlplane.js";
 import SearchableSelect from "./SearchableSelect.jsx";
 
 /**
@@ -61,7 +62,7 @@ export default function VoiceLibraryView({ catalogue }) {
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data?.detail || `The plane answered ${response.status}.`);
+        setError(planeDetail(data, `The plane answered ${response.status}.`));
         return;
       }
       const blob = await response.blob();

@@ -31,7 +31,16 @@ from typing import Callable
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Connection
 
-from .db import Base, Database, Dub, Job, Project, ProjectChapter
+from .db import (
+    Base,
+    Database,
+    Dub,
+    Job,
+    Project,
+    ProjectChapter,
+    QuotaPeriod,
+    RateWindow,
+)
 
 #: Oldest first. A database is stamped with the last entry it has been brought to.
 #: m2a1 — slice A (workspaces, api_keys, session_tokens, usage_events).
@@ -39,7 +48,8 @@ from .db import Base, Database, Dub, Job, Project, ProjectChapter
 #: m2c1 — slice C (adds usage_events.transcript_characters).
 #: m2d1 — slice D (adds projects and project_chapters).
 #: m2f1 — slice F (adds dubs). Slice E added no table, so it has no step here.
-KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1", "m2c1", "m2d1", "m2f1")
+#: m2g1 — slice G (adds the workspace limits, quota_periods and rate_windows).
+KNOWN_VERSIONS: tuple[str, ...] = ("m2a1", "m2b1", "m2c1", "m2d1", "m2f1", "m2g1")
 
 MIGRATION_VERSION = KNOWN_VERSIONS[-1]
 
@@ -122,6 +132,38 @@ def _add_dubs(connection: Connection) -> None:
     Dub.__table__.create(connection, checkfirst=True)
 
 
+#: The two columns m2g1 adds, with the table they belong to. Both are limits in
+#: which 0 means "none", so the server default is the honest value for an
+#: existing row: no workspace acquires a limit it never chose.
+_WORKSPACE_LIMITS = (
+    ("workspaces", "character_ceiling"),
+    ("workspaces", "requests_per_minute"),
+)
+
+
+def _add_limits(connection: Connection) -> None:
+    """m2g1: a ceiling and a rate, plus the counters that make them hold.
+
+    Two columns on ``workspaces`` (both ``NOT NULL DEFAULT 0``, meaning no
+    limit — an existing customer is not silently throttled by an upgrade) and
+    two new tables. Idempotence comes from asking the schema first for the
+    columns, exactly as m2c1 does, and from ``checkfirst=True`` for the tables,
+    so a crash between the DDL and the stamp re-runs this and changes nothing.
+    """
+    present = {col["name"] for col in inspect(connection).get_columns("workspaces")}
+    for table, column in _WORKSPACE_LIMITS:
+        if column in present:
+            continue
+        connection.execute(
+            text(
+                f"ALTER TABLE {table} "
+                f"ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0"
+            )
+        )
+    QuotaPeriod.__table__.create(connection, checkfirst=True)
+    RateWindow.__table__.create(connection, checkfirst=True)
+
+
 #: (version this step produces, work to do). Order matters; the stamp is written
 #: in the same transaction as the work.
 MIGRATIONS: tuple[tuple[str, Callable[[Connection], None]], ...] = (
@@ -129,6 +171,7 @@ MIGRATIONS: tuple[tuple[str, Callable[[Connection], None]], ...] = (
     ("m2c1", _add_transcript_characters),
     ("m2d1", _add_projects),
     ("m2f1", _add_dubs),
+    ("m2g1", _add_limits),
 )
 
 

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { planeDetail } from "../lib/controlplane.js";
+
 import { formatDateTime, keyPrefix } from "../lib/format.js";
 
 /**
@@ -37,7 +39,7 @@ export default function KeysView({ initialKeys }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data?.detail || "The plane refused the request.");
+        setError(planeDetail(data, "The plane refused the request."));
         return;
       }
       setRevealed(data.api_key_record);
@@ -56,7 +58,7 @@ export default function KeysView({ initialKeys }) {
     const response = await fetch(`/api/keys/${id}`, { method: "DELETE" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setError(data?.detail || "The plane refused the revocation.");
+      setError(planeDetail(data, "The plane refused the revocation."));
       return;
     }
     await reload();

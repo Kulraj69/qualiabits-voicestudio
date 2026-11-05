@@ -57,6 +57,8 @@ tests/hosted/                 its tests
 | `GET /v1/api-keys` | session | list keys — never key material |
 | `DELETE /v1/api-keys/{id}` | session | revoke one of your own keys |
 | `GET /v1/usage` | session or key | this workspace's meter, and its key-by-key breakdown |
+| `GET /v1/limits` | session or key | this workspace's character ceiling and per-key rate, and what is left of them |
+| `PUT /v1/limits` | session | set or clear them; a key can read the limits and not change them |
 | `GET /v1/voices` | session or key | what the engine can speak, for a picker |
 | `POST /v1/audio/speech` | API key | metered passthrough to the engine, for one short request |
 | `POST /v1/audio/transcriptions` | session or key | a recording in, the engine's transcript out, metered in its own counters |

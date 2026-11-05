@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { formatBytes, formatDateTime, formatSeconds, statusLabel, isTerminal } from "../lib/format.js";
 import { defaultVoiceId, groupVoices, KIND_LABELS } from "../lib/voices.js";
+import { planeDetail } from "../lib/controlplane.js";
 import SearchableSelect from "./SearchableSelect.jsx";
 
 /**
@@ -67,7 +68,7 @@ export default function JobsView({ catalogue, initialJobs }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data?.detail || "The plane refused to queue it.");
+        setError(planeDetail(data, "The plane refused to queue it."));
         return;
       }
       setNotice(
@@ -85,7 +86,7 @@ export default function JobsView({ catalogue, initialJobs }) {
     const response = await fetch(`/api/jobs/${id}`, { method: "DELETE" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setError(data?.detail || "The plane refused the cancellation.");
+      setError(planeDetail(data, "The plane refused the cancellation."));
       return;
     }
     await refresh();

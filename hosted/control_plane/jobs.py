@@ -38,7 +38,7 @@ from typing import Any
 from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.orm import Session
 
-from . import metering
+from . import limits, metering
 from .db import ApiKey, Database, Job, utcnow
 from .storage import StoredObject
 
@@ -162,6 +162,11 @@ def _sweep_unclaimable_running(db: Database, now) -> int:
                 status_code=504,
                 characters=job.characters,
                 error="worker lease expired on the final attempt",
+            )
+            # Slice G: the characters became real spend above, so the reservation
+            # that stood in for them is released in the same transaction.
+            limits.settle(
+                session, workspace_id=job.workspace_id, characters=job.characters
             )
         session.commit()
         return len(rows)
@@ -289,6 +294,9 @@ def succeed(
             engine_seconds=engine_seconds,
         )
         job.audio_seconds = event.audio_seconds
+        limits.settle(
+            session, workspace_id=job.workspace_id, characters=job.characters
+        )
         _touch_key(session, job.api_key_id)
         session.commit()
         return job
@@ -339,18 +347,27 @@ def fail(
             characters=job.characters,
             error=error,
         )
+        limits.settle(
+            session, workspace_id=job.workspace_id, characters=job.characters
+        )
         _touch_key(session, job.api_key_id)
         session.commit()
         return job
 
 
 def cancel(session: Session, job: Job) -> bool:
-    """Cancel a queued job. Nothing was sent to the engine, so the meter is untouched."""
+    """Cancel a queued job. Nothing was sent to the engine, so the meter is untouched.
+
+    Slice G made the second half of that sentence do work: the characters this
+    job reserved when it was queued are given back, so cancelling is genuinely
+    free rather than a way to hold the ceiling down until the month turns over.
+    """
     if job.status != QUEUED:
         return False
     job.status = CANCELLED
     job.finished_at = utcnow()
     job.error = "cancelled before it was claimed"
+    limits.release(session, workspace_id=job.workspace_id, characters=job.characters)
     return True
 
 

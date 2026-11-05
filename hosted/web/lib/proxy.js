@@ -17,6 +17,12 @@ const FORWARDED = [
   "x-qualiabits-project-chapters",
   "x-qualiabits-audio-seconds",
   "x-qualiabits-engine-seconds",
+  // Slice G: a refusal's own numbers, so the dashboard can show why and for how
+  // long without re-reading the prose it just displayed.
+  "retry-after",
+  "x-qualiabits-limit",
+  "x-qualiabits-limit-used",
+  "x-qualiabits-limit-remaining",
   "x-qualiabits-object-sha256",
   "x-qualiabits-workspace",
   "x-omnivoice-backend",

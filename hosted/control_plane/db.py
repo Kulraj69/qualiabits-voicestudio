@@ -26,6 +26,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
     event,
     select,
@@ -62,6 +63,19 @@ class Workspace(Base):
     password_salt: Mapped[str] = mapped_column(String(64))
     password_hash: Mapped[str] = mapped_column(String(128))
     password_params: Mapped[str] = mapped_column(String(64))
+    #: Slice G. Characters this workspace may ask the engine to speak in one UTC
+    #: calendar month. ``0`` means no ceiling, which is the default because a
+    #: limit nobody asked for is a policy, not a safety net. The signup default
+    #: can be set by the operator (``QUALI_DEFAULT_CHARACTER_CEILING``) and every
+    #: workspace can change its own from the Usage page.
+    character_ceiling: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    #: Slice G. Requests one API key of this workspace may make per fixed
+    #: one-minute window. ``0`` means no rate limit.
+    requests_per_minute: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow
     )
@@ -149,6 +163,74 @@ class UsageEvent(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, index=True
     )
+
+
+class QuotaPeriod(Base):
+    """Slice G: the reservation counter for one workspace and one UTC month.
+
+    Deliberately *not* a second ledger. The ledger (``usage_events``) stays the
+    only place a character is charged; this row exists to close the race between
+    reading spend and acting on it, and it is released in the same transaction as
+    the usage event that replaces it. A workspace with no ceiling never gets a
+    row.
+
+    ``UniqueConstraint(workspace_id, period_start)`` is what makes the
+    compare-and-swap safe: there is exactly one counter per workspace per month,
+    so the conditional UPDATE either takes the characters or refuses them.
+
+    Both halves of the month live *in this one row*, which is the point.
+    ``committed_characters`` is a projection of the ledger — every character
+    charged lands here in the same transaction as its usage event — and
+    ``reserved_characters`` is what requests in flight have taken. The gate is
+    ``committed + reserved + n <= ceiling``, evaluated inside one conditional
+    UPDATE, so no request can ever compare against a settled figure that a
+    concurrent settle has already moved: a first attempt that read the ledger and
+    then acted on it had exactly that hole, and a thread-race test in
+    ``tests/hosted/test_hosted_limits.py`` is what made it visible.
+    """
+
+    __tablename__ = "quota_periods"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "period_start", name="uq_quota_period"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
+    )
+    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    #: A projection of ``usage_events.characters`` for this period, maintained only
+    #: by ``limits.settle`` (which writes it beside the event that justifies it) and
+    #: seeded from the ledger when the row is first created, so an upgraded
+    #: database's existing spend is counted rather than forgotten.
+    committed_characters: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+    reserved_characters: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0"
+    )
+
+
+class RateWindow(Base):
+    """Slice G: how many requests one key made in one fixed minute.
+
+    One row per key per minute, so the counter is a conditional UPDATE and not a
+    scan of every request ever made. Nothing prunes these rows yet, and that is
+    stated rather than hidden: a key making a request a minute leaves 1,440 rows
+    a day, and a sweep can be added when a real deployment makes the size matter.
+    """
+
+    __tablename__ = "rate_windows"
+    __table_args__ = (
+        UniqueConstraint("api_key_id", "window_start", name="uq_rate_window"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    api_key_id: Mapped[int] = mapped_column(
+        ForeignKey("api_keys.id", ondelete="CASCADE"), index=True
+    )
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
 
 class SchemaMeta(Base):

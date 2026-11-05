@@ -50,7 +50,7 @@ import json
 import re
 from contextlib import asynccontextmanager
 from datetime import timedelta
-from typing import Annotated, Iterator
+from typing import Annotated, Iterator, NoReturn
 
 from fastapi import (
     Depends,
@@ -68,7 +68,16 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.datastructures import UploadFile
 
-from . import dubbing, jobs, metering, projects, security, storage, voices as voice_catalogue
+from . import (
+    dubbing,
+    jobs,
+    limits,
+    metering,
+    projects,
+    security,
+    storage,
+    voices as voice_catalogue,
+)
 from .auth import Principal, principal
 from .config import Settings
 from .db import (
@@ -173,6 +182,20 @@ class JobRequest(BaseModel):
     input: str = Field(default="", max_length=JOB_BODY_MAX_CHARS)
     voice: str = Field(default="", max_length=120)
     response_format: str = Field(default="wav", max_length=16)
+
+
+class LimitsRequest(BaseModel):
+    """Slice G: a workspace's own limits, which are its own spend guard.
+
+    Absent means "leave alone"; an explicit ``null`` means "no limit". That
+    distinction is the whole reason this body is not two ``int = 0`` fields: a
+    dashboard that sends a partial body must not silently clear the other limit.
+    ``0`` is accepted and means the same as ``null``, because a client that has
+    the number in hand should not have to guess which spelling we prefer.
+    """
+
+    character_ceiling: int | None = Field(default=None, ge=0, le=1_000_000_000)
+    requests_per_minute: int | None = Field(default=None, ge=0, le=1_000_000)
 
 
 class ProjectRequest(BaseModel):
@@ -365,6 +388,55 @@ def _key_id(who: Principal) -> int | None:
     return who.api_key.id if who.api_key is not None else None
 
 
+def _refuse_limits(
+    session: Session,
+    *,
+    who: Principal,
+    api_key: ApiKey | None,
+    route: str,
+    refusal: limits.Refusal,
+) -> NoReturn:
+    """Record the refusal the way the meter records everything else, then stop.
+
+    Two decisions worth naming. The event carries **zero** characters: the text
+    never reached the engine, and charging the ceiling for a request the ceiling
+    itself refused would make the limit inflate its own spend. And the refusal is
+    an ordinary row in the ledger with its own status code, so "how often was this
+    workspace told no, and why" is a question the meter can already answer —
+    ``by_status`` counts 402 and 429 apart from real failures.
+    """
+    metering.record(
+        session,
+        workspace_id=who.workspace_id,
+        api_key_id=None if api_key is None else api_key.id,
+        route=route,
+        status_code=refusal.status_code,
+        characters=0,
+        error=refusal.error,
+    )
+    session.commit()
+    # The body is an object, not a sentence: a client branches on ``error`` and a
+    # human reads ``detail``. A prose-only refusal forces every integration to
+    # pattern-match English, and the plane's own transcription route already
+    # answers with an object detail for the same reason.
+    raise HTTPException(
+        status_code=refusal.status_code,
+        detail=refusal.as_dict(),
+        headers=refusal.http_headers(),
+    )
+
+
+def _limits_for(session: Session, who: Principal) -> tuple[Workspace, ApiKey | None]:
+    """The workspace row and the key row a metered request is judged against."""
+    workspace = session.get(Workspace, who.workspace_id)
+    if workspace is None:  # pragma: no cover - the principal came from a live key
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="That credential's workspace no longer exists.",
+        )
+    return workspace, who.api_key
+
+
 def _window_of(byte_count: int) -> str:
     """A human-readable byte ceiling, for the sentence a refusal carries."""
     mebibyte = 1024 * 1024
@@ -528,6 +600,10 @@ def create_app(
             password_salt=salt,
             password_hash=digest,
             password_params=params,
+            # Slice G: the operator's house defaults, which are "none" unless the
+            # operator set them. A workspace can always change its own afterwards.
+            character_ceiling=state.settings.default_character_ceiling,
+            requests_per_minute=state.settings.default_requests_per_minute,
         )
         session.add(workspace)
         try:
@@ -634,6 +710,52 @@ def create_app(
         return {"usage": metering.summary(session, who.workspace_id).as_dict(),
                 "read_via": who.via}
 
+    # ── limits ────────────────────────────────────────────────────────────────
+    @app.get("/v1/limits")
+    def get_limits(request: Request, session: DbSession) -> dict:
+        """This workspace's limits, and what is left of them.
+
+        Readable with a key as well as a session on purpose: the thing a
+        customer wires an alarm to is a key's remaining allowance, and a monitor
+        should not have to hold a human's session token to see it.
+        """
+        who = principal(session, request, allow="any")
+        workspace, _ = _limits_for(session, who)
+        return {"limits": limits.state(session, workspace), "read_via": who.via}
+
+    @app.put("/v1/limits")
+    def set_limits(body: LimitsRequest, request: Request, session: DbSession) -> dict:
+        """Set this workspace's ceiling and rate. Session only, deliberately.
+
+        A key can read the limits and cannot change them: lowering a client's own
+        ceiling is the move a runaway script would make, and the point of the
+        ceiling is to survive the client's mistakes, not to be negotiated with one.
+        """
+        who = principal(session, request, allow="session")
+        workspace, _ = _limits_for(session, who)
+        sent = set(body.model_fields_set)
+        if not sent:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Send at least one of character_ceiling or "
+                    "requests_per_minute. null (or 0) clears a limit."
+                ),
+            )
+        if "character_ceiling" in sent:
+            workspace.character_ceiling = int(body.character_ceiling or 0)
+        if "requests_per_minute" in sent:
+            workspace.requests_per_minute = int(body.requests_per_minute or 0)
+        session.commit()
+        return {
+            "limits": limits.state(session, workspace),
+            "changed": sorted(sent),
+            "note": (
+                "A lower ceiling takes effect on the next request; characters "
+                "already charged this period are not unspent by lowering it."
+            ),
+        }
+
     # ── voices ────────────────────────────────────────────────────────────────
     @app.get("/v1/voices")
     async def voices(request: Request, session: DbSession) -> dict:
@@ -670,6 +792,18 @@ def create_app(
                     "Split it into more than one job."
                 ),
             )
+        # Slice G: the characters are known before this route queues anything, so
+        # the ceiling is decided here — a job that would break the month's limit
+        # is refused while it is still one HTTP request, not later from the queue.
+        workspace, _ = _limits_for(session, who)
+        refusal = limits.guard(
+            session, workspace=workspace, api_key=who.api_key, characters=len(text)
+        )
+        if refusal is not None:
+            _refuse_limits(
+                session, who=who, api_key=who.api_key, route=jobs.JOBS_ROUTE, refusal=refusal
+            )
+
         job = jobs.enqueue(
             session,
             workspace_id=who.workspace_id,
@@ -811,6 +945,25 @@ def create_app(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
             ) from exc
+
+        # Slice G: one reservation for the whole manuscript, taken after the split
+        # because the split is what decides how many characters are really spoken
+        # — the chapter texts, not the manuscript they came from. Reserving the
+        # manuscript instead would strand the separator characters (two per
+        # boundary) in the counter for the rest of the month, and a test in this
+        # slice measured exactly that leak. Each chapter's job then settles its own
+        # share as it finishes, so a half-finished project does not hold the
+        # ceiling hostage for chapters that never ran.
+        workspace, _ = _limits_for(session, who)
+        speakable = sum(len(chapter) for chapter in chapters)
+        refusal = limits.guard(
+            session, workspace=workspace, api_key=who.api_key, characters=speakable
+        )
+        if refusal is not None:
+            _refuse_limits(
+                session, who=who, api_key=who.api_key, route="/v1/projects",
+                refusal=refusal,
+            )
 
         voice = (body.voice or "").strip()
         response_format = (body.response_format or "wav").strip().lower() or "wav"
@@ -1031,6 +1184,15 @@ def create_app(
                 detail=f"'input' is longer than {INPUT_MAX_CHARS} characters.",
             )
 
+        workspace, _ = _limits_for(session, who)
+        refusal = limits.guard(
+            session, workspace=workspace, api_key=api_key, characters=len(text)
+        )
+        if refusal is not None:
+            _refuse_limits(
+                session, who=who, api_key=api_key, route=SPEECH_ROUTE, refusal=refusal
+            )
+
         result = await state.upstream.speech(payload)
         metering.touch_key(session, api_key)
         metering.record(
@@ -1044,6 +1206,9 @@ def create_app(
             engine_seconds=result.elapsed_seconds,
             error=result.error,
         )
+        # The reservation becomes real spend, in the same transaction as the
+        # event that charges it, so the ceiling cannot double-count a request.
+        limits.settle(session, workspace_id=who.workspace_id, characters=len(text))
         session.commit()
 
         if result.delivered:
@@ -1087,6 +1252,19 @@ def create_app(
         who = principal(session, request, allow="any")
         ceiling = state.settings.transcribe_max_bytes
         allowance = f"An upload is at most {_window_of(ceiling)}."
+
+        # Slice G, and the shape of the rule: a transcription asks the engine to
+        # speak nothing, so it is bounded by the request rate and not by the
+        # character ceiling. The check happens before the upload is parsed.
+        workspace, _ = _limits_for(session, who)
+        refusal = limits.guard(
+            session, workspace=workspace, api_key=who.api_key, characters=0
+        )
+        if refusal is not None:
+            _refuse_limits(
+                session, who=who, api_key=who.api_key,
+                route=TRANSCRIBE_ROUTE, refusal=refusal,
+            )
 
         # A declared length over the ceiling is refused before a byte is read.
         declared = request.headers.get("content-length", "").strip()
@@ -1237,6 +1415,19 @@ def create_app(
         api_key = who.require_api_key()
         ceiling = state.settings.transcribe_max_bytes
         allowance = f"An upload is at most {_window_of(ceiling)}."
+
+        # Slice G: a dub is refused by the rate, not by the ceiling, for the same
+        # reason a transcription is — until the recording has been heard nobody
+        # knows how many characters will be spoken, and reserving a guess would
+        # be inventing a number.
+        workspace, _ = _limits_for(session, who)
+        refusal = limits.guard(
+            session, workspace=workspace, api_key=api_key, characters=0
+        )
+        if refusal is not None:
+            _refuse_limits(
+                session, who=who, api_key=api_key, route=DUB_ROUTE, refusal=refusal
+            )
 
         declared = request.headers.get("content-length", "").strip()
         if declared.isdigit() and int(declared) > ceiling:

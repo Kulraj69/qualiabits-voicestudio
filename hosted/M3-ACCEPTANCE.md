@@ -55,13 +55,34 @@ each call's own engine seconds apart. It is **not** a translation — there is n
 translation model in this repository and none is called — so the dub is in the
 language it heard, and the page says so rather than implying otherwise; the engine's
 transcript is shown beside the player unedited, because that is what the file will
-say. Two of the pages
+say. **Slice G** is the limits. A hosted product that meters but cannot stop is one
+customer's script away from the month's engine time, so the plane now bounds every
+metered request *before* the engine is asked: a character ceiling per workspace per
+UTC calendar month, and a request rate per API key in a fixed one-minute window.
+Two things make it more than a counter. The gate is one conditional `UPDATE` that
+compares both halves of the month — what has been charged and what is reserved by
+requests in flight — against the ceiling, because a read-then-write let two
+concurrent requests both take the last of it (a thread-race test in
+`tests/hosted/test_hosted_limits.py` is what found that, along with a stranded
+separator and a cancellation that was charged for work nobody did). And a refusal is
+ordinary product behaviour rather than an error page: `402` for the ceiling with the
+moment the period resets, `429` for the rate with a real `Retry-After`, a
+machine-readable code in the body, the limit and what is left of it in the headers,
+and a zero-character row in the meter, because the text never reached the engine. The
+ceiling counts characters a customer asks the engine to *speak*: a transcription asks
+for none, so it is bounded by the rate and not by the ceiling, and the page says so.
+Both limits are readable over the API (`GET /v1/limits`) so a customer can alarm on
+the remainder, and settable on the dashboard's own Usage page — with one asymmetry
+that is deliberate: a key can *read* the limits, and only a session can change them,
+because lowering a client's own ceiling is exactly what a runaway client would do.
+
+Two of the pages
 M3 names — Voice Clone with a consent checkbox and Voice Design — are
 **not built**, and the last section of this page says so
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot77-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot79-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -147,6 +168,15 @@ the chain runs run → commit → push and every link is a file a reader can ope
 | Another workspace can never read a dub, or learn that one exists | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_dubbing.py` | no run evidence: the browser run signs one workspace up |
 | An older database gains the dubs table, rows intact | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | no run evidence: the browser run creates a fresh database |
 | On the real engine the dub says the words it heard from the audio that was spoken | `hosted/web/e2e/dashboard.mjs` | `hosted/web/test/harness.test.mjs` | `the real engine's dub is the words it heard from the audio that was spoken` |
+| Every metered request is bounded before the engine is asked | `hosted/control_plane/limits.py` | `tests/hosted/test_hosted_limits.py` | `a request over the ceiling is refused 402 with the headroom it has left` |
+| A rate per API key, refused with a real `Retry-After` | `hosted/control_plane/limits.py` | `tests/hosted/test_hosted_limits.py` | `the third request in the minute is refused 429 with a real Retry-After` |
+| A refusal costs no characters and is still visible in the meter | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_limits.py` | `a refused request costs no characters and shows up in the meter as 429` |
+| Two concurrent requests cannot both take the last of the ceiling | `hosted/control_plane/db.py` | `tests/hosted/test_hosted_limits.py` | no run evidence: a browser run is sequential by construction, so the race is driven by threads in the unit suite instead |
+| A cancelled job gives its reservation back | `hosted/control_plane/jobs.py` | `tests/hosted/test_hosted_limits.py` | no run evidence: the browser run does not cancel a job that reserved characters |
+| The limits are settable in the dashboard and readable over the API | `hosted/web/app/api/limits/route.js` | `hosted/web/test/quota.test.mjs` | `the Usage page shows the ceiling, what is charged against it and what is left` |
+| Clearing a limit is distinguishable from not mentioning it | `hosted/web/lib/quota.js` | `hosted/web/test/quota.test.mjs` | `clearing both limits works, and the page then says none` |
+| A refusal reaches the page as a sentence, not as an object | `hosted/web/lib/controlplane.js` | `hosted/web/test/controlplane.test.mjs` | `the dashboard shows the plane's own ceiling sentence, not [object Object]` |
+| An older database gains the limits without throttling anyone | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | `a workspace starts with no ceiling and no rate, and says the window is fixed` |
 
 Two sentences that belong beside that table, because the gap between what is proven
 and what is not is exactly where a product page starts lying:
@@ -184,9 +214,26 @@ and what is not is exactly where a product page starts lying:
 
 ## What is not built, and is not stubbed
 
-Voice Clone with a consent checkbox, Voice Design, Dubbing, the
-agents tab, and the marketing landing page are all **later slices of
-M3**. None of
-them is a greyed-out button or a "coming soon" card: a page that is not built is not on
-the site, and the dashboard's navigation lists only pages that answer. The light theme
-that used to be on this list is built: slice E, above.
+Voice Clone with a consent checkbox, Voice Design, the agents tab, and the marketing
+landing page are **later slices of M3**. None of them is a greyed-out button or a
+"coming soon" card: a page that is not built is not on the site, and the dashboard's
+navigation lists only pages that answer. The light theme that used to be on this list is
+built (slice E, above), and so is dubbing (slice F) — a judge pass on slice F caught this
+page still calling dubbing a later slice while its own table had six rows about it, and
+that sentence is why the guard over `hosted/web/README.md` now reads its equivalent
+section both ways.
+
+**Why the two remaining pages are not built here, with the evidence.** Slice G needed
+to know whether they could be, so this records what the repository says rather than an
+impression:
+
+| An engine that could do it | What it advertises | What it needs that this box does not have |
+| --- | --- | --- |
+| `backend/engines/cosyvoice_gguf/__init__.py` | `supports_cloning = True`, CPU and Vulkan, "reference clone" | the managed native server built from pinned `Lourdle/cosyvoice.cpp`; that engine's own spec records Windows x64 + AMD Vulkan as its verified target, and nothing here is installed |
+| `backend/engines/pockettts/__init__.py` | `supports_cloning = True`, CPU-only, MIT code + CC-BY-4.0 weights | weights gated on HuggingFace behind an access agreement and an acceptable-use clause: accepting terms for the owner is not a lane's to do |
+| `backend/engines/indextts/`, `dots_tts/`, `moss_tts_v15/`, `moss_tts_nano_subprocess/`, `confucius4/` | reference-clip timbre, and `supports_voice_design = False` | each needs reference audio plus multi-GB weights; the root filesystem had 832 MB free when this slice started |
+| `backend/engines/audiocpp/`, `omnivoice_subprocess/`, `voxcpm2_subprocess/` | `supports_voice_design = True` | the same weight problem, and no design-capable weights on this machine |
+| the engine the hosted plane actually speaks through | Kokoro int8, 54 preset voices, plus faster-whisper-small for speech in | no clone path and no design path in either model |
+
+A cloning or design page built on this machine today could only be a promise, and a
+promise is the one thing this section exists to refuse.

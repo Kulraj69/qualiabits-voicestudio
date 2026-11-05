@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { toJson, toPlainText, toSrt, transcriptFilename } from "../lib/transcript.js";
+import { planeDetail } from "../lib/controlplane.js";
 import SearchableSelect from "./SearchableSelect.jsx";
 
 /**
@@ -78,7 +79,7 @@ export default function TranscribeView() {
       const type = response.headers.get("content-type") || "";
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data?.detail || `The plane answered ${response.status}.`);
+        setError(planeDetail(data, `The plane answered ${response.status}.`));
         setResult({
           failed: true,
           status: response.status,

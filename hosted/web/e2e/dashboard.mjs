@@ -258,7 +258,7 @@ async function plane(base, urlPath, { method = "GET", token, body } = {}) {
       data = { raw: text };
     }
   }
-  return { status: response.status, data };
+  return { status: response.status, data, headers: response.headers };
 }
 
 /** The plane's own bytes for a route, not its JSON.
@@ -1794,6 +1794,192 @@ async function main() {
       audiobook_seconds: audiobook.seconds,
       meter_before: usageBeforeProject.requests,
       meter_after: usageAfterProject.requests,
+    };
+
+    // ── slice G: the limits that hold ───────────────────────────────────────
+    // Read from the plane, set through the plane, then read back out of the
+    // dashboard's own page: a limit that only exists in the API is half a
+    // feature, and a page that shows a number the plane did not give it is a
+    // second source of truth.
+    const limitsBefore = (await plane(planeBase, "/v1/limits", { token: session })).data?.limits;
+    check(
+      "a workspace starts with no ceiling and no rate, and says the window is fixed",
+      limitsBefore?.character_ceiling === null
+        && limitsBefore?.requests_per_minute === null
+        && limitsBefore?.rate_window_kind === "fixed"
+        && limitsBefore?.rate_window_seconds === 60,
+      JSON.stringify(limitsBefore),
+    );
+
+    const limitsKey = (await plane(planeBase, "/v1/api-keys", {
+      method: "POST", token: session, body: { label: "limits-e2e" },
+    })).data?.api_key_record?.api_key;
+    check("the run minted a key so the rate can be tested per key", Boolean(limitsKey));
+
+    const setRate = await plane(planeBase, "/v1/limits", {
+      method: "PUT", token: session, body: { requests_per_minute: 2 },
+    });
+    check(
+      "the workspace sets its own rate, and the plane reports the change",
+      setRate.status === 200
+        && setRate.data?.limits?.requests_per_minute === 2
+        && (setRate.data?.changed || []).includes("requests_per_minute"),
+      JSON.stringify(setRate.data),
+    );
+
+    const LIMIT_TEXT = "one two three";
+    const beforeRate = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;
+    const rateCalls = [];
+    for (let index = 0; index < 3; index += 1) {
+      rateCalls.push(await plane(planeBase, "/v1/audio/speech", {
+        method: "POST",
+        token: limitsKey,
+        body: { input: LIMIT_TEXT, voice: SPEAK_VOICE, response_format: "wav" },
+      }));
+    }
+    const rateRefusal = rateCalls[2];
+    const retryAfter = Number(rateRefusal.headers?.get("retry-after"));
+    const rateDetail = rateRefusal.data?.detail;
+    check(
+      "the third request in the minute is refused 429 with a real Retry-After",
+      rateCalls[0].status === 200 && rateCalls[1].status === 200
+        && rateRefusal.status === 429
+        && Number.isFinite(retryAfter) && retryAfter >= 1 && retryAfter <= 60,
+      `statuses ${rateCalls.map((call) => call.status).join(",")} retry-after ${rateRefusal.headers?.get("retry-after")}`,
+    );
+    check(
+      "the refusal carries a machine-readable code and the numbers behind it",
+      rateDetail?.error === "request_rate_exceeded"
+        && rateDetail?.limit === 2 && rateDetail?.remaining === 0
+        && rateDetail?.retry_after === retryAfter,
+      JSON.stringify(rateDetail),
+    );
+    const afterRate = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;
+    check(
+      "a refused request costs no characters and shows up in the meter as 429",
+      afterRate.characters - beforeRate.characters === LIMIT_TEXT.length * 2
+        && afterRate.by_status?.["429"] >= 1,
+      `characters ${beforeRate.characters} -> ${afterRate.characters}, 429 rows ${afterRate.by_status?.["429"]}`,
+    );
+
+    // A ceiling three characters above what this workspace has already been
+    // charged: the next request has to be refused, and refused *by the plane*.
+    const limitsNow = (await plane(planeBase, "/v1/limits", { token: session })).data?.limits;
+    const limitCeiling = limitsNow.characters_settled + 3;
+    const setCeiling = await plane(planeBase, "/v1/limits", {
+      method: "PUT", token: session, body: { character_ceiling: limitCeiling, requests_per_minute: null },
+    });
+    check(
+      "the ceiling is set to three characters of headroom, and the rate is cleared",
+      setCeiling.status === 200
+        && setCeiling.data?.limits?.character_ceiling === limitCeiling
+        && setCeiling.data?.limits?.requests_per_minute === null
+        && setCeiling.data?.limits?.characters_remaining === 3,
+      JSON.stringify(setCeiling.data?.limits),
+    );
+    const ceilingRefusal = await plane(planeBase, "/v1/audio/speech", {
+      method: "POST",
+      token: limitsKey,
+      body: { input: LIMIT_TEXT, voice: SPEAK_VOICE, response_format: "wav" },
+    });
+    const ceilingDetail = ceilingRefusal.data?.detail;
+    check(
+      "a request over the ceiling is refused 402 with the headroom it has left",
+      ceilingRefusal.status === 402
+        && ceilingDetail?.error === "character_ceiling_exceeded"
+        && ceilingDetail?.remaining === 3
+        && typeof ceilingDetail?.resets_at === "string"
+        && ceilingDetail.resets_at.length > 0,
+      JSON.stringify(ceilingRefusal.data).slice(0, 300),
+    );
+    const afterCeiling = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;
+    check(
+      "the ceiling refusal is a ledger row with zero characters, not a silent drop",
+      afterCeiling.characters === afterRate.characters
+        && afterCeiling.by_status?.["402"] === 1,
+      `characters ${afterRate.characters} -> ${afterCeiling.characters}, 402 rows ${afterCeiling.by_status?.["402"]}`,
+    );
+
+    // The page the customer actually reads.
+    await page.goto(`${webBase}/usage`, { waitUntil: "load" });
+    await page.waitForSelector('[data-testid="limits"]', { timeout: 30000 });
+    const shown = await page.evaluate(() => ({
+      ceiling: document.querySelector('[data-testid="limit-ceiling"]')?.textContent?.trim(),
+      used: document.querySelector('[data-testid="limit-used"]')?.textContent?.trim(),
+      remaining: document.querySelector('[data-testid="limit-remaining"]')?.textContent?.trim(),
+      rate: document.querySelector('[data-testid="limit-rate"]')?.textContent?.trim(),
+      note: document.querySelector('[data-testid="limits"]')?.textContent || "",
+    }));
+    const group = (value) => String(value || "").replace(/[^0-9]/g, "");
+    check(
+      "the Usage page shows the ceiling, what is charged against it and what is left",
+      group(shown.ceiling) === String(limitCeiling)
+        && group(shown.used) === String(afterCeiling.characters)
+        && group(shown.remaining) === "3",
+      JSON.stringify(shown),
+    );
+    check(
+      "the Usage page names the rate and says the window is fixed",
+      shown.rate === "none" || /\/min/.test(shown.rate),
+      shown.rate,
+    );
+    check(
+      "the Usage page says a refused request costs no characters",
+      /costs\s+no characters|costs no characters/i.test(shown.note.replace(/\s+/g, " ")),
+      shown.note.replace(/\s+/g, " ").slice(0, 160),
+    );
+
+    // And the refusal as a customer sees it: the plane's own sentence, in the
+    // page, not a bracket object. Making the refusal body an object is what
+    // turned every `data?.detail` in the dashboard into `[object Object]` until
+    // this slice routed them all through one reader.
+    await page.goto(`${webBase}/speak`, { waitUntil: "load" });
+    await chooseSelect(page, "voice-select", SPEAK_VOICE);
+    await page.fill('[data-testid="speak-text"]', LIMIT_TEXT);
+    await page.click('[data-testid="speak-submit"]');
+    await page.waitForSelector(".notice--error", { timeout: SPEAK_TIMEOUT_MS });
+    const refusedSentence = await page.evaluate(
+      () => (document.querySelector(".notice--error")?.textContent || "").trim(),
+    );
+    check(
+      "the dashboard shows the plane's own ceiling sentence, not [object Object]",
+      /leaves? .*ceiling|ceiling of/i.test(refusedSentence) && !refusedSentence.includes("[object"),
+      refusedSentence.slice(0, 200),
+    );
+
+    const cleared = await plane(planeBase, "/v1/limits", {
+      method: "PUT", token: session, body: { character_ceiling: null, requests_per_minute: null },
+    });
+    check(
+      "clearing both limits works, and the page then says none",
+      cleared.status === 200
+        && cleared.data?.limits?.character_ceiling === null
+        && cleared.data?.limits?.requests_per_minute === null,
+      JSON.stringify(cleared.data?.limits),
+    );
+    await page.goto(`${webBase}/usage`, { waitUntil: "load" });
+    await page.waitForSelector('[data-testid="limits"]', { timeout: 30000 });
+    const clearedShown = await page.evaluate(() => ({
+      ceiling: document.querySelector('[data-testid="limit-ceiling"]')?.textContent?.trim(),
+      rate: document.querySelector('[data-testid="limit-rate"]')?.textContent?.trim(),
+    }));
+    check(
+      "with no limits set the page says none rather than zero",
+      clearedShown.ceiling === "none" && clearedShown.rate === "none",
+      JSON.stringify(clearedShown),
+    );
+    result.limits = {
+      ceiling_set: limitCeiling,
+      ceiling_refusal_status: ceilingRefusal.status,
+      rate_refusal_status: rateRefusal.status,
+      retry_after: retryAfter,
+      characters_before: beforeRate.characters,
+      characters_after_first_two: afterRate.characters,
+      characters_after_refusal: afterCeiling.characters,
+      page_ceiling: shown.ceiling,
+      page_remaining: shown.remaining,
+      page_rate: shown.rate,
+      refusal_sentence: refusedSentence.slice(0, 200),
     };
 
     // ── keyboard focus is visible ───────────────────────────────────────────

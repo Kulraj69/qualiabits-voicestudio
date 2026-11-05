@@ -16,6 +16,7 @@ import {
   tooLongManuscriptSentence,
 } from "../lib/projects.js";
 import { defaultVoiceId, groupVoices, KIND_LABELS } from "../lib/voices.js";
+import { planeDetail } from "../lib/controlplane.js";
 import SearchableSelect from "./SearchableSelect.jsx";
 
 /** The dashboard's own class for a project's word, reusing the queue's badge set. */
@@ -116,8 +117,7 @@ export default function ProjectsView({ catalogue, initialProjects, limits }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const detail = data?.detail;
-        setError(typeof detail === "string" ? detail : "The plane refused to queue the manuscript.");
+        setError(planeDetail(data, "The plane refused to queue the manuscript."));
         return;
       }
       const chapters = data.project?.chapters?.length ?? 0;
@@ -138,7 +138,7 @@ export default function ProjectsView({ catalogue, initialProjects, limits }) {
     const response = await fetch(`/api/projects/${id}`, { method: "DELETE" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setError(data?.detail || "The plane refused the cancellation.");
+      setError(planeDetail(data, "The plane refused the cancellation."));
       return;
     }
     setNotice(`Cancelled ${data.cancelled_jobs?.length ?? 0} queued chapter(s). Spoken chapters are kept.`);

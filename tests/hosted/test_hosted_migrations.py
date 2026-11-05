@@ -107,11 +107,16 @@ def write_slice_a_database(path: Path, *, email: str = "old@example.com") -> Non
 def test_a_fresh_database_is_created_at_the_current_version(tmp_path):
     db = Database(f"sqlite:///{tmp_path / 'fresh.db'}")
     assert migrate(db, expected_version=SCHEMA_VERSION) == "created"
-    assert db.schema_version() == SCHEMA_VERSION == "m2f1"
+    assert db.schema_version() == SCHEMA_VERSION == "m2g1"
     assert inspect(db.engine).has_table("jobs")
     assert inspect(db.engine).has_table("projects")
     assert inspect(db.engine).has_table("project_chapters")
     assert inspect(db.engine).has_table("dubs")
+    assert inspect(db.engine).has_table("quota_periods")
+    assert inspect(db.engine).has_table("rate_windows")
+    assert {"character_ceiling", "requests_per_minute"} <= {
+        column["name"] for column in inspect(db.engine).get_columns("workspaces")
+    }
     assert "transcript_characters" in {
         column["name"] for column in inspect(db.engine).get_columns("usage_events")
     }
@@ -123,8 +128,8 @@ def test_a_slice_a_database_is_brought_forward_and_keeps_every_row(tmp_path):
     db = Database(f"sqlite:///{path}")
 
     assert db.schema_version() == "m2a1"
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2f1"
-    assert db.schema_version() == "m2f1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2g1"
+    assert db.schema_version() == "m2g1"
     assert inspect(db.engine).has_table("jobs")
 
     with db.session() as session:
@@ -134,6 +139,10 @@ def test_a_slice_a_database_is_brought_forward_and_keeps_every_row(tmp_path):
         assert security.verify_password(
             PASSWORD, workspace.password_salt, workspace.password_hash, workspace.password_params
         ), "the password stored by the old build still verifies"
+        # Slice G, and the point of its defaults: an upgrade does not silently
+        # throttle a customer who never asked for a limit.
+        assert workspace.character_ceiling == 0
+        assert workspace.requests_per_minute == 0
         # The new table is usable on the old database.
         job = jobs.enqueue(
             session,
@@ -151,7 +160,7 @@ def test_upgrading_twice_changes_nothing_the_second_time(tmp_path):
     write_slice_a_database(path)
     db = Database(f"sqlite:///{path}")
 
-    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2f1"
+    assert migrate(db, expected_version=SCHEMA_VERSION) == "upgraded:m2a1->m2g1"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     assert migrate(db, expected_version=SCHEMA_VERSION) == "current"
     with db.session() as session:
@@ -183,6 +192,15 @@ def test_a_step_can_be_run_again_without_failing(tmp_path):
         steps["m2f1"](connection)
     with db.engine.begin() as connection:
         steps["m2f1"](connection)
+    # Slice G's step is the only one that adds columns *and* tables, so it is the
+    # one worth running twice for real: the columns are guarded by a schema read
+    # and the tables by ``checkfirst``.
+    with db.engine.begin() as connection:
+        steps["m2g1"](connection)
+    with db.engine.begin() as connection:
+        steps["m2g1"](connection)
+    assert inspect(db.engine).has_table("quota_periods")
+    assert inspect(db.engine).has_table("rate_windows")
     assert inspect(db.engine).has_table("jobs")
     assert inspect(db.engine).has_table("projects")
     assert inspect(db.engine).has_table("project_chapters")
@@ -255,7 +273,7 @@ def test_the_app_upgrades_a_slice_a_database_in_place_and_the_customer_still_log
     write_slice_a_database(tmp_path / "control-plane.db")
     with app_client(tmp_path, engine) as client:
         health = client.get("/healthz").json()
-        assert health["schema_state"] == "upgraded:m2a1->m2f1"
+        assert health["schema_state"] == "upgraded:m2a1->m2g1"
         assert health["schema_version"] == SCHEMA_VERSION
 
         # The customer who signed up under slice A signs in with the same password.

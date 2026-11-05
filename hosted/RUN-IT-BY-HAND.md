@@ -70,4 +70,26 @@ file job1.wav        # RIFF 24 kHz mono; sha256 matches the job's own receipt
 # 7. read the meter. characters are what you asked for, audio_seconds are what
 #    arrived, measured from the WAV you actually received — both routes, once each.
 curl -sS $BASE/v1/usage -H "Authorization: Bearer KEY_FROM_STEP_3"
+
+# 8. bounds. A ceiling of 2000 characters for this UTC month and 5 requests a
+#    minute for each key. A session sets them; a key can only read them.
+curl -sS -X PUT $BASE/v1/limits \
+  -H "Authorization: ***" \
+  -H 'content-type: application/json' \
+  -d '{"character_ceiling":2000,"requests_per_minute":5}'
+
+# 9. and watch it hold. Speak 30-character lines in a loop: past the fifth in one
+#    minute the plane answers 429 with a Retry-After, and past 2000 characters it
+#    answers 402 with the moment the period resets. Both refusals carry
+#    x-qualiabits-limit-remaining, and neither costs a character.
+for i in $(seq 1 8); do
+  curl -sS -o /dev/null -w "%{http_code}\n" -X POST $BASE/v1/audio/speech \
+    -H "Authorization: ***" -H 'content-type: application/json' \
+    -d '{"input":"123456789012345678901234567890","voice":"hf_alpha"}'
+done
+
+# 10. give the ceiling back (null clears it; omitting a field leaves it alone).
+curl -sS -X PUT $BASE/v1/limits \
+  -H "Authorization: ***" \
+  -H 'content-type: application/json' -d '{"character_ceiling":null}'
 ```

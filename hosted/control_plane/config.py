@@ -26,7 +26,11 @@ from pathlib import Path
 #: m2f1 — slice F: adds ``dubs``, so a recording and the same words in another
 #:        voice are one receipt rather than two unrelated engine calls. (Slice E,
 #:        the light theme, added no table and needed no migration.)
-SCHEMA_VERSION = "m2f1"
+#: m2g1 — slice G: adds ``workspaces.character_ceiling`` and
+#:        ``workspaces.requests_per_minute``, plus ``quota_periods`` (the
+#:        reservation counter) and ``rate_windows`` (requests per key per fixed
+#:        minute), so a limit is enforced before the engine is asked.
+SCHEMA_VERSION = "m2g1"
 
 DEFAULT_UPSTREAM = "http://127.0.0.1:3900"
 DEFAULT_SESSION_TTL_SECONDS = 12 * 60 * 60
@@ -36,6 +40,32 @@ DEFAULT_JOB_MAX_ATTEMPTS = 3
 #: 16-bit 44.1 kHz mono audio, which is far more than a support-ticket voice
 #: note and far less than a customer's whole call archive.
 DEFAULT_TRANSCRIBE_MAX_BYTES = 25 * 1024 * 1024
+
+#: Slice G. The ceiling a *new* workspace starts with, and the rate limit it
+#: starts with. Zero means none: the plane does not impose a policy the operator
+#: did not ask for, and the plane's own end-to-end runs must not be throttled by
+#: a default nobody set. An operator can raise both for new signups with
+#: ``QUALI_DEFAULT_CHARACTER_CEILING`` / ``QUALI_DEFAULT_REQUESTS_PER_MINUTE``.
+DEFAULT_CHARACTER_CEILING = 0
+DEFAULT_REQUESTS_PER_MINUTE = 0
+
+
+def _env_nonneg_int(name: str, default: int, *, ceiling: int) -> int:
+    """A non-negative setting, refused above a sane ceiling.
+
+    Zero is meaningful for every limit in this file (it means "none"), so it
+    cannot go through :func:`_env_int`, which rejects it.
+    """
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer, got {raw!r}") from exc
+    if value < 0 or value > ceiling:
+        raise ValueError(f"{name} must be between 0 and {ceiling}, got {value}")
+    return value
 
 
 def _env_int(name: str, default: int) -> int:
@@ -90,6 +120,10 @@ class Settings:
     # ── slice C ───────────────────────────────────────────────────────────────
     #: Bytes of one uploaded recording the plane will accept before it refuses.
     transcribe_max_bytes: int = DEFAULT_TRANSCRIBE_MAX_BYTES
+    # ── slice G ───────────────────────────────────────────────────────────────
+    #: What a new workspace starts with. Zero means no limit; see limits.py.
+    default_character_ceiling: int = DEFAULT_CHARACTER_CEILING
+    default_requests_per_minute: int = DEFAULT_REQUESTS_PER_MINUTE
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -124,5 +158,15 @@ class Settings:
             job_poll_seconds=_env_float("QUALI_JOB_POLL_SECONDS", 1.0),
             transcribe_max_bytes=_env_int(
                 "QUALI_TRANSCRIBE_MAX_BYTES", DEFAULT_TRANSCRIBE_MAX_BYTES
+            ),
+            default_character_ceiling=_env_nonneg_int(
+                "QUALI_DEFAULT_CHARACTER_CEILING",
+                DEFAULT_CHARACTER_CEILING,
+                ceiling=1_000_000_000,
+            ),
+            default_requests_per_minute=_env_nonneg_int(
+                "QUALI_DEFAULT_REQUESTS_PER_MINUTE",
+                DEFAULT_REQUESTS_PER_MINUTE,
+                ceiling=1_000_000,
             ),
         )

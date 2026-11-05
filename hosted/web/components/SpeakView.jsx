@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { defaultVoiceId, groupVoices, KIND_LABELS, languageOptions } from "../lib/voices.js";
+import { planeDetail } from "../lib/controlplane.js";
 import SearchableSelect from "./SearchableSelect.jsx";
 
 /** ISO 639-1 codes offered as completions. The engine may still ignore one. */
@@ -73,7 +74,7 @@ export default function SpeakView({ catalogue, initialVoice = "" }) {
       if (!response.ok) {
         setKeyRejected(response.headers.get("x-qualiabits-key-state") === "rejected");
         const data = await response.json().catch(() => ({}));
-        setError(data?.detail || `The plane answered ${response.status}.`);
+        setError(planeDetail(data, `The plane answered ${response.status}.`));
         return;
       }
       setKeyRejected(false);

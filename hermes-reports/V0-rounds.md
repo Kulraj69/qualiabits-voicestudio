@@ -1739,3 +1739,56 @@ the owner's GPU runtime with a hard spending limit and the listening check on th
 WAVs, one product differentiator, a deployment and object-store decision, the next M3 page,
 and the official criteria file if this is entered anywhere. Nothing was deployed, published,
 messaged, submitted, spent or priced; no GPU, no provider call, no terms accepted.
+
+## Rotation slot 79 — V0-build — 2026-11-05 — M3 slice G: limits that hold
+
+Plan (step 1 of the MANDATORY SELF-LOOP). Rotation: the last line of
+`/workspace/devpost/hermes-reports/lane-rotation.txt` read at 05:06 IST was slot 78
+(hackathon), so this tick of [V0-build, hackathon, V0-build, V0-growth] is **V0-build**.
+Slot 77 finished slice F, so this slot opens the next slice instead of resuming one.
+
+**Why slice G is limits, not the two pages M3 names.** Voice Clone (with consent) and Voice
+Design are engine-gated on this box, and the gate is visible in this repository's own code:
+
+| engine | what it advertises | why it cannot run here |
+| --- | --- | --- |
+| `engines/cosyvoice_gguf` (`__init__.py:25`) | `supports_cloning = True`, CPU/Vulkan, "reference clone" | needs the `Lourdle/cosyvoice.cpp` native server built from a pinned source revision; that engine's own spec records Windows x64 + AMD Vulkan as the verified target |
+| `engines/pockettts` (`__init__.py:74`) | `supports_cloning = True`, CPU-only, MIT + CC-BY-4.0 | weights are gated on HuggingFace behind an access agreement and an acceptable-use clause; accepting terms for the owner is not this lane's to do |
+| `engines/indextts`, `dots_tts`, `moss_tts_v15`, `moss_tts_nano_subprocess`, `confucius4` | reference-clip timbre, `supports_voice_design = False` | each needs reference audio plus multi-GB weights; the root filesystem had 832 MB free at the start of this slot (pruned from this lane's own scratch to 2.0 GB) |
+| `engines/audiocpp`, `omnivoice_subprocess`, `voxcpm2_subprocess` | `supports_voice_design = True` | same weight problem; no design-capable weights on this box |
+| the one engine the hosted plane actually speaks through | Kokoro int8 (54 preset voices) + faster-whisper-small for speech in | no clone path and no design path in either |
+
+So a Voice Clone page today could only be a greyed-out button, which is the one thing this
+repository's acceptance page explicitly refuses to ship. Both pages stay unbuilt, and that
+table goes onto the acceptance page as this slice's finding.
+
+**Slice G: limits that hold.** A hosted multi-tenant product that meters but cannot stop is
+one customer's script away from spending the month's engine time. What this slice builds:
+
+1. a per-workspace monthly **character ceiling** (UTC calendar month), reserved before the
+   engine is asked and settled after, using the same compare-and-swap idiom `jobs.py` already
+   uses to claim work — two concurrent requests must not both slip past the last of the
+   ceiling;
+2. a per-API-key **request rate**, a fixed one-minute window (named fixed-window, not sliding,
+   wherever it is described), refused with `429` and a real `Retry-After`;
+3. refusals as real behaviour: `402` for the ceiling with the period reset time in the body,
+   `429` for the rate; the meter records the refusal with **zero** characters because the text
+   never reached the engine;
+4. the limits shown and settable on the dashboard's Usage page, and readable over the API
+   (`GET /v1/limits`) so a customer can alarm on the remaining amount;
+5. honest scope: the ceiling counts characters asked for, so a transcription (which asks for
+   none) is bounded by the rate and not by the ceiling.
+
+Definition of done: enforced on all five metered entry points with the refusal decided before
+the upstream call (proved by a stub engine that counts calls); thread-safe under a race;
+migration `m2g1` brings an older database forward untouched; dashboard shows and sets them;
+`tests/hosted` + web unit + both browser paths re-taken at ONE revision over clean trees + a
+cold clone; acceptance page, both READMEs and DESIGN.md updated with guards that read the new
+rows back; at least two cheap+ judge rounds with fixes after each and no honesty flaw in the
+last. Targets: technical depth, criteria fit (a product that cannot be sold safely is not a
+product), do-X-see-Y, honesty.
+
+Not claimed: originality and criteria fit against the whole V0 product remain the owner's.
+
+### Round 1 — build
+Tests: taken below as each suite runs.

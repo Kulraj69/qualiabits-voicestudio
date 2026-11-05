@@ -121,7 +121,10 @@ Now walk it, and each step says what you should see:
    type a sentence, press **Speak**. A player appears with the audio, the
    duration the plane measured from the WAV header, and a **Download WAV** link.
    Ask for a voice the engine does not have and you get *the engine's own
-   sentence*, passed through the plane.
+   sentence*, passed through the plane — and if the workspace has set a ceiling
+   this request would break, the page shows the plane's own refusal sentence, not
+   a bracket object: every error path in this app reads its message through one
+   function for exactly that reason.
 3. **Voices** at `/voices` — every voice the plane reports, as a card each, with
    the kind, the engine's default marked, and a search that narrows what arrived
    (it can only ever return voices from the plane, never add one). Press
@@ -161,7 +164,17 @@ Now walk it, and each step says what you should see:
 8. **Usage** at `/usage` — the workspace totals and the per-key breakdown, with
    the plane's own notes about what each counter means. **Characters** and
    **characters transcribed** are separate lines on purpose: one is text you asked
-   the engine to say, the other is text it handed back.
+   the engine to say, the other is text it handed back. Below them is **Limits**,
+   this workspace's own ceiling and rate, and the form that sets them: type a
+   number of characters and a number of requests per minute and press **Save
+   limits**; empty boxes mean *no limit*, and the panel then reads **none** rather
+   than zero. Set a ceiling just above what the meter says you have spent and the
+   next **Speak** is refused with the plane's own sentence, in the page, saying how
+   much is left and when the month resets — a `402`. Set the rate to two and the
+   third request inside one minute is refused with a `429` and a `Retry-After`.
+   Neither refusal costs a character, and both are visible on this page afterwards:
+   the meter counts them under their own status codes, and **Remaining** moves back
+   when a queued job you cancel gives its reservation up.
 9. **Projects** at `/projects` — paste a manuscript, give it a title, choose a
    voice, press **Create project**. The plane splits the text at paragraph ends
    first, then sentence ends, then spaces — never inside a word — and queues one

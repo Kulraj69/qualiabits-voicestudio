@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { planeDetail } from "../lib/controlplane.js";
+
 /**
  * The sign-up / sign-in form.
  *
@@ -35,7 +37,7 @@ export default function AuthForm({ mode }) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data?.detail || "Something went wrong. Try again.");
+        setError(planeDetail(data, "Something went wrong. Try again."));
         return;
       }
       router.push("/");

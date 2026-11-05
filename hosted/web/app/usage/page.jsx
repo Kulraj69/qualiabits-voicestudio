@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import LimitsView from "../../components/LimitsView.jsx";
 import { cpJson } from "../../lib/controlplane.js";
 import { formatBytes, formatCount, formatDateTime, formatSeconds, keyPrefix } from "../../lib/format.js";
 import { readSessionToken } from "../../lib/session.js";
@@ -14,6 +15,10 @@ export default async function UsagePage() {
   if (status === 401) redirect("/login");
   const usage = status === 200 ? data?.usage ?? null : null;
   const readVia = data?.read_via;
+  // Slice G: the same page shows the limits the meter is measured against, read
+  // from the plane rather than computed here, so the two cannot disagree.
+  const limitRead = await cpJson("/v1/limits", { token });
+  const limits = limitRead.status === 200 ? limitRead.data?.limits ?? null : null;
 
   if (!usage) {
     return (
@@ -156,6 +161,8 @@ export default async function UsagePage() {
           </p>
         </div>
       </section>
+
+      <LimitsView initialLimits={limits} />
     </>
   );
 }

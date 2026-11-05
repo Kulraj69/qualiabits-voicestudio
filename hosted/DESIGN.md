@@ -179,3 +179,60 @@ user-provided asset rather than a catalogue entry, so no terms are accepted on
 anybody's behalf. `hosted/web/e2e/real-engine.sh` pins the bytes it uses by sha256
 and stops rather than substituting anything. Nothing in this repository has ever
 downloaded a model behind a licence gate.
+
+
+## Limits, and why they are decided before the engine
+
+Metering is a record. It is not a brake: the plane could always say what a workspace
+had spent and could do nothing about the next request. Slice G adds the two limits a
+hosted product needs before one customer's script can spend the month — a character
+ceiling per workspace per UTC calendar month, and a request rate per API key in a
+fixed one-minute window — and this section is the reasoning behind the shape they took.
+
+**Both halves of the month live in one row.** The gate is a single conditional UPDATE:
+
+```
+UPDATE quota_periods SET reserved = reserved + n
+ WHERE id = ? AND committed + reserved + n <= ceiling
+```
+
+A `rowcount` of 1 means the characters are taken; anything else is a refusal. The first
+version compared the reservation against the ledger it had read a statement earlier, and
+the thread-race test caught what that costs: a `settle` committing between the read and
+the UPDATE moves spend out of `reserved` and into the ledger, so the reader's stale total
+is too small and it lets the request through. Reading both figures from the row it is
+about to update removes the window. `committed_characters` is a projection of the ledger
+rather than a second record — it is seeded from the ledger when the row is created (so a
+workspace that sets a ceiling mid-month, or a database upgraded from a slice with no
+counters, counts what it has already spent) and advanced only in the same transaction as
+the usage event it mirrors.
+
+**Settle and release are different verbs, and confusing them charges for nothing.**
+`settle` moves characters from reserved to committed because the engine *was* asked;
+`release` removes them because it was not — a queued job its owner cancelled before any
+worker claimed it. A cancellation that called `settle` charged the ceiling for work
+nobody did, and a test in this slice found it.
+
+**A reservation is exactly what will be charged.** A project reserves the chapter texts
+the splitter produced, not the manuscript they came from, because the two characters at
+each chapter boundary are never spoken — reserving the manuscript stranded them in the
+counter for the rest of the month, which the project test measured.
+
+**Two limits, two refusals, two meanings.** `402` for the ceiling, because waiting a
+minute cannot help and the body carries the moment the period resets. `429` for the rate,
+with a real `Retry-After`, because waiting always helps. Both carry the limit, the used
+and the remaining numbers in the headers and a machine-readable `error` in the body, so
+an integration branches on a code instead of matching English. A refused request costs
+no characters — it never reached the engine, so writing characters for it would make the
+ceiling inflate its own spend — but it does spend its rate slot, because a limiter counts
+attempts. The refusal itself is a ledger row with zero characters, so "how often was this
+workspace told no, and why" is a question the meter already answers.
+
+**Fixed window, said out loud.** The rate is a fixed minute rather than a sliding one.
+That is a real weakening: two bursts either side of a boundary can together total twice
+the limit. A sliding window costs a row per request per key to buy fairness nobody has
+asked for yet, and the alternative to naming it is pretending. The same honesty applies
+to what is *not* here: nothing prunes `rate_windows` yet, and a request that dies
+mid-flight leaves its reservation standing until the period turns over. The dashboard
+shows `characters_reserved` apart from `characters_settled`, so that difference is
+visible rather than inferred.

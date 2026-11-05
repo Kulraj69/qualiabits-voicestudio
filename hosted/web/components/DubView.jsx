@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { describeDub, dubFilename, hasWordsToSpeak } from "../lib/dubbing.js";
 import { defaultVoiceId, groupVoices, KIND_LABELS } from "../lib/voices.js";
+import { planeDetail } from "../lib/controlplane.js";
 import SearchableSelect from "./SearchableSelect.jsx";
 
 /**
@@ -85,7 +86,7 @@ export default function DubView({ catalogue, initialDubs }) {
       const response = await fetch("/api/dubs", { method: "POST", body });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data?.detail || `The plane answered ${response.status}.`);
+        setError(planeDetail(data, `The plane answered ${response.status}.`));
         return;
       }
       const record = data.dub;
