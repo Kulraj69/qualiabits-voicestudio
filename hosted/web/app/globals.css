@@ -987,10 +987,10 @@ th.num {
  * M3's brief asks for a dashboard that is "responsive", and until slice H this
  * file had no width breakpoint in it at all: the rules above are the ones the
  * desktop design was drawn with, and a narrow window simply got them squeezed.
- * The run in `hermes-reports/M3-slot81-*` is what that looked like — every page
- * scrolled sideways (the document measured 560px wide in a 390px window), the
- * session controls sat off the right edge, and the theme switch was squeezed
- * from a 34px circle to a 17px sliver, because a flex row whose items have
+ * The run in `hermes-reports/M3-slot81-web-e2e-before-r1.log` is what that looked
+ * like — every page scrolled sideways (the document measured 560px wide in a 390px
+ * window), the session controls sat off the right edge, and the theme switch was
+ * squeezed from a 34px circle to a 17x34 sliver, because a flex row whose items have
  * `min-width: auto` cannot get narrower than the sum of their content.
  *
  * So the two rules below do two different jobs. The 900px one lays the top bar
@@ -1013,9 +1013,8 @@ th.num {
   /* The top bar becomes two rows here rather than at the phone width, and that
      is deliberate: its one-row minimum content is 560px, so between 640 and 900
      a single row still *fits*, but only by squeezing the nine nav links into
-     whatever is left — the run measured three lines of links beside a one-line
-     brand. The nav gets its own full-width row, which is one tidy wrap instead
-     of a shatter, and the session controls keep their place. */
+     whatever is left. The nav gets its own full-width row, which is one tidy wrap
+     instead of a shatter, and the session controls keep their place. */
   .topbar {
     flex-wrap: wrap;
     column-gap: var(--space-3);

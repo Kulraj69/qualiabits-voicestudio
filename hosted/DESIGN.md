@@ -243,11 +243,15 @@ M3's brief asks for a dashboard that is "responsive, fast, dark/light" — and u
 the first of those three words had nothing behind it. `hosted/web/app/globals.css` held
 exactly one `@media` rule and it was `prefers-color-scheme`; there was no width breakpoint
 in the file at all, and the browser suite drove the nine pages at one viewport. What that
-cost was measured before it was fixed, and the run that measured it is the reason the
+cost was measured before it was fixed, and the transcript of that run is the reason the
 numbers in this section are numbers rather than adjectives: at 390px **every one of the
 nine pages scrolled sideways**, the document measuring 560px wide in a 390px window; the
 session controls (`span.who`, the sign-out button) sat at x=415..560, off the right edge;
-the theme switch, a 34px circle by design, was squeezed to 17x34.
+the theme switch, a 34px circle by design, was squeezed to 17x34. Every one of those
+numbers is that run's own output — `hermes-reports/M3-slot81-web-e2e-before-r1.log` — which
+also records its own verdict (151 of 155 checks passed). It is one file and it is the only
+one that records the before-state: it was taken over a working tree and kept no
+`result.json`, which is said here rather than glossed.
 
 **Why the page was 560px wide.** The top bar is a flex row, and a flex item's automatic
 minimum size is its content's, so a row of items that cannot shrink below their content
@@ -259,10 +263,13 @@ that, because the offending row was the page's own frame.
 brand, the theme switch and the session on the first, the nine nav links on their own
 full-width line underneath — because that is the honest way to give nine links room without
 either hiding some or letting the row push the session off the page. It used to be decided
-at 640px only, and the run showed what that looked like between 640 and 900: the nav
-shattered into three cramped lines beside a one-line brand, because a single row still
-“fitted” by squeezing. The free space in that row is what the nav has to live in, so the
-nav is given its own instead. Below 640px the page padding tightens once more, the brand's
+at 640px only, and the band between 768 and 900 is the reason it is not any more: a single
+row still “fits” there in the arithmetic sense — the bar's one-row minimum is 560px — and
+the nav is what pays for it. That band is reasoned from the 560px minimum rather than
+measured: the harness drives 390, 768 and 1440, so the tablet end of it is measured and the
+rest is an inference this page labels as one. The free space in that row is what the nav
+has to live in, so the nav is given its own instead. Below 640px the page padding tightens
+once more, the brand's
 “Dashboard” suffix goes, so does the signed-in name beside the sign-out button — the home
 page's own heading carries it — and the two places with a fixed minimum width — the session
 block and the revealed API key — are allowed to shrink. Which of those is *needed* is not a

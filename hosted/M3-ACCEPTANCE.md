@@ -89,7 +89,10 @@ top bar's own controls stay inside the window and stay big enough to press. Two
 defects are on the record in that harness rather than quietly fixed: the bar whose flex
 children could not shrink below their content (the document measured 560px wide in a
 390px window, so the session block sat off the right edge), and the page padding and the
-session control, which had to be allowed to shrink once more below 640px. The artefact
+session control, which had to be allowed to shrink once more below 640px. Those before-numbers
+are one run's own output — `hermes-reports/M3-slot81-web-e2e-before-r1.log`, kept as the
+transcript it is because that run was taken over a working tree and no `result.json` for it
+exists. The artefact
 is the screenshots: every page at both narrow widths, committed beside the run.
 
 Two of the pages
