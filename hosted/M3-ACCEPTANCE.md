@@ -119,11 +119,12 @@ rather than trusted: both paths' check counts, the two-check difference between
 them, and the shared-word count below all fail the suite if the page and the file
 disagree. A change to a measured directory, the harness included, is the other case:
 that fails the same guard, and a fresh browser run is owed. Concretely, for this
-pair: the two browser paths ran at `370e78743`; that commit is an ancestor of
-everything pushed since, and `git diff 370e78743 <pushed HEAD> -- hosted/control_plane
+pair: the two browser paths ran at `dc63603ba`; that commit is an ancestor of
+everything pushed since, and `git diff dc63603ba <pushed HEAD> -- hosted/control_plane
 hosted/worker hosted/scripts hosted/web/app hosted/web/components hosted/web/lib
 hosted/web/e2e` is empty, which is the `git diff` the same guard runs. The pushed HEAD
-itself is read back from the remote into `hermes-reports/V0-slot79-push-r1.log`, so
+itself is read back from the remote into `hermes-reports/V0-slot81-push-r1.log`, which
+also holds the two commands and the remote SHA, so
 the chain runs run → commit → push and every link is a file a reader can open.
 
 | The plan asks for | Code | Tests | A check in the browser run |

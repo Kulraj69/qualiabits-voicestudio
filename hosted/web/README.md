@@ -61,13 +61,14 @@ puts those in `.venv`. With an interpreter like that, from a bare clone:
 git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git qb && cd qb
 <python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py \
     tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
-# 31 passed — no venv in that clone, no model, no browser. Transcript:
-# hermes-reports/V0-slot79-coldclone-r1.log, taken from a clone of f3de24f5c, whose
-# first lines are the clone, the revision and the interpreter it borrowed (a sibling
-# checkout's .venv — the clone itself has none). That transcript records both
-# attempts, both the same: 31 passed, 0 skipped, because this box had room for
+# 32 passed — no venv in that clone, no model, no browser. Transcript:
+# hermes-reports/V0-slot81-coldclone-r1.log, taken from a clone of the pushed
+# revision 360e563d9, whose first lines are the clone, the revision, the
+# interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
+# and what the clone does not have. That transcript records both
+# attempts, both the same: 32 passed, 0 skipped, because this box had room for
 # the 112 MB asset one guard stages. On a box that has no room, that one test skips
-# and the same command prints 30 passed with one skip; the command is the same either
+# and the same command prints 31 passed with one skip; the command is the same either
 # way, only the box changes.
 ```
 
