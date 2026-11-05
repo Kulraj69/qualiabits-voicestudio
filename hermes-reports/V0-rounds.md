@@ -1856,3 +1856,43 @@ Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless`: `815662b8b..9cee02f
 (the three slice-G commits and this log in one push); remote SHA read back equal
 (`hermes-reports/V0-slot79-push-r1.log`). Nothing deployed, published, messaged, submitted,
 spent or priced; no GPU, no provider call, no terms accepted.
+
+# M3 slice H — the width the brief asked for
+
+## Round 1 — plan, and the definition of done
+
+M3's brief, quoted where it was written: *"new web UI (Next.js): clean ElevenLabs-quality
+dashboard ... Responsive, fast, dark/light."* Dark/light was slice E and has guards. **Responsive
+has nothing**: `hosted/web/app/globals.css` holds exactly one `@media` rule and it is
+`prefers-color-scheme` — there is no width breakpoint anywhere in the 983 lines — and the browser
+harness walks the nine pages at one viewport and asserts nothing about width. So a customer who
+opens the dashboard on a phone gets whatever the desktop layout does when it is squeezed, and no
+run in this repository has ever looked. Slice H is that width: breakpoints, the real defects a
+narrow window exposes, checks that would catch a regression, and the same one-revision evidence
+chain the other slices have.
+
+Definition of done for the slice: (a) the nine pages render at three widths — 390x844 (phone),
+768x1024 (tablet), 1440x900 (desktop) — with **no sideways scroll and no element wider than the
+window** on any page at any of them, asserted element-by-element in a real browser and not by
+eye; (b) the top bar's own controls (brand, nav, theme switch, session) stay inside the window and
+remain clickable at phone width; (c) the desktop appearance is unchanged — the same width, the
+same checks that existed before slice H still pass at the viewport they use; (d) screenshots of
+every page at phone width are committed as the artefact; (e) any pure geometry rule worth keeping
+without a browser gets a unit test; (f) `hosted/M3-ACCEPTANCE.md`, `hosted/README.md`,
+`hosted/web/README.md` and `hosted/DESIGN.md` carry the new rows and guards read them back;
+(g) both browser paths re-taken at ONE revision over clean trees, plus a cold clone and
+`tests/hosted` + the web unit suite; (h) two cheap+ judge rounds with fixes after each, no honesty
+flaw in the last.
+
+Judging criteria targeted: taste and human feel (this is the one criterion a squeezed layout is
+felt in), technical depth (a real measurement, not an impression), criteria fit (the brief says
+it), README do-X-see-Y (the run is the evidence), honesty (the before-state is recorded, not
+quietly fixed).
+
+**Explicitly not claimed:** originality and criteria fit against the whole V0 product remain the
+owner's. Nothing is deployed: every width below is loopback.
+
+### Round 1 — the checks first, so the defect is on the record before it is fixed
+
+The harness gained the width section *before* the stylesheet gained the breakpoints, so the run
+that follows records the failure rather than my description of it.
