@@ -17,3 +17,13 @@ c86afdd0cdf854b2d45b2a0af108f47517f212c3	refs/heads/work/m1-headless
 
 $ git rev-parse HEAD
 c86afdd0cdf854b2d45b2a0af108f47517f212c3
+
+$ git push origin work/m1-headless   # the push transcript's own commit
+To https://github.com/Kulraj69/qualiabits-voicestudio.git
+   c86afdd0c..da2ba0422  work/m1-headless -> work/m1-headless
+
+$ git ls-remote origin work/m1-headless
+da2ba042212122a525e7a284c74e092b6802e428	refs/heads/work/m1-headless
+
+$ git rev-parse HEAD
+da2ba042212122a525e7a284c74e092b6802e428
