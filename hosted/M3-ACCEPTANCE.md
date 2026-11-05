@@ -1,4 +1,4 @@
-# What M3 asked for so far — slices A to E — and where each piece is
+# What M3 asked for so far — slices A to H — and where each piece is
 
 No official judging criteria are mapped here, and none can be: M3 is a milestone in
 this repository's own plan, not a hackathon this product is entered in. There is no
@@ -12,7 +12,7 @@ rather than a claim: nothing in this repository measures itself against a commer
 voice product, no such product has been run or quoted, and the two comparisons the
 project does have are wall-clock timings against another local engine.
 
-Six slices are built. **Slice A** is the four things a customer does first — sign
+Eight slices are built. **Slice A** is the four things a customer does first — sign
 up, speak, mint keys, see what was used. **Slice B** is transcription: a recording in,
 the engine's transcript out, metered in its own counters. **Slice C** is the Voice
 Library: every voice the plane reports, searchable, each one previewable through the
@@ -75,6 +75,22 @@ Both limits are readable over the API (`GET /v1/limits`) so a customer can alarm
 the remainder, and settable on the dashboard's own Usage page — with one asymmetry
 that is deliberate: a key can *read* the limits, and only a session can change them,
 because lowering a client's own ceiling is exactly what a runaway client would do.
+**Slice H** is the second adjective in that brief: *responsive*. Until it, the
+stylesheet held exactly one width-free `@media` rule — the light palette's
+`prefers-color-scheme` fallback — and no breakpoint anywhere, so a customer who opened
+the dashboard on a phone got the desktop layout squeezed, and no run in this repository
+had ever looked. It has two widths now (900px and 640px), and they are layout only: a
+breakpoint may move a box, never re-colour one, because a colour token declared inside a
+width block would be a third copy of the palette that the theme guard knows nothing
+about. The measured claim is not "it looks fine" but what a real browser reports on all
+nine pages at 390x844, 768x1024 and 1440x900: no page scrolls sideways, no element is
+wider than the window, the heading stays inside it, and — at the two narrow widths — the
+top bar's own controls stay inside the window and stay big enough to press. Two
+defects are on the record in that harness rather than quietly fixed: the bar whose flex
+children could not shrink below their content (the document measured 560px wide in a
+390px window, so the session block sat off the right edge), and the page padding and the
+session control, which had to be allowed to shrink once more below 640px. The artefact
+is the screenshots: every page at both narrow widths, committed beside the run.
 
 Two of the pages
 M3 names — Voice Clone with a consent checkbox and Voice Design — are
@@ -82,7 +98,7 @@ M3 names — Voice Clone with a consent checkbox and Voice Design — are
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M3-slot79-web-e2e-r1/result.json`, taken
+at: the checks come from `hermes-reports/M3-slot81-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. `tests/hosted/test_m3_acceptance_matrix.py` reads this table and fails if a path
 stops existing or a named check stops appearing in the run the page cites, so the
 table cannot quietly become a description of a previous version of the code.
@@ -96,7 +112,7 @@ evidence about the code under the directories it measured, and about the harness
 the run's revision, because the prose on these pages is corrected after a run — a
 count, a name, a measured word. Those corrections cannot make the run untrue,
 because the numbers they state are read back out of the same run file by guards
-rather than trusted: both paths' check counts, the one-check difference between
+rather than trusted: both paths' check counts, the two-check difference between
 them, and the shared-word count below all fail the suite if the page and the file
 disagree. A change to a measured directory, the harness included, is the other case:
 that fails the same guard, and a fresh browser run is owed. Concretely, for this
@@ -178,6 +194,14 @@ the chain runs run → commit → push and every link is a file a reader can ope
 | Clearing a limit is distinguishable from not mentioning it | `hosted/web/lib/quota.js` | `hosted/web/test/quota.test.mjs` | `clearing both limits works, and the page then says none` |
 | A refusal reaches the page as a sentence, not as an object | `hosted/web/lib/controlplane.js` | `hosted/web/test/controlplane.test.mjs` | `the dashboard shows the plane's own ceiling sentence, not [object Object]` |
 | An older database gains the limits without throttling anyone | `hosted/control_plane/migrations.py` | `tests/hosted/test_hosted_migrations.py` | `a workspace starts with no ceiling and no rate, and says the window is fixed` |
+| A dashboard that is responsive, not one that scrolls sideways on a phone | `hosted/web/app/globals.css` | `tests/hosted/test_dashboard_width_rules.py` | `390x844: no page scrolls sideways` |
+| Nothing is wider than the window at phone or tablet width, page by page | `hosted/web/app/globals.css` | `tests/hosted/test_dashboard_width_rules.py` | `390x844: no element is wider than the window` |
+| The bar wraps into at most two rows below 900px, and the nav takes its own row | `hosted/web/app/globals.css` | `tests/hosted/test_dashboard_width_rules.py` | `390x844: the top bar lays out in at most two rows, nav included` |
+| The top bar's own controls stay inside the window at phone width | `hosted/web/components/SiteHeader.jsx` | `hosted/web/test/harness.test.mjs` | `390x844: every top bar control stays inside the window` |
+| The theme switch is a hit target, so a narrow bar may not squeeze it | `hosted/web/app/globals.css` | `tests/hosted/test_dashboard_width_rules.py` | `390x844: every top bar control is still big enough to press` |
+| The tablet width is measured too, not only the phone | `hosted/web/e2e/dashboard.mjs` | `tests/hosted/test_dashboard_width_rules.py` | `768x1024: no page scrolls sideways` |
+| Every page at both narrow widths, captured as the artefact | `hosted/web/e2e/dashboard.mjs` | `hosted/web/test/harness.test.mjs` | `phone and tablet: every page was captured as a screenshot at both widths` |
+| The desktop layout the dashboard already had is unchanged by the width work | `hosted/web/app/globals.css` | `tests/hosted/test_dashboard_width_rules.py` | `desktop: the nav still sits on one line, as the shipped design has it` |
 
 Two sentences that belong beside that table, because the gap between what is proven
 and what is not is exactly where a product page starts lying:
@@ -188,12 +212,13 @@ and what is not is exactly where a product page starts lying:
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
   the real engine — that a second engine could hear words it had said. In the run this
-  page cites, three of the five words of the Hindi sentence came back — एक, हिन्दी and
-  है — and a guard below reads that number back out of the run's own
+  page cites, two of the five words of the Hindi sentence came back — एक and है — and a
+  guard below reads that number back out of the run's own
   `transcript.shared_words` rather than trusting this sentence. The count moves
   between runs of the *same code*: the run before this one
-  (`hermes-reports/M3-slot77-web-e2e-r1`: एक and है) came back with two, the two before
-  that (`hermes-reports/M3-slot75-web-e2e-r1`: एक, हिन्दी and है) with three, its
+  (`hermes-reports/M3-slot79-web-e2e-r1`: एक, हिन्दी and है) came back with three, the
+  one before that (`hermes-reports/M3-slot77-web-e2e-r1`: एक and है) with two, then
+  (`hermes-reports/M3-slot75-web-e2e-r1`: एक, हिन्दी and है) with three, its
   predecessor (`hermes-reports/M3-slot72-web-e2e-r1`: एक and है) with two, and the
   earliest of them (`hermes-reports/M3-slot56-web-e2e-r1`: यह, एक and है) with three.
   This run heard यह as *यहा* and वाक्य as *वाग के*.

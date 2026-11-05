@@ -64,6 +64,8 @@ WORD_NUMBERS = {
     "one-hundred-thirty-three": 133,
     "one-hundred-forty-two": 142,
     "one-hundred-forty-eight": 148,
+    "one-hundred-fifty-nine": 159,
+    "one-hundred-sixty-five": 165,
 }
 
 #: The checks that exist only under `--keep`, because they assert that the
@@ -166,6 +168,26 @@ def test_the_two_cited_runs_were_taken_at_one_revision():
     )
 
 
+def spelled(count: int) -> str:
+    """The word this repository's prose uses for `count`.
+
+    The page spells its counts out (`one-hundred-fifty-nine`, not `159`), so a guard
+    that wants to read a count back has to spell it the same way. This round's
+    predecessor pinned the two words themselves — `one-hundred-forty-two` and
+    `one-hundred-forty-eight` — which made the guard also a ban on any check being
+    added to either path: slice H added seventeen and the guard failed on prose that
+    had correctly followed the runs. The word is looked up now and the number is
+    what is asserted.
+    """
+    for word, number in WORD_NUMBERS.items():
+        if number == count:
+            return word
+    raise AssertionError(
+        f"the runner's vocabulary has no word for {count}; add it to WORD_NUMBERS "
+        "and use it in hosted/web/README.md"
+    )
+
+
 def test_the_stated_counts_are_the_counts_in_the_two_runs():
     text = readme()
     cited = cited_runs()
@@ -178,22 +200,24 @@ def test_the_stated_counts_are_the_counts_in_the_two_runs():
         "the run the page calls the stub path is not the stub path"
     )
 
-    for word, expected in (
-        ("one-hundred-forty-two", stub_keep),
-        ("one-hundred-forty-eight", real_keep),
+    for sentence in (
+        f"{spelled(stub_keep)} checks on the stub path",
+        f"{spelled(real_keep)} against the real engine",
     ):
-        assert word in text, f"the page no longer states {word!r}"
-        assert WORD_NUMBERS[word] == expected, (
-            f"the page says {word!r} ({WORD_NUMBERS[word]}) and the runs record {expected}"
+        assert sentence in flat(text), (
+            f"the page no longer says {sentence!r}; the runs record {stub_keep} "
+            f"(stub) and {real_keep} (real)"
         )
-    assert "one-hundred-forty-two checks on the stub path" in flat(text)
-    assert "one-hundred-forty-eight against the real engine" in flat(text)
     # The un-kept totals are not asserted against the page: the harness only writes
     # result.json when it is asked to keep evidence, so there is no committed run to
     # read them from, and a judge pass was right that the page should not quote
     # arithmetic as a measurement. What is still checked is that the rule holds.
-    assert stub_without == stub_keep - 1 and real_without == real_keep - 1, (
-        "the screenshot check is no longer the only difference between --keep and not"
+    assert stub_without == stub_keep - EXPECTED_KEEP_ONLY and (
+        real_without == real_keep - EXPECTED_KEEP_ONLY
+    ), (
+        "the screenshot checks are no longer the only difference between --keep and "
+        f"not: the stub path loses {stub_keep - stub_without} and the real path "
+        f"{real_keep - real_without}, against {EXPECTED_KEEP_ONLY} screenshot-only checks"
     )
 
 

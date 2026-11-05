@@ -28,8 +28,8 @@ material from there down is long on purpose: a judge pass called this page an ev
 dossier, and that is what the honesty claim costs in this repository.
 
 The fastest way to check the claims below without fetching a model: the two committed
-runs in this repository — `hermes-reports/M3-slot79-web-e2e-r1/result.json` (real
-engine, 148 checks) and `hermes-reports/M3-slot79-web-e2e-stub-r1/result.json` (stub, 142
+runs in this repository — `hermes-reports/M3-slot81-web-e2e-r1/result.json` (real
+engine, 165 checks) and `hermes-reports/M3-slot81-web-e2e-stub-r1/result.json` (stub, 159
 checks) — record every check's own verdict, the engine's identity and the
 sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) is the
 one command that re-takes the real one, and it refuses to run on weights other than
@@ -38,13 +38,12 @@ plane, the worker and the browser, and it deliberately proves nothing about spee
 
 The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
 this repository, and their transcripts are committed beside the two run files:
-`hermes-reports/V0-slot79-tests-r2.log` (the Python guard suite, 260 passed),
-`V0-slot79-web-unit-r1.log` (the web unit suite, 118 passed), `V0-slot79-pins-r1.log`
-(the pinned-bytes guard, 5 passed), `V0-slot79-coldclone-r1.log` (the same guards twice
-from a clone of `f3de24f5c` with no `.venv`, no `node_modules` and no model: 31 passed,
-0 skipped, both attempts — this box had room for the 112 MB asset the download-branch
-guard stages), `V0-slot79-stub-run2.log` and
-`V0-slot79-real-run1.log` (the two browser runs the archives hold). A reader who
+`hermes-reports/V0-slot81-tests-r1.log` (the Python guard suite),
+`V0-slot81-web-unit-r1.log` (the web unit suite, 118 passed), `V0-slot81-pins-r1.log`
+(the pinned-bytes guard, 5 passed), `V0-slot81-coldclone-r1.log` (the same guards twice
+from a clone of the revision below, with no `.venv`, no `node_modules` and no model),
+`V0-slot81-stub-run1.log` and
+`V0-slot81-real-run1.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 
 ## Do this, see that
@@ -255,17 +254,17 @@ records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
-of the nine pages: **one-hundred-forty-two checks on the stub path** and
-**one-hundred-forty-eight against the real engine**. Without `--keep` the screenshot check
-has nowhere to write, so
-either path runs one check fewer; `--no-build` skips one more on top of that, the
+of the nine pages: **one-hundred-fifty-nine checks on the stub path** and
+**one-hundred-sixty-five against the real engine**. Without `--keep` the two checks that
+assert the screenshots have somewhere to be written have nowhere to write, so
+either path runs two checks fewer; `--no-build` skips one more on top of that, the
 check that the build succeeds. Only the two `--keep` runs are quoted as numbers here,
 because they are the two that are committed: a judge pass was right that the shorter
 forms' totals were arithmetic the page stated as though they had been measured. The
 kept runs
-are `hermes-reports/M3-slot79-web-e2e-stub-r1/result.json` and
-`hermes-reports/M3-slot79-web-e2e-r1/result.json`, and a test reads the counts, the
-one-check difference and the eight-and-two difference below back out of those files
+are `hermes-reports/M3-slot81-web-e2e-stub-r1/result.json` and
+`hermes-reports/M3-slot81-web-e2e-r1/result.json`, and a test reads the counts, the
+two-check difference and the eight-and-two difference below back out of those files
 rather than trusting this paragraph. The real path adds eight checks a constant-size
 stub cannot pass — the engine's own answers about itself, from its identity and
 active backend to the sha256 of its model files, plus the two claims a stub cannot

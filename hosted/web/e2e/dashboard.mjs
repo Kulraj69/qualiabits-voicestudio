@@ -714,7 +714,7 @@ async function main() {
             outside: offenders.filter((item) => !item.in_scroll_container).length,
             topbar_controls: controls,
             nav_row_tops: [...new Set(navTops)].length,
-            topbar_rows: barRows.length,
+            topbar_rows: barRows,
             topbar_height: barBox ? Math.round(barBox.height) : 0,
             heading_visible: Boolean(headingBox && headingBox.width > 0 && headingBox.height > 0
               && headingBox.right <= vw + 1 && headingBox.left >= -1),

@@ -182,7 +182,35 @@ def test_the_code_the_cited_run_exercised_has_not_changed_since():
 
 
 #: The prose spells its small numbers out, so the guard has to read them back.
-WORD_NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+WORD_NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+                "seven": 7, "eight": 8}
+
+
+def test_the_slice_count_in_the_prose_is_the_number_of_slices_the_page_describes():
+    """The opening sentence is a count, and it went stale twice before this guard.
+
+    It read *six* while seven slices were described, and its own title said
+    "slices A to E" two slices later. Nothing read either one: the matrix's other
+    tests read the table, and the table had grown correctly. A count in the first
+    paragraph of an acceptance page is the sentence a reader is most likely to
+    quote, so it is read back out of the page's own slice headings here.
+    """
+    text = page_text()
+    match = re.search(r"\b(\w+) slices are built\b", text)
+    assert match, "the page no longer says how many slices are built"
+    named = re.findall(r"\*\*Slice ([A-Z])\*\*", text)
+    letters = sorted(set(named))
+    assert len(letters) == len(named), (
+        f"the page describes a slice twice, or a slice is marked twice: {named}"
+    )
+    assert WORD_NUMBERS.get(match.group(1).lower()) == len(named), (
+        f"the page says {match.group(1)!r} slices are built and describes "
+        f"{len(named)}: {letters}"
+    )
+    title = text.splitlines()[0]
+    assert f"slices A to {letters[-1]}" in title, (
+        f"the title's range is stale: {title!r} against slices A to {letters[-1]}"
+    )
 
 
 def test_the_shared_word_count_in_the_prose_is_the_run_s_own():

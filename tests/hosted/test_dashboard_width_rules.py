@@ -162,3 +162,33 @@ def test_the_browser_suite_drives_the_three_widths_it_claims():
         )
     for phrase in ("no page scrolls sideways", "no element is wider than the window"):
         assert phrase in harness, f"the width checks lost their name: {phrase!r}"
+
+
+def test_the_harness_reports_the_bar_s_row_count_as_a_number():
+    """A check that reads a property of a number can never fail.
+
+    The harness counts the top bar's rows into an integer (`let barRows = 0`, then
+    `barRows += 1` per row), and the measurement it publishes was
+    `topbar_rows: barRows.length` — `undefined`. The check that consumes it,
+    "the top bar lays out in at most two rows, nav included", therefore compared
+    `undefined > 2`, which is false for every page, so half of that check's own
+    claim could not fail and its detail printed `undefined bar row(s)` beside real
+    numbers. Nothing caught it because no test reads the value back, and no reader
+    would notice `undefined` in a detail string. This guard is that reader.
+    """
+    harness = HARNESS.read_text(encoding="utf-8")
+    assert "let barRows = 0;" in harness, (
+        "the harness no longer counts the top bar's rows into an integer"
+    )
+    assert "topbar_rows: barRows," in harness, (
+        "the published row count is not the integer the harness counted; a property "
+        "read off a number is `undefined`, and a check against it cannot fail"
+    )
+    assert "topbar_rows: barRows.length" not in harness, (
+        "the row count is read as a property of a number again, so the check that "
+        "consumes it compares `undefined`"
+    )
+    assert "p.topbar_rows > 2" in harness, (
+        "the check that consumes the row count is gone, so the count is published "
+        "for nobody"
+    )
