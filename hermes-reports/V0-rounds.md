@@ -1852,7 +1852,7 @@ the parts of V0 this repository does not have and says so. Voice Clone and Voice
 unbuilt, now recorded on the acceptance page with the engine evidence for why this box
 cannot build them truthfully.
 
-Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless`: `815662b8b..370e78743`,
-`370e78743..f3de24f5c`, `f3de24f5c..56b7f9677`; remote SHA read back equal each time
+Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless`: `815662b8b..9cee02f19`
+(the three slice-G commits and this log in one push); remote SHA read back equal
 (`hermes-reports/V0-slot79-push-r1.log`). Nothing deployed, published, messaged, submitted,
 spent or priced; no GPU, no provider call, no terms accepted.
