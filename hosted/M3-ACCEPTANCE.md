@@ -190,7 +190,7 @@ the chain runs run → commit → push and every link is a file a reader can ope
 | On the real engine the dub says the words it heard from the audio that was spoken | `hosted/web/e2e/dashboard.mjs` | `hosted/web/test/harness.test.mjs` | `the real engine's dub is the words it heard from the audio that was spoken` |
 | Every metered request is bounded before the engine is asked | `hosted/control_plane/limits.py` | `tests/hosted/test_hosted_limits.py` | `a request over the ceiling is refused 402 with the headroom it has left` |
 | A rate per API key, refused with a real `Retry-After` | `hosted/control_plane/limits.py` | `tests/hosted/test_hosted_limits.py` | `the third request in the minute is refused 429 with a real Retry-After` |
-| A refusal costs no characters and is still visible in the meter | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_limits.py` | `a refused request costs no characters and shows up in the meter as 429` |
+| A refusal costs no characters and is still visible in the meter | `hosted/control_plane/app.py` | `tests/hosted/test_hosted_limits.py` | `a refused request is a 429 row that reserved no characters` |
 | Two concurrent requests cannot both take the last of the ceiling | `hosted/control_plane/db.py` | `tests/hosted/test_hosted_limits.py` | no run evidence: a browser run is sequential by construction, so the race is driven by threads in the unit suite instead |
 | A cancelled job gives its reservation back | `hosted/control_plane/jobs.py` | `tests/hosted/test_hosted_limits.py` | no run evidence: the browser run does not cancel a job that reserved characters |
 | The limits are settable in the dashboard and readable over the API | `hosted/web/app/api/limits/route.js` | `hosted/web/test/quota.test.mjs` | `the Usage page shows the ceiling, what is charged against it and what is left` |
@@ -215,11 +215,11 @@ and what is not is exactly where a product page starts lying:
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
   the real engine — that a second engine could hear words it had said. In the run this
-  page cites, two of the five words of the Hindi sentence came back — एक and है — and a
-  guard below reads that number back out of the run's own
+  page cites, three of the five words of the Hindi sentence came back — एक, हिन्दी and
+  है — and a guard below reads that number back out of the run's own
   `transcript.shared_words` rather than trusting this sentence. The count moves
   between runs of the *same code*: the run before this one
-  (`hermes-reports/M3-slot79-web-e2e-r1`: एक, हिन्दी and है) came back with three, the
+  (`hermes-reports/M3-slot79-web-e2e-r1`: एक, हिन्दी and है) also came back with three, the
   one before that (`hermes-reports/M3-slot77-web-e2e-r1`: एक and है) with two, then
   (`hermes-reports/M3-slot75-web-e2e-r1`: एक, हिन्दी and है) with three, its
   predecessor (`hermes-reports/M3-slot72-web-e2e-r1`: एक and है) with two, and the
