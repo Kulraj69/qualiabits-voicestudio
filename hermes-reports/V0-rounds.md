@@ -1979,3 +1979,54 @@ passes 159/159 with the widths measuring, per page: phone 2 bar rows / 2 nav lin
 2 / 1, desktop 1 / 1, no page scrolling sideways and no element outside the window at any of
 the three. A guard keeps the rule in place, because a browser run is the only other thing
 that would notice it coming back.
+
+### Round 3 — the evidence pair re-taken at ONE revision, over clean trees
+
+The harness change above (the row count) is inside `hosted/web/e2e`, which is one of the
+directories a browser run measures, so the pair already on disk (`2975a0fec`) no longer
+described this code and both paths were re-taken. The stale archives were moved **outside**
+the repository first, so neither run could report itself dirty; both runs were taken at
+`dc63603ba`:
+
+* stub path: **159/159**, `engine_is_stub true`, `worktree_dirty false`,
+  `hermes-reports/M3-slot81-web-e2e-stub-r1/result.json`;
+* real engine (sherpa-onnx on the pinned Kokoro int8, 54 voices, faster-whisper-small
+  pinned by `model.bin`): **165/165**, `engine_is_stub false`, `worktree_dirty false`,
+  `hermes-reports/M3-slot81-web-e2e-r1/result.json`.
+
+The width measurements, per page at each of the three viewports: phone 390x844 — 2 top-bar
+rows, 2 nav lines; tablet 768x1024 — 2 rows, 1 nav line; desktop 1440x900 — 1 row, 1 line;
+`document_scroll_width == inner_width` and zero elements outside the window at all three;
+18 screenshots (nine pages at each narrow width) committed as the artefact. The real run's
+transcript heard **three** of the five Hindi words this time (एक, हिन्दी, है), where the
+previous run heard two — the page said two, the run says three, and the page was corrected
+from the run rather than the other way round.
+
+Suites at that revision: `tests/hosted` **268 passed** (`V0-slot81-tests-r1.log`), web unit
+**118 pass / 0 fail** (`V0-slot81-web-unit-r1.log`), the pinned-bytes guard **5 passed**
+(`V0-slot81-pins-r1.log`). Re-running the guards against the new pair found two more pieces
+of drift, both fixed where they were wrong: the acceptance table's limits row still named
+the 429 check by the name the slice-H harness stopped using, and the Hindi sentence above.
+
+### Round 3 continued — a cite that did not exist, and one that did not say what was claimed
+
+Three claims about the unbreakpointed layout (560px in a 390px window; the session block off
+the right edge; the theme switch squeezed to 17x34) were quoted in `globals.css`,
+`DESIGN.md` and the acceptance page but cited only as "the run". The run's own console
+transcript is now committed as `hermes-reports/M3-slot81-web-e2e-before-r1.log`, with a
+header saying what it is and that it names no revision and kept no `result.json`, and the
+three pages name it. The 640–900 band is no longer described as measured: the harness drives
+390, 768 and 1440, so `DESIGN.md` says which end is measured and calls the rest an inference.
+
+The cold clone is the route the README promises and it had to be re-taken for a second
+reason: `*.log` is ignored in this repository, so the transcripts the pages cite by name were
+written but **not tracked** — the commit message of `360e563d9` said "their transcripts" and
+only the archives were in it. They are force-added now, as the earlier slices' logs are, and
+the clone was re-taken at the pushed revision `b65be4302`: a directory with no `.venv`, no
+`node_modules` and no model, both attempts **32 passed, 0 skipped**
+(`V0-slot81-coldclone-r1.log`) — one more than the last slice because this slice added a
+guard.
+
+Chain, each link a file a reader can open: run → `dc63603ba` → push
+(`V0-slot81-push-r1.log`, both pushes, remote SHA read back equal) → cold clone at
+`b65be4302`.

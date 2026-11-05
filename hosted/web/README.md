@@ -63,7 +63,7 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
     tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
 # 32 passed — no venv in that clone, no model, no browser. Transcript:
 # hermes-reports/V0-slot81-coldclone-r1.log, taken from a clone of the pushed
-# revision 360e563d9, whose first lines are the clone, the revision, the
+# revision b65be4302, whose first lines are the clone, the revision, the
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
 # and what the clone does not have. That transcript records both
 # attempts, both the same: 32 passed, 0 skipped, because this box had room for
