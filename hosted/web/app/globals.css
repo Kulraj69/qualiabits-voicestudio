@@ -1055,7 +1055,13 @@ th.num {
     min-width: 0;
   }
   .who__email {
-    max-width: 32vw;
+    /* The bar's first row has to hold the brand, the theme switch and the session
+       button inside 390px minus the page padding. A capped-but-present name
+       (32vw) still did not fit: it pushed the session block onto a third row,
+       which the run measured as `3 bar row(s)` once the harness stopped reading
+       its own count as `undefined`. The name is not lost on a phone — it is the
+       home page's own heading — so the bar shows the button only. */
+    display: none;
   }
   .main {
     padding: var(--space-5) var(--space-4);

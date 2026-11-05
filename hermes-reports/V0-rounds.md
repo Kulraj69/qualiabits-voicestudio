@@ -1896,3 +1896,86 @@ owner's. Nothing is deployed: every width below is loopback.
 
 The harness gained the width section *before* the stylesheet gained the breakpoints, so the run
 that follows records the failure rather than my description of it.
+
+## Slot 87 — V0-build — 2026-11-05 — resumed slice H to the end of its self-loop
+
+ROTATION. `lane-rotation.txt` ends with slot 86 (hackathon: all H1-H6 blocked or gated), and 86
+stands at the hackathon position of `[V0-build, hackathon, V0-build, V0-growth]` (slots 84/85 were
+V0-build and hackathon), so this tick is **V0-build**. The last product-lane work pushed is slot 79's
+slice G on `work/m1-headless` (`bd6c51bba`). Slice H was opened *after* that push by a run that was
+cut off: this clone holds its five local commits (`ffe8f8391` the stylesheet, `c224c77dc` the plan and
+the round log, `5f0c60d0e` and `2975a0fec` two real fixes it made to its own checks, `1a9091212` the
+design and README rows), and its two browser archives (165 checks real, 159 stub) were written to
+`hermes-reports/` as **untracked** files at `2975a0fec` with `worktree_dirty false`. That run labelled
+itself slot 81 in its archive names and slot 83 in a plan left uncommitted in a second checkout
+(`/workspace/devpost/qualiabits-voicestudio`); both labels are superseded by this one. So this slot
+resumes slice H rather than opening a second slice in the lane, which is the rule.
+
+PLAN (the definition of done is Round 1's above, copied from the slice's own brief): run the real
+suites first and fix what they say is wrong; close the one real defect this run's inspection found in
+the harness itself; then re-take both browser paths at ONE revision over clean trees with the archives
+staged outside the repository, commit them, cold-clone the result, run two cheap+ judge passes on the
+real artifacts and fix what they find, and push. Do not claim the milestone: originality and criteria
+fit against the whole V0 product stay the owner's, nothing is deployed, and M1's GPU/listening gate is
+unchanged.
+
+Judging criteria targeted: taste and human feel (a squeezed layout is felt there first), technical
+depth (a real measurement at three widths, element by element), criteria fit (the brief says
+"responsive"), README do-X-see-Y (the run and its archives are the evidence), honesty (the before-state
+and the counts are read back out of the runs by guards, not trusted to prose).
+
+**Explicitly not claimed:** originality, a public URL, a real bucket, a GPU, a human listening check,
+and any hackathon criteria — there is still no official rules file for this milestone.
+
+### Round 2 — running the suites first, which is where the work was
+
+`venv/bin/python -m pytest tests/hosted -q` at `2975a0fec`+working tree: **4 failed, 261 passed**.
+Each failure was real and each named a different file:
+
+1. `tests/hosted/test_web_pages_claims.py` — three tests, one cause. The guard that
+   reads the page's two check counts pinned the *words* `one-hundred-forty-two` and
+   `one-hundred-forty-eight`, so the prose had followed slice H's two runs (159 and 165)
+   and the guard failed on correct prose; and with the counts read out of the runs, the
+   next assertion — "the screenshot check is the only difference between `--keep` and
+   not" — was still written as `- 1` while the same file's `EXPECTED_KEEP_ONLY` had
+   already been raised to two for slice H's phone-and-tablet screenshot check. Fixed
+   where each was wrong: the word is looked up from the count now (and the two new words
+   are in the page's vocabulary), the difference is read as the two screenshot checks it
+   is, and the three pieces of prose that said "one check fewer" say two.
+2. `tests/hosted/test_m3_acceptance_matrix.py::test_the_code_the_cited_run_exercised_has_not_changed_since`
+   — the acceptance page still cited slot 79's run, and slice H had changed
+   `hosted/web/app/globals.css` and `hosted/web/e2e/dashboard.mjs` since. Right, and it
+   is the guard doing its job: the citation moves to this slice's own pair, and the page
+   gains the eight rows slice H's definition of done asks for.
+
+Then two defects nothing had caught, both found by reading the files rather than by a
+test:
+
+3. `hosted/web/e2e/dashboard.mjs` counted the top bar's rows into an integer
+   (`let barRows = 0`, `barRows += 1`) and published `topbar_rows: barRows.length` —
+   `undefined`. The check that consumes it compared `undefined > 2`, so **half of its own
+   claim could not fail**, and its detail string printed `undefined bar row(s)` next to
+   real numbers. Fixed to `barRows`, and `tests/hosted/test_dashboard_width_rules.py`
+   gained a guard that reads the harness's arithmetic back (a check that reads a property
+   of a number is a check that cannot fail).
+4. `hosted/M3-ACCEPTANCE.md` said "Six slices are built" while describing seven, under a
+   title reading "slices A to E". Nothing read either sentence. The page now says eight,
+   its title says A to H, it carries slice H's paragraph (the brief's *responsive*, the
+   two breakpoints, the measured widths, the two defects on the record), and a new guard
+   in the same matrix test reads the count out of the page's own `**Slice X**` headings and
+   the title's range out of the last of them.
+
+### Round 2 continued — the fixed check failed, and it was right
+
+With the row count real, the stub path failed one check honestly:
+`390x844: the top bar lays out in at most two rows, nav included — / 3 bar row(s), nav 2
+line(s), 189px tall` on **all nine pages**. The bar really did have three rows at phone
+width, and `hosted/DESIGN.md` and `hosted/README.md` both described two. The cause was
+measurable in the run's own geometry: the signed-in name (capped at 32vw) plus the sign-out
+button did not fit beside the brand (132px) and the theme switch (34px) in 390px minus the
+page padding, so the session block wrapped onto a line of its own. The name is gone below
+640px now — the home page's own heading carries it — and with that one rule the stub run
+passes 159/159 with the widths measuring, per page: phone 2 bar rows / 2 nav lines, tablet
+2 / 1, desktop 1 / 1, no page scrolling sideways and no element outside the window at any of
+the three. A guard keeps the rule in place, because a browser run is the only other thing
+that would notice it coming back.

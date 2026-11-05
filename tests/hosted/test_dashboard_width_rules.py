@@ -152,6 +152,26 @@ def test_the_phone_block_lets_the_page_padding_and_the_session_shrink():
     )
 
 
+def test_the_phone_block_drops_the_session_name_so_the_bar_keeps_two_rows():
+    """The rule that the run's own row count asked for.
+
+    At 390px the bar's first row holds the brand, the theme switch and the session
+    button in the page's width minus its padding. A name beside the button does not
+    fit: capped at 32vw it still pushed the button onto a line of its own, and the
+    bar measured three rows on all nine pages — which nothing noticed until the
+    harness stopped publishing its own count as `undefined`. The name is dropped on
+    a phone (the home page's heading carries it) and this guard keeps it dropped,
+    because a browser run is the only other thing that would notice it coming back.
+    """
+    phone = dict(width_blocks()).get(640, "")
+    assert phone, "there is no phone-width block"
+    block = block_in(phone, ".who__email {")
+    assert "display: none" in block, (
+        "the signed-in name is back in the phone bar, which puts the session button "
+        "on a third row"
+    )
+
+
 def test_the_browser_suite_drives_the_three_widths_it_claims():
     """The stylesheet's rules are only evidence if a run measures them."""
     harness = HARNESS.read_text(encoding="utf-8")

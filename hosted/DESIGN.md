@@ -263,8 +263,14 @@ at 640px only, and the run showed what that looked like between 640 and 900: the
 shattered into three cramped lines beside a one-line brand, because a single row still
 “fitted” by squeezing. The free space in that row is what the nav has to live in, so the
 nav is given its own instead. Below 640px the page padding tightens once more, the brand's
-“Dashboard” suffix goes, and the two places with a fixed minimum width — the session block
-and the revealed API key — are allowed to shrink.
+“Dashboard” suffix goes, so does the signed-in name beside the sign-out button — the home
+page's own heading carries it — and the two places with a fixed minimum width — the session
+block and the revealed API key — are allowed to shrink. Which of those is *needed* is not a
+judgement call: the bar's rows are counted from its own children by the run, and until this
+slice's last round that count was published as `undefined`, so a third row at 390px — the
+sign-out button pushed onto a line of its own by a name capped at 32vw — was reported as a
+pass. With the count fixed the run failed on the real value, the name went, and the phone
+bar now measures two rows on all nine pages.
 
 **What the check refuses to call a defect.** A wide table on a phone may scroll inside its
 own box: `.table-wrap` is an `overflow-x: auto` container and that is the whole reason it
