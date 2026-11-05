@@ -1792,3 +1792,67 @@ Not claimed: originality and criteria fit against the whole V0 product remain th
 
 ### Round 1 — build
 Tests: taken below as each suite runs.
+
+### Round 1 — the evidence this slice was missing, and the first judge pass
+
+The interrupted run had built slice G, committed it at `370e78743`, taken both browser
+paths once and stopped. This run resumed there. What running the suite found, all six
+failures real and each fixed where it was wrong: `hosted/M2-ACCEPTANCE.md` still quoted
+`schema_version m2f1` after migration m2g1 moved it; `hosted/M3-ACCEPTANCE.md` said two of
+the five Hindi words came back where this run's own transcript records three (एक, हिन्दी,
+है); `hosted/web/README.md` quoted 112 unit checks where the files now hold 118, and cited
+the slot-77 run pair where the slice's own pair is the one to cite. The real browser pair
+was re-taken at ONE revision over clean trees, archives staged outside the repository:
+stub 142/142 and real engine 148/148, both `tested_commit 370e78743`, both
+`worktree_dirty false` (`hermes-reports/M3-slot79-web-e2e-r1|stub-r1/result.json`). The
+hosted layer's own end-to-end was re-taken too (11 checks, same revision,
+`M2-slot79-e2e-r1`), and the front page's Measured section re-rendered from it. A cold
+clone of `f3de24f5c` with no `.venv`, no `node_modules` and no model: 31 passed, 0 skipped,
+twice (`V0-slot79-coldclone-r1.log`).
+
+Suites: `tests/hosted` 260 passed (`V0-slot79-tests-r2.log`); web unit 118 pass / 0 fail
+(`V0-slot79-web-unit-r1.log`); pinned-bytes guard 5 passed (`V0-slot79-pins-r1.log`).
+
+Judge pass 1 (cheap+): **26/35** — originality 3, taste 4, human feel 4, technical depth 5,
+criteria fit 2, reviewer path 4, honesty 4. The honest finding was about the bundle, not
+the product: the prompt was 279 KB, Linux refuses a command-line argument over 128 KB, and
+the shell's `exit=126` stub was handed to the judge as though it were a completed pass.
+Fixed in the builder.
+
+### Round 2 — the second pass, and a claim of my own it caught
+
+The builder now supplies the biggest artifacts as labelled excerpts with their real line
+numbers (so a judge can see what it was not given) and includes a pass only when its last
+line is `exit=0`; the failed attempt is kept as `M3-slot79-review1-attempt1-argstoolong.err`.
+Judge pass 2: **25/35** — originality 3, taste 4, human feel 4, technical depth 5, criteria
+fit 2, reviewer path 4, **honesty 3**, and the honesty flaw was real and mine: the "what
+changed" note asserted "D8 is now two completed passes" *before* the second pass had run.
+Withdrawn in `M3-slot79-since-review1.txt` rather than defended.
+
+### Round 3 — the third pass, no honesty flaw left
+
+Nothing in the product changed between passes 2 and 3; the corrected note did. Judge pass 3:
+**26/35** — originality 3, taste 4, human feel 4, technical depth 5, criteria fit 2,
+reviewer path 4, **honesty 4 with no honesty flaw**, D8 "demonstrated procedurally", D1-D6
+demonstrated and D7 partly (Voice Clone and Voice Design stay unbuilt, which the page says).
+
+Reports: `hermes-reports/M3-slot79-review{1,2,3}.txt` with their prompts.
+
+### Slice G closeout
+
+Slice G's definition of done is met: both limits decided before the engine on all five
+metered entry points, the race test, the two refusal codes with their headers and
+`Retry-After`, migration m2g1, the Usage page showing and setting them, `tests/hosted`,
+web unit, both browser paths at one revision over clean trees, a cold clone, the acceptance
+page and both READMEs and DESIGN.md with guards reading the new rows back, and three cheap+
+passes with fixes after the first two. The *milestone's* gate is not met and no pass is
+claimed: the last pass still scores originality 3 and criteria fit 2, and both are the
+owner's — a product differentiator, a deployment with a public URL and a real bucket, and
+the parts of V0 this repository does not have and says so. Voice Clone and Voice Design stay
+unbuilt, now recorded on the acceptance page with the engine evidence for why this box
+cannot build them truthfully.
+
+Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless`: `815662b8b..370e78743`,
+`370e78743..f3de24f5c`, `f3de24f5c..56b7f9677`; remote SHA read back equal each time
+(`hermes-reports/V0-slot79-push-r1.log`). Nothing deployed, published, messaged, submitted,
+spent or priced; no GPU, no provider call, no terms accepted.
