@@ -1992,7 +1992,16 @@ async function main() {
     check("the run minted a key so the rate can be tested per key", Boolean(limitsKey));
 
     const setRate = await plane(planeBase, "/v1/limits", {
-      method: "PUT", token: session, body: { requests_per_minute: 2 },
+      method: "PUT", token: session,
+      // A ceiling well above what this workspace has already spent, so the rate
+      // is what refuses the third request and the ceiling is merely *there*.
+      // It has to be there: a reservation is only taken when a ceiling exists,
+      // so with no ceiling the two allowed requests would reserve nothing and
+      // the check below would have nothing to compare.
+      body: {
+        requests_per_minute: 2,
+        character_ceiling: (limitsBefore?.characters_used ?? 0) + 1000,
+      },
     });
     check(
       "the workspace sets its own rate, and the plane reports the change",
