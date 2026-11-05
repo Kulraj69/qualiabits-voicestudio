@@ -1,0 +1,65 @@
+Verdict: FAIL — 26/35. Criteria fit and originality remain below 4, and D8 is not independently demonstrated. Honesty also has an evidence gap around the claimed two completed judge rounds.
+
+1. Originality — 3/5
+
+The implementation makes quota enforcement unusually careful: atomic reservations, ledger projections, refusal semantics, and race tests are memorable engineering details. The core idea is still a hosted TTS dashboard with character quotas and API-key rate limiting, which the artifacts themselves acknowledge is not novel enough for a 4.
+
+2. Taste — 4/5
+
+The product language is deliberate: “none” instead of zero, settled versus reserved usage, fixed-window disclosure, and explicit refusal explanations. The UI evidence covers the main dashboard paths, themes, focus states, and the Usage page, although the supplied text does not permit independent visual inspection of the screenshots needed for a 5.
+
+3. Human feel — 4/5
+
+The README, implementation comments, commit messages, and acceptance document have a consistent engineering voice and state uncomfortable limitations plainly. The prose is sometimes defensive and audit-heavy, with frequent em-dashes and long explanatory blocks, but it avoids the listed AI-generic marketing language.
+
+4. Technical depth — 5/5
+
+The hard part is real and tested: the conditional `UPDATE` compares committed plus reserved characters, row creation races are handled, counters seed from the ledger, and reserve/settle/release are distinct. The supplied evidence includes 260 hosted tests, 118 web unit tests, and real-engine and stub browser runs with 148/148 and 142/142 checks respectively.
+
+5. Criteria fit — 2/5
+
+Against the owner’s V0 milestone, this is only a local M3 limits slice. There is no evidence here for a public deployment, public signup, real S3, GPU/spot operation, voice cloning, voice design, voice agents, SIP/phone calls, production health checks, billing, or a demo video. The two named M3 pages, Voice Clone and Voice Design, are explicitly unbuilt.
+
+6. Reviewer path — 4/5
+
+The README provides a stub path, a real-engine path, manual startup instructions, tests, pinned model checks, and committed run evidence. The path is reproducible but operationally heavy: roughly 2.6 GB of Python dependencies, 360 MB of web dependencies, and model assets for the real path; the quick stub path proves application behavior but deliberately proves nothing about speech quality.
+
+7. Honesty — 3/5
+
+Most claims are unusually well qualified: local-only, undeployed, no GPU, no real S3, no human audio listening check, and explicit stub-versus-real labeling. However, the artifact claims that D8 is now “two completed passes” while the supplied evidence contains only the prior pass and the current requested round; the failed `exit=126` invocation was correctly reclassified, but no completed second-round report is shown. That unsupported process claim is an honesty flaw under this rubric.
+
+Five most damaging flaws
+
+1. V0 scope is far beyond the delivered slice  
+   References: `hosted/M3-ACCEPTANCE.md`, “Two of the pages M3 names”; `hosted/web/README.md`, opening product description.  
+   Missing evidence covers Voice Clone, Voice Design, agents, phone calls, deployment, public signup, GPU operation, and real S3.
+
+2. The core hackathon idea is insufficiently differentiated  
+   References: D8 claim; `hosted/control_plane/limits.py`, module docstring.  
+   This is strong quota infrastructure around a voice dashboard, not a surprising user-facing concept. The memorable moment is an honest refusal, not a new product experience.
+
+3. D8’s two-round claim is not proven by the supplied artifacts  
+   References: `hermes-reports/M3-slot79-review1.txt`; “What changed after the pass above”; D8 status in the supplied material.  
+   The earlier attempt failed with `exit=126`, and the supplied bundle does not include a completed second judge report. The current round cannot retroactively serve as evidence that two prior rounds had already been completed.
+
+4. The real reviewer path is too heavy for a fast hackathon review  
+   References: `hosted/web/README.md`, “What a fresh clone can do before you install anything heavy”; `hosted/README.md`, “Start here.”  
+   The stub route is accessible, but the actual engine path requires substantial dependencies and model assets, reducing the number of judges likely to verify the strongest claims.
+
+5. Local test evidence is not production evidence  
+   References: real E2E result, `deployed: false`, `public_url: null`, `gpu: false`, `real_s3: false`.  
+   The runs establish local behavior at the tested revision, not hosted multi-tenancy, autoscaling, HTTPS, cloud storage, public signup, or production readiness.
+
+D-item status
+
+- D1 — Demonstrated. Defaults are unlimited, and both workspace ceiling and per-key rate are tested.
+- D2 — Demonstrated. The single conditional update, quota-row creation race, and concurrent reservation behavior are covered.
+- D3 — Demonstrated. Ledger seeding, projection consistency, settlement, release, and cancellation behavior are evidenced.
+- D4 — Demonstrated. The 402 and 429 responses include structured bodies, headers, reset or retry information, zero-character refusal rows, and pre-engine refusal tests.
+- D5 — Demonstrated. Speech characters, transcription scope, fixed-window behavior, unpruned rate rows, and visible reservations are documented and tested.
+- D6 — Demonstrated. API reads, session-only writes, Usage-page editing, empty-as-none semantics, and shared error extraction are evidenced.
+- D7 — Partly demonstrated. The acceptance table, design documentation, and hand-run guide exist, but the two unbuilt pages remain absent and the evidence relies on self-authored committed archives.
+- D8 — Not demonstrated. The supplied material does not show two completed cheap+ judge reports with fixable findings resolved; it shows one prior pass, a failed invocation that was later reclassified, and the current round request.
+
+What would make it win: ship one genuinely differentiated voice-agent or phone-call experience publicly end to end, then preserve this level of measured evidence while supplying a verifiable two-round review record.
+exit=0

@@ -1,0 +1,182 @@
+........................................................................ [ 27%]
+........................................................................ [ 55%]
+........................................FF......F....................... [ 83%]
+..................................FFF.......                             [100%]
+=================================== FAILURES ===================================
+_____________ test_every_run_reference_is_really_in_the_cited_run ______________
+
+    def test_every_run_reference_is_really_in_the_cited_run():
+        run = cited_run()
+        checks = set(run["checks"])
+        text = json.dumps(run)
+        wrong: list[str] = []
+        declared_gaps = 0
+        for row in table_rows():
+            cell = row[3]
+            # A row may declare that the run proves nothing for it, but it has to say so
+            # in those words. The S3 row used to point at `"backend": "local"` -- true of
+            # the run and no evidence at all that an S3 requirement works, which a judge
+            # was right to call a weak row.
+            if NO_RUN_EVIDENCE in cell:
+                declared_gaps += 1
+                continue
+            named = backticked(cell)
+            assert named, f"the row {row[0]!r} names nothing in the run and declares no gap"
+            for name in named:
+                if name in checks or name in text:
+                    continue
+                wrong.append(f"{row[0]!r} cites {name}, which is neither a check nor in the run file")
+>       assert wrong == [], (
+            "the acceptance table points at run evidence the quoted run does not have: "
+            + "; ".join(wrong)
+        )
+E       AssertionError: the acceptance table points at run evidence the quoted run does not have: 'The plane reports the schema version its database is on' cites "schema_version": "m2f1", which is neither a check nor in the run file
+E       assert ["'The plane ...the run file"] == []
+E         
+E         Left contains one more item: '\'The plane reports the schema version its database is on\' cites "schema_version": "m2f1", which is neither a check nor in the run file'
+E         Use -v to get more diff
+
+tests/hosted/test_m2_acceptance_matrix.py:103: AssertionError
+_________ test_the_run_the_table_is_checked_against_is_the_page_s_run __________
+
+    def test_the_run_the_table_is_checked_against_is_the_page_s_run():
+        """A table checked against a different run than the page quotes would be a trap."""
+        run = cited_run()
+        assert run["passed"] is True
+        assert run["revision"]["worktree_dirty"] is False
+        named = {name for row in table_rows() for name in backticked(row[3])}
+        assert named & set(run["checks"]), (
+            "no row of the acceptance table names a check of the quoted run, so the table "
+            "and the run are connected by nothing"
+        )
+        # The field the table quotes as prose has to be the one the run recorded.
+        # The schema version moves when a migration lands (the transcription slice took
+        # it from m2b1 to m2c1), so it is read from the run this page quotes rather than
+        # pinned here -- a table left quoting the old one fails the run-file check above.
+        reported = run["control_plane_health"]["schema_version"]
+        quoted = sorted(name for name in named if "schema_version" in name)
+        assert quoted, (
+            "the table no longer checks the schema version the run reports"
+        )
+>       assert all(f'"{reported}"' in name for name in quoted), (
+            f"the table quotes a schema version the quoted run does not report "
+            f"(the run says {reported}): {quoted}"
+        )
+E       AssertionError: the table quotes a schema version the quoted run does not report (the run says m2g1): ['"schema_version": "m2f1"']
+E       assert False
+E        +  where False = all(<generator object test_the_run_the_table_is_checked_against_is_the_page_s_run.<locals>.<genexpr> at 0x70ab1bcdd540>)
+
+tests/hosted/test_m2_acceptance_matrix.py:132: AssertionError
+___________ test_the_shared_word_count_in_the_prose_is_the_run_s_own ___________
+
+    def test_the_shared_word_count_in_the_prose_is_the_run_s_own():
+        """The page says how much of the spoken sentence came back. Keep it true.
+    
+        That sentence said *two* while the run it cites records *three* shared words,
+        which is exactly the kind of count a judge is right to call a lie. Reading the
+        number back out of the run is cheaper than trusting prose, so the page's
+        sentence, the number and the words it names are all checked here.
+        """
+        text = page_text()
+        transcript = run_result()["transcript"]
+        match = re.search(r"(\w+) of the (\w+) words of the Hindi sentence", text)
+        assert match, "the page no longer says how many of the spoken words came back"
+        shared, spoken = transcript["shared_words"], transcript["spoken_words"]
+>       assert WORD_NUMBERS.get(match.group(1)) == len(shared), (
+            f"the page says {match.group(1)!r} words came back; the run records "
+            f"{len(shared)}: {shared}"
+        )
+E       AssertionError: the page says 'two' words came back; the run records 3: ['एक', 'हिन्दी', 'है']
+E       assert 2 == 3
+E        +  where 2 = <built-in method get of dict object at 0x70ab3d9f9d00>('two')
+E        +    where <built-in method get of dict object at 0x70ab3d9f9d00> = {'one': 1, 'two': 2, 'three': 3, 'four': 4, ...}.get
+E        +    and   'two' = <built-in method group of re.Match object at 0x70ab3d2cd260>(1)
+E        +      where <built-in method group of re.Match object at 0x70ab3d2cd260> = <re.Match object; span=(23874, 23917), match='two of the five words of the Hindi sentence'>.group
+E        +  and   3 = len(['एक', 'हिन्दी', 'है'])
+
+tests/hosted/test_m3_acceptance_matrix.py:201: AssertionError
+__________________ test_the_page_names_two_runs_one_per_path ___________________
+
+    def test_the_page_names_two_runs_one_per_path():
+        cited = cited_runs()
+>       assert len(cited) == 2, f"the page names {sorted(cited)}"
+E       AssertionError: the page names ['M3-slot77-web-e2e-r1', 'M3-slot77-web-e2e-stub-r1', 'M3-slot79-web-e2e-r1', 'M3-slot79-web-e2e-stub-r1']
+E       assert 4 == 2
+E        +  where 4 = len({'M3-slot77-web-e2e-r1': {'run': 'qualiabits voice — browser dashboard end to end', 'engine': 'sherpa-onnx on kokoro-i... '/workspace/qualiabits-voicestudio/.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port {port}', ...}})
+
+tests/hosted/test_web_pages_claims.py:111: AssertionError
+______________ test_the_two_cited_runs_were_taken_at_one_revision ______________
+
+    def test_the_two_cited_runs_were_taken_at_one_revision():
+        """The provenance gate, read from the two files the page names.
+    
+        Round 3 of slice C had to close this by hand: the two committed browser runs
+        recorded different revisions, so together they described no single state of the
+        code while the page read as though they did. Each run's own `revision` block is
+        the only thing that can settle it, so it is read here, and the commit both name
+        has to exist in this repository and still be in this branch's history — a page
+        citing a run from a commit nobody can check is not evidence.
+        """
+        cited = cited_runs()
+        commits = {}
+        for name, result in cited.items():
+            revision = result["revision"]
+            assert revision["worktree_dirty"] is False, (
+                f"{name} was taken over a dirty tree, so it is evidence about no revision"
+            )
+            assert revision["tested_commit"], f"{name} names no commit"
+            commits[name] = revision["tested_commit"]
+    
+>       assert len(set(commits.values())) == 1, (
+            "the page's two runs were taken at different revisions, so the pair describes "
+            f"no single state of this code: {commits}"
+        )
+E       AssertionError: the page's two runs were taken at different revisions, so the pair describes no single state of this code: {'M3-slot77-web-e2e-r1': '933aacf834aea5adbca641b22f3429463e3a6a2b', 'M3-slot77-web-e2e-stub-r1': '933aacf834aea5adbca641b22f3429463e3a6a2b', 'M3-slot79-web-e2e-stub-r1': '370e7874355ff4921daa3fb5495e340e0a9e0a8a', 'M3-slot79-web-e2e-r1': '370e7874355ff4921daa3fb5495e340e0a9e0a8a'}
+E       assert 2 == 1
+E        +  where 2 = len({'370e7874355ff4921daa3fb5495e340e0a9e0a8a', '933aacf834aea5adbca641b22f3429463e3a6a2b'})
+E        +    where {'370e7874355ff4921daa3fb5495e340e0a9e0a8a', '933aacf834aea5adbca641b22f3429463e3a6a2b'} = set(dict_values(['933aacf834aea5adbca641b22f3429463e3a6a2b', '933aacf834aea5adbca641b22f3429463e3a6a2b', '370e7874355ff4921daa3fb5495e340e0a9e0a8a', '370e7874355ff4921daa3fb5495e340e0a9e0a8a']))
+E        +      where dict_values(['933aacf834aea5adbca641b22f3429463e3a6a2b', '933aacf834aea5adbca641b22f3429463e3a6a2b', '370e7874355ff4921daa3fb5495e340e0a9e0a8a', '370e7874355ff4921daa3fb5495e340e0a9e0a8a']) = <built-in method values of dict object at 0x70ab1bf1db40>()
+E        +        where <built-in method values of dict object at 0x70ab1bf1db40> = {'M3-slot77-web-e2e-r1': '933aacf834aea5adbca641b22f3429463e3a6a2b', 'M3-slot77-web-e2e-stub-r1': '933aacf834aea5adbca...ub-r1': '370e7874355ff4921daa3fb5495e340e0a9e0a8a', 'M3-slot79-web-e2e-r1': '370e7874355ff4921daa3fb5495e340e0a9e0a8a'}.values
+
+tests/hosted/test_web_pages_claims.py:137: AssertionError
+____________ test_the_stated_counts_are_the_counts_in_the_two_runs _____________
+
+    def test_the_stated_counts_are_the_counts_in_the_two_runs():
+        text = readme()
+        cited = cited_runs()
+        stub = cited[[name for name in cited if "-stub-" in name][0]]
+        real = cited[[name for name in cited if "-stub-" not in name][0]]
+    
+        _, stub_keep, stub_without = counted(stub)
+        _, real_keep, real_without = counted(real)
+        assert stub["engine_is_stub"] is True and real["engine_is_stub"] is False, (
+            "the run the page calls the stub path is not the stub path"
+        )
+    
+        for word, expected in (
+            ("one-hundred-forty-two", stub_keep),
+            ("one-hundred-forty-eight", real_keep),
+        ):
+            assert word in text, f"the page no longer states {word!r}"
+>           assert WORD_NUMBERS[word] == expected, (
+                f"the page says {word!r} ({WORD_NUMBERS[word]}) and the runs record {expected}"
+            )
+E           AssertionError: the page says 'one-hundred-forty-two' (142) and the runs record 127
+E           assert 142 == 127
+
+tests/hosted/test_web_pages_claims.py:175: AssertionError
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /workspace/qualiabits-voicestudio/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/hosted/test_m2_acceptance_matrix.py::test_every_run_reference_is_really_in_the_cited_run
+FAILED tests/hosted/test_m2_acceptance_matrix.py::test_the_run_the_table_is_checked_against_is_the_page_s_run
+FAILED tests/hosted/test_m3_acceptance_matrix.py::test_the_shared_word_count_in_the_prose_is_the_run_s_own
+FAILED tests/hosted/test_web_pages_claims.py::test_the_page_names_two_runs_one_per_path
+FAILED tests/hosted/test_web_pages_claims.py::test_the_two_cited_runs_were_taken_at_one_revision
+FAILED tests/hosted/test_web_pages_claims.py::test_the_stated_counts_are_the_counts_in_the_two_runs
+6 failed, 254 passed, 1 warning in 119.37s (0:01:59)
+exit=1

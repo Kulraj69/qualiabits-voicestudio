@@ -1,0 +1,65 @@
+Verdict: FAIL
+
+1. Originality — 3/5
+
+The quota implementation is unusually careful, with atomic reservations, ledger projections, and honest refusal behavior. The core product remains a hosted TTS dashboard with quotas and rate limiting, which the artifacts themselves acknowledge is not novel enough for a 4. The memorable moment is engineering rigor, not a distinctive user-facing experience.
+
+2. Taste — 4/5
+
+The copy and product boundaries are deliberate: “none” instead of zero, settled versus reserved usage, fixed-window disclosure, and explicit refusal explanations. The dashboard evidence covers the main pages, themes, focus states, and Usage page. A 5 is not justified because the supplied material does not allow independent inspection of the screenshots.
+
+3. Human feel — 4/5
+
+The README, comments, commits, acceptance document, and review reports have a consistent, specific engineering voice. They plainly state uncomfortable limitations such as no deployment, no GPU, no real S3, no human audio check, and two unbuilt pages. The prose is defensive and audit-heavy, with frequent em-dashes and long explanatory blocks, but it avoids the listed generic AI-marketing language.
+
+4. Technical depth — 5/5
+
+The difficult behavior is implemented and tested: a conditional `UPDATE` compares committed plus reserved characters, quota-row creation races are covered, counters seed from the ledger, and reserve/settle/release are distinct. Refusals are recorded with zero characters and occur before the engine call. Evidence includes 260 hosted tests, 118 web unit tests, 5 pin tests, and real/stub browser runs with 148/148 and 142/142 checks.
+
+5. Criteria fit — 2/5
+
+Against the owner’s V0 milestone, this is a local M3 limits slice, not a live full-stack ElevenLabs competitor. There is no evidence for public deployment, public signup, real S3, GPU/spot operation, voice cloning, voice design, voice agents, SIP/phone calls, billing, production health checks, or a demo video. `hosted/M3-ACCEPTANCE.md` explicitly records Voice Clone and Voice Design as unbuilt.
+
+6. Reviewer path — 4/5
+
+The README gives stub and real-engine paths, manual startup commands, tests, pinned model checks, and committed run evidence. The stub path is practical and honest, but the real path requires approximately 2.6 GB of Python dependencies, 360 MB of web dependencies, and model assets. It is reproducible but not lightweight for a stranger on a timer.
+
+7. Honesty — 4/5
+
+Most claims are carefully bounded and backed by code or committed run data. The artifacts clearly state `deployed=false`, `public_url=null`, `gpu=false`, `real_s3=false`, no human audio review, and no pricing or billing. The two prior reports are now supplied as completed `exit=0` artifacts, so the earlier D8 evidence gap is resolved; however, the evidence remains primarily self-authored local reports rather than independently verified external operation.
+
+Five most damaging flaws
+
+1. The delivered scope is far short of V0.
+   References: `hosted/M3-ACCEPTANCE.md`, “Two of the pages M3 names”; `hosted/web/README.md`, opening product description.
+   Missing: Voice Clone, Voice Design, agents, phone calls, deployment, public signup, GPU operation, and real S3.
+
+2. The core hackathon idea is insufficiently differentiated.
+   References: D8 claim; `hosted/control_plane/limits.py`, module docstring.
+   The strongest work is quota infrastructure around a voice dashboard, not a surprising product experience.
+
+3. There is no production or public proof.
+   References: real E2E `result.json`; fields `deployed`, `public_url`, `gpu`, and `real_s3`.
+   The 148 checks establish local behavior at one revision, not HTTPS, cloud storage, autoscaling, public signup, or hosted multi-tenancy.
+
+4. The strongest reviewer path is operationally heavy.
+   References: `hosted/web/README.md`, “What a fresh clone can do before you install anything heavy”; `hosted/README.md`, “Start here.”
+   The fast stub path deliberately proves nothing about real speech, while the real path requires substantial downloads and model setup.
+
+5. The product is still missing two explicitly named M3 pages.
+   References: `hosted/M3-ACCEPTANCE.md`; the web route inventory, which contains no Voice Clone or Voice Design page.
+   The documentation is honest about this, but the absence still directly lowers milestone fit.
+
+D-item status
+
+- D1 — Demonstrated. Monthly workspace character ceilings and per-key request rates default to none and are tested.
+- D2 — Demonstrated. The single conditional update, quota-row creation race, and concurrent reservation behavior are covered.
+- D3 — Demonstrated. Ledger seeding, projection consistency, settlement, release, and cancellation are evidenced.
+- D4 — Demonstrated. 402 and 429 refusals include structured bodies, headers, reset or retry information, zero-character meter rows, and pre-engine refusal tests.
+- D5 — Demonstrated. Speech-character scope, transcription behavior, fixed-window semantics, unpruned rate rows, and visible reservations are documented and tested.
+- D6 — Demonstrated. API reads, session-only writes, Usage-page editing, empty-as-none semantics, and shared error extraction are evidenced.
+- D7 — Partly demonstrated. The acceptance table, design documentation, and hand-run guide exist, but Voice Clone and Voice Design remain unbuilt and the evidence is based on committed local archives.
+- D8 — Demonstrated procedurally, but not as a pass. Two completed prior review reports are supplied, the fixable evidence-bundle flaw was addressed, and remaining flaws are recorded. The underlying product findings from both rounds remain unresolved, so they continue to affect the scores above.
+
+What would make it win: ship one genuinely differentiated voice-agent or phone-call experience publicly end to end, including the missing deployment and integration evidence, while preserving this level of measured honesty.
+exit=0

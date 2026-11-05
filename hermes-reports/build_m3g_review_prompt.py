@@ -12,6 +12,7 @@ silent gap.
 """
 from __future__ import annotations
 
+import json
 import sys
 import time
 from pathlib import Path
@@ -33,14 +34,82 @@ from build_m3_review_prompt import (  # noqa: E402
 
 SLICE = "M3-slot79"
 
+#: The judge prompt goes to the model on this box as a single command-line
+#: argument, and Linux refuses one longer than 128 KB (MAX_ARG_STRLEN). Handing
+#: the judge the whole of `app.py` and every document in full made a 279 KB
+#: prompt that would not run at all, so the biggest artifacts are supplied as
+#: named excerpts instead: the guard helper, the five metered routes where the
+#: decision is made, and the first N lines of the rest, each labelled as an
+#: excerpt with its real line numbers, so a judge can see what it was not given.
+APP_RANGES = (
+    (376, 460),    # _refuse_limits and _limits_for, the refusal and the subject
+    (700, 830),    # /v1/usage, /v1/limits (get and put), /v1/jobs (guard at 799)
+        (1140, 1215),  # the speech route, guard at 1188
+    (1238, 1280),  # the transcription route, guard at 1260
+    (1396, 1450),  # the dub route, guard at 1424
+)
+
+
+def excerpt(path: Path, ranges) -> str:
+    """Named line ranges of one file, each headed by the lines it really occupies."""
+    if not path.exists():
+        raise SystemExit(f"missing artifact: {path}")
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    out = [f"{path.name} is {len(lines)} lines; these are the ranges that matter:"]
+    for start, end in ranges:
+        end = min(end, len(lines))
+        out.append(f"--- lines {start}-{end} ---")
+        out.extend(lines[start - 1:end])
+    return "\n".join(out)
+
+
+def e2e_trimmed(path: Path) -> str:
+    """The real run's facts, minus the per-page screenshot records, for the same
+    128 KB reason the excerpts exist. The route list is in the stub summary and in
+    the archives themselves; what the judge needs here is the provenance block,
+    the engine's own answers and what the run measured about speech."""
+    if not path.exists():
+        raise SystemExit(f"missing end-to-end result: {path}")
+    data = json.loads(path.read_text())
+    keep = {
+        k: data.get(k)
+        for k in ("run", "revision", "engine", "engine_command", "engine_is_stub",
+                  "engine_health", "engine_active", "engine_voice_count",
+                  "engine_model", "engine_model_source", "transcription_model",
+                  "transcription_model_pinned", "browser", "deployed", "public_url",
+                  "gpu", "real_s3", "transcript", "dub", "audio", "limits", "usage",
+                  "passed", "failed", "ok")
+    }
+    lines = [f"{path.name} (provenance, engine answers and measurements; the per-page "
+             f"screenshot records are omitted from this prompt, not from the file):",
+             json.dumps(keep, indent=2, ensure_ascii=False)]
+    lines.append(f"\nchecks: {data.get('passed')} passed, {data.get('failed')} failed, "
+                 f"ok={data.get('ok')}")
+    named = [check["name"] for check in data.get("checks", [])]
+    lines.append(f"{len(named)} checks, each with its own verdict, are listed in the "
+                 f"result file; the archives beside it hold the browser screenshots. "
+                 f"They are not repeated here to stay inside the shell's argument limit.")
+    return "\n".join(lines)
+
 
 def review_files(limit: int = 4) -> str:
-    found = sorted(REPORTS.glob(f"{SLICE}-review*.txt"))
-    if not found:
-        return "no judge pass is committed yet; this is the first"
+    """The cheap+ passes already run on this slice, verbatim.
+
+    A pass that never reached the model is not a pass: the first attempt at this
+    slice's round 1 was refused by the shell ("Argument list too long", exit 126),
+    and the first bundle handed its stub of an output to the judge as though it
+    were a completed review — the judge was right to call that out, and to score
+    honesty 4 for it. Only a file whose last line says exit=0 is a pass.
+    """
+    usable = []
+    for path in sorted(REPORTS.glob(f"{SLICE}-review*.txt")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if text.rstrip().endswith("exit=0"):
+            usable.append((path, text))
+    if not usable:
+        return "no completed judge pass is committed yet; this is the first"
     return "\n\n".join(
-        f"### {p.name}\n" + p.read_text(encoding="utf-8", errors="replace")
-        for p in found[-limit:]
+        f"### {p.name}\n" + text for p, text in usable[-limit:]
     )
 
 
@@ -125,38 +194,38 @@ def main() -> None:
         "fixed, unfixable ones written down; originality is expected to stay under "
         "4 because a rate limiter is not a novel idea and the differentiator is "
         "the owner's decision.\n",
-        "## The README a reviewer reads first (hosted/web/README.md, full)\n",
-        show(WEB / "README.md"), "\n",
+        "## The README a reviewer reads first (hosted/web/README.md, first 120 lines of the file)\n",
+        show(WEB / "README.md", head=120), "\n",
         "## The hosted layer's README (hosted/README.md, first 140 lines)\n",
         show(REPO / "hosted" / "README.md", head=140), "\n",
         "## The app's files (excluding node_modules, .next, .evidence)\n",
         file_list(WEB), "\n",
-        "## The limits module (hosted/control_plane/limits.py, full)\n",
-        show(REPO / "hosted" / "control_plane" / "limits.py"), "\n",
-        "## Where the routes decide (hosted/control_plane/app.py, the guards and the limits routes)\n",
-        show(REPO / "hosted" / "control_plane" / "app.py"), "\n",
-        "## The counter rows (hosted/control_plane/db.py, the slice-G models and the workspace limits)\n",
-        show(REPO / "hosted" / "control_plane" / "db.py"), "\n",
-        "## The migration (hosted/control_plane/migrations.py, full)\n",
-        show(REPO / "hosted" / "control_plane" / "migrations.py"), "\n",
-        "## Where a job settles (hosted/control_plane/jobs.py, full)\n",
-        show(REPO / "hosted" / "control_plane" / "jobs.py"), "\n",
-        "## The tests this slice owes (tests/hosted/test_hosted_limits.py, full)\n",
-        show(REPO / "tests" / "hosted" / "test_hosted_limits.py"), "\n",
+        "## The limits module (hosted/control_plane/limits.py, first 200 lines of 491)\n",
+        show(REPO / "hosted" / "control_plane" / "limits.py", head=200), "\n",
+        "## Where the routes decide (hosted/control_plane/app.py, excerpted: the guard helper and every metered route)\n",
+        excerpt(REPO / "hosted" / "control_plane" / "app.py", APP_RANGES), "\n",
+        "## The counter rows (hosted/control_plane/db.py, the slice-G models and the workspace limits, first 120 lines)\n",
+        show(REPO / "hosted" / "control_plane" / "db.py", head=120), "\n",
+        "## The migration (hosted/control_plane/migrations.py, first 150 lines)\n",
+        show(REPO / "hosted" / "control_plane" / "migrations.py", head=150), "\n",
+        "## Where a job settles (hosted/control_plane/jobs.py, first 150 lines)\n",
+        show(REPO / "hosted" / "control_plane" / "jobs.py", head=150), "\n",
+        "## The tests this slice owes (tests/hosted/test_hosted_limits.py, first 170 lines of 419)\n",
+        show(REPO / "tests" / "hosted" / "test_hosted_limits.py", head=170), "\n",
         "## The dashboard's half (lib/quota.js, the limits API route, the panel)\n",
         show(WEB / "lib" / "quota.js"), "\n",
         show(WEB / "app" / "api" / "limits" / "route.js"), "\n",
         show(WEB / "components" / "LimitsView.jsx"), "\n",
-        "## The acceptance table this slice owes rows in (hosted/M3-ACCEPTANCE.md)\n",
-        show(REPO / "hosted" / "M3-ACCEPTANCE.md"), "\n",
+        "## The acceptance table this slice owes rows in (hosted/M3-ACCEPTANCE.md, first 100 lines of the file)\n",
+        show(REPO / "hosted" / "M3-ACCEPTANCE.md", head=100), "\n",
         "## The end-to-end, real engine, this revision (--keep)\n",
-        e2e_summary(evidence), "\n",
+        e2e_trimmed(evidence), "\n",
         "## The end-to-end, stub engine (the default smoke path)\n",
         stub_summary(stub), "\n",
         "## Suite results (tests/hosted, the newest transcript beside these runs)\n",
         stamped(tests), "\n",
-        "## Web unit tests (node --test, the newest transcript)\n",
-        stamped(unit),
+        "## Web unit tests (node --test, the newest transcript, first 15 lines)\n",
+        "\n".join(stamped(unit).splitlines()[:15]),
         "\n",
         "## Commits in this slice\n", git_log(10), "\n",
         "## The judge passes already run on this slice (D8)\n",

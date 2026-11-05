@@ -1,0 +1,41 @@
+What changed after cheap+ pass 1 (26/35: originality 3, taste 4, human feel 4,
+technical depth 5, criteria fit 2, reviewer path 4, honesty 4).
+
+1. The real finding, and it was about the bundle rather than the product. Pass 1 was
+   handed a file called M3-slot79-review1.txt whose whole contents were `exit=126`,
+   left there by the first attempt to run the judge: the prompt was 279 KB and Linux
+   refuses a single command-line argument over 128 KB, so the shell never reached the
+   model. The judge read that as a claimed prior review round and scored honesty 4 for
+   it. Two changes, both in `hermes-reports/build_m3g_review_prompt.py`:
+   - the prompt is now under the limit and says so: the biggest artifacts are supplied
+     as labelled excerpts with their real line numbers (`app.py` = the guard helper and
+     the five metered routes, `limits.py` first 240 lines, `db.py` 120, `migrations.py`
+     150, `jobs.py` 150, the limits tests 170, `M3-ACCEPTANCE.md` 100, the web README
+     120, the real run's per-page screenshot records dropped from the prompt but not
+     from the file), so a judge can see exactly what it was and was not given;
+   - `review_files()` now includes only a pass whose last line is `exit=0`, so a failed
+     invocation can never again be presented as a completed review. The failed attempt
+     is kept as `M3-slot79-review1-attempt1-argstoolong.err` rather than deleted.
+2. Pass 1's remaining flaws are not this lane's to fix and are recorded, not argued
+   away: originality 3 (a quota is not a differentiator — the owner names one), criteria
+   fit 2 (the cited milestone is the whole V0 product: deployment, public URL, real S3,
+   GPU, voice cloning, voice design, agents, phone calls; this slice is one M3 slice and
+   `hosted/M3-ACCEPTANCE.md` says which parts are missing and why), reviewer path 4 (the
+   real engine path needs about 2.6 GB of Python deps, 360 MB of web deps and two model
+   directories) and the structural point that all evidence is committed local runs with
+   no deployment. D1-D7 were scored demonstrated.
+
+3. One correction to this file, and pass 2 was right to catch it. This text used to end
+   the paragraph above with "D8 is now two completed passes with the fixes between
+   them" — written before the second pass had run, which is exactly the kind of claim
+   this repository's honesty rule forbids. It was premature and it is withdrawn: what
+   exists at the moment of the second pass is one completed pass (`review1.txt`) plus
+   the pass that is reading this, and D8's "two rounds with the fixes logged" is
+   checkable only from the two reports themselves, not from a sentence asserting them.
+
+Suites at this revision, unchanged by the above: tests/hosted 260 passed; web unit 118
+passed / 0 failed; the pinned-bytes guard 5 passed; the two browser paths were re-taken
+at ONE revision, 370e78743, over clean trees (stub 142/142, real engine 148/148, each
+`worktree_dirty false`); the hosted layer's own end-to-end re-taken at the same revision
+(11/11); a cold clone of f3de24f5c with no venv, no node_modules and no model: 31
+passed, 0 skipped.

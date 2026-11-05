@@ -1,0 +1,65 @@
+Verdict: FAIL. Scores: 3, 4, 4, 5, 2, 4, 4. Originality and criteria fit are below the required 4; D8 is also not demonstrated.
+
+1. Originality — 3/5
+
+The implementation is unusually careful about reservations, ledger projections, refusal semantics, and honest scope, but the core product idea is still a hosted speech dashboard with quotas and rate limiting. The artifacts themselves acknowledge this: D8 says originality should remain below 4 because “a rate limiter is not a novel idea.” The memorable moment is the honest refusal and reservation behavior, not a differentiated product experience.
+
+2. Taste — 4/5
+
+The copy, naming, and product boundaries are designed rather than generic: “none” instead of zero, separate settled and reserved counts, fixed-window disclosure, and explicit refusal explanations are good choices. The browser evidence covers themes, focus states, responsive card rows, and the Usage page. I cannot independently inspect the screenshots from the supplied text, so a 5 is not justified.
+
+3. Human feel — 4/5
+
+The writing has a specific engineering voice and repeatedly states uncomfortable limits: no deployment, no GPU, no real S3, no human audio review, fixed rather than sliding windows, and two unbuilt pages. Commit messages and documentation are concrete rather than promotional. There is some long, defensive, audit-heavy prose and frequent em-dash use, but no damaging AI-generic language or empty superlatives in the supplied material.
+
+4. Technical depth — 5/5
+
+This is the strongest category. The conditional `UPDATE` protects both committed and reserved characters; creation races are handled; counters are seeded from the ledger; reserve/settle/release are distinct; refusals are recorded with zero characters; and concurrent behavior has race tests. The evidence includes 260 hosted tests passed, 118 web unit tests passed, a real-engine browser run with 148 checks passed, and a stub browser run with 142 checks passed.
+
+5. Criteria fit — 2/5
+
+Against the owner’s V0 milestone, this is only a local M3 slice, not the requested live full-stack competitor. There is no deployed SaaS, public URL, GPU/spot deployment, real S3, email authentication flow, billing, voice cloning, voice design, voice agents, SIP/phone calls, deployment health checks, signup on a public service, or demo video. The artifacts explicitly admit that Voice Clone and Voice Design are unbuilt; the evidence supports the limits slice, not the full milestone.
+
+6. Reviewer path — 4/5
+
+The README gives runnable commands, a stub path, a real-engine path, manual process instructions, test commands, and committed run evidence. A reviewer can verify the local behavior, and the stub E2E path is appropriately separated from speech-quality claims. However, the full fresh-clone path requires roughly 2.6 GB for Python dependencies, 360 MB for web dependencies, and model assets; the real path is not a genuinely few-minute path on an ordinary machine.
+
+7. Honesty — 4/5
+
+The project is unusually explicit about what was and was not proven: local-only operation, no public deployment, no real S3, no GPU, no human listening check, stub versus real engine, and the transcription error. Numbers are tied to committed results and tests, and simulated audio is labeled. The score is not 5 because the evidence bundle still depends heavily on committed self-authored reports, and the supplied prior judge run ends at `exit=126`, so the claimed two-round review discipline is not independently established.
+
+Five most damaging flaws
+
+1. The milestone is far broader than this slice.
+   Reference: `hosted/M3-ACCEPTANCE.md`, section beginning “Two of the pages M3 names — Voice Clone…”; `hosted/web/README.md`, first 20 lines.
+   Clone, design, agents, phone calls, deployment, public signup, GPU operation, and real S3 are absent.
+
+2. The core idea is not sufficiently differentiated.
+   Reference: D8 in the supplied slice claims; `hosted/control_plane/limits.py`, module docstring.
+   The implementation is excellent quota engineering, but a quota/rate-limited TTS dashboard is not a surprising hackathon concept. The artifact explicitly predicts an originality score under 4.
+
+3. D8’s required review process is not proven.
+   Reference: `hermes-reports/M3-slot79-review1.txt` reports `exit=126`; “What changed after the pass above” says “nothing: this is the first pass on the slice.”
+   The supplied evidence shows a failed prior review attempt and the current first pass, not two completed cheap+ rounds with every fixable flaw addressed.
+
+4. The real reviewer path is operationally heavy.
+   Reference: `hosted/web/README.md`, “What a fresh clone can do before you install anything heavy”; `hosted/README.md`, “Start here.”
+   A fresh reviewer needs a large Python environment, web dependencies, and potentially two model directories. The lightweight path proves the application and control plane, but deliberately proves nothing about speech.
+
+5. The evidence proves local behavior, not production readiness.
+   Reference: real E2E result generated `2026-11-05T00:50:31.909Z`; `deployed: false`, `public_url: null`, `gpu: false`, `real_s3: false`.
+   The 148-check run is strong evidence for this revision’s local browser path, but it does not establish hosted availability, multi-tenant production operation, autoscaling, HTTPS, public signup, or cloud storage.
+
+D-item status
+
+- D1 — Demonstrated. Workspace monthly character ceiling and per-key request rate default to none and are tested.
+- D2 — Demonstrated. The single conditional update, creation race, and concurrent reservation behavior are covered by the implementation and tests.
+- D3 — Demonstrated. Ledger seeding, projection drift checks, settlement, release, cancellation, and usage-event consistency are evidenced.
+- D4 — Demonstrated. The artifacts show 402 and 429 behavior, reset/Retry-After data, headers, structured bodies, zero-character refusal rows, and no engine call after refusal.
+- D5 — Demonstrated. The scope distinction between speech characters and transcription, fixed-window behavior, unpruned rows, and visible reservations are documented and tested.
+- D6 — Demonstrated. API read access, session-only writes, Usage-page editing, empty-as-none semantics, and shared error parsing are evidenced.
+- D7 — Partly demonstrated. The acceptance documentation, design explanation, and hand-run guide exist, but the claimed cited-run workflow and supporting evidence are still dependent on self-authored archives; the two named pages remain unbuilt.
+- D8 — Not demonstrated. The artifact shows a failed earlier judge invocation and says this is the first pass; two completed cheap+ rounds with fixes are not present.
+
+What would make it win: add one genuinely differentiated user-facing voice-agent or phone-call moment and ship it publicly end to end, while preserving this level of measured, honest evidence.
+exit=0

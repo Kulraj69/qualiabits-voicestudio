@@ -41,9 +41,9 @@ this repository, and their transcripts are committed beside the two run files:
 `hermes-reports/V0-slot79-tests-r2.log` (the Python guard suite, 260 passed),
 `V0-slot79-web-unit-r1.log` (the web unit suite, 118 passed), `V0-slot79-pins-r1.log`
 (the pinned-bytes guard, 5 passed), `V0-slot79-coldclone-r1.log` (the same guards twice
-from a clone of `370e78743` with no `.venv`, no `node_modules` and no model: 29 passed
-with one skip the first time, because the box had run out of room for the 112 MB asset
-the download-branch guard stages, then 30 passed), `V0-slot79-stub-run2.log` and
+from a clone of `f3de24f5c` with no `.venv`, no `node_modules` and no model: 31 passed,
+0 skipped, both attempts — this box had room for the 112 MB asset the download-branch
+guard stages), `V0-slot79-stub-run2.log` and
 `V0-slot79-real-run1.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 
@@ -62,21 +62,22 @@ puts those in `.venv`. With an interpreter like that, from a bare clone:
 git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git qb && cd qb
 <python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py \
     tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
-# 30 passed — no venv in that clone, no model, no browser. Transcript:
-# hermes-reports/V0-slot77-coldclone-r1.log, taken from a clone of 3a820f474, whose
+# 31 passed — no venv in that clone, no model, no browser. Transcript:
+# hermes-reports/V0-slot79-coldclone-r1.log, taken from a clone of f3de24f5c, whose
 # first lines are the clone, the revision and the interpreter it borrowed (a sibling
 # checkout's .venv — the clone itself has none). That transcript records both
-# attempts: the first was 29 passed with one skip, because this box had no room for
-# the 112 MB asset one guard stages, and the second was 30 passed. The command is
-# the same both times; only the box changed.
+# attempts, both the same: 31 passed, 0 skipped, because this box had room for
+# the 112 MB asset one guard stages. On a box that has no room, that one test skips
+# and the same command prints 30 passed with one skip; the command is the same either
+# way, only the box changes.
 ```
 
 Those four files check that the two archived runs name one revision that is in this
 branch's history, that the counts and the Hindi word count in the prose are the
 runs' own, and that the model pins are enforced on every path into the script. On a
 machine with no model directory the two tests that stage the pinned asset skip, with
-that as their reason; on this box they ran in the second attempt, which is why that
-line says 30 passed and 0 skipped.
+that as their reason; on this box they did not, which is why that line says 31 passed
+and 0 skipped.
 
 You need three processes. The dashboard is one of them; the engine and the
 control plane are the other two, and running them is described in
