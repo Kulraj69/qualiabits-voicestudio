@@ -1,0 +1,29 @@
+# The push this slice's evidence chain ends in, read back from the remote.
+#
+# command (the token is read from the secrets file at run time and is not written
+# here, and the header is never echoed):
+#   git -c http.extraheader="Authorization: Basic <redacted>" push origin work/m1-headless
+#   git -c http.extraheader="Authorization: Basic <redacted>" ls-remote origin refs/heads/work/m1-headless
+#
+# push output:
+# To https://github.com/Kulraj69/qualiabits-voicestudio.git
+#    bd6c51bba..360e563d9  work/m1-headless -> work/m1-headless
+#
+# remote SHA read back: 360e563d9d668be4f64e80b4eb714eeb0be6cd73
+# local  HEAD at the same moment: 360e563d9d668be4f64e80b4eb714eeb0be6cd73
+# equal: yes
+#
+# The run both evidence archives carry is dc63603ba, an ancestor of this push:
+#   git diff dc63603ba 360e563d9 -- hosted/control_plane hosted/worker hosted/scripts \
+#       hosted/web/app hosted/web/components hosted/web/lib hosted/web/e2e
+# is empty, which is the same command tests/hosted/test_m3_acceptance_matrix.py runs.
+
+# Second push, after the prose in the two pages was pointed at the artifacts above:
+#   360e563d9..30b018f1a  work/m1-headless -> work/m1-headless
+# remote SHA read back: 30b018f1a7206f0fbbd83deb7931bc4001e06035
+# local  HEAD at the same moment: 30b018f1a7206f0fbbd83deb7931bc4001e06035
+# equal: yes
+#
+# Both pushes are recorded because the acceptance page quotes "the pushed HEAD" and the
+# diff it checks is against the run's own revision dc63603ba, which the first push is an
+# ancestor of and the second one is its descendant.
