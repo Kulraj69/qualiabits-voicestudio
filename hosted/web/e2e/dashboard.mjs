@@ -2004,9 +2004,18 @@ async function main() {
 
     const LIMIT_TEXT = "one two three";
     const beforeRate = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;
+    const beforeLimits = (await plane(planeBase, "/v1/limits", { token: session })).data?.limits;
+    // Three requests in one fixed minute, and the point of this part of the
+    // check is the *limiter*, so the requests are ones the engine cannot slow
+    // down: `POST /v1/jobs` queues a row and answers immediately, while a speech
+    // call on the real engine takes tens of seconds. The first version of this
+    // used the speech route, and the real-engine run failed it for exactly that
+    // reason — three calls that each take twenty seconds straddle a UTC minute,
+    // so each landed in its own window and the third was allowed. A check that
+    // passes only while the engine is fast measures the machine, not the plane.
     const rateCalls = [];
     for (let index = 0; index < 3; index += 1) {
-      rateCalls.push(await plane(planeBase, "/v1/audio/speech", {
+      rateCalls.push(await plane(planeBase, "/v1/jobs", {
         method: "POST",
         token: limitsKey,
         body: { input: LIMIT_TEXT, voice: SPEAK_VOICE, response_format: "wav" },
@@ -2017,7 +2026,7 @@ async function main() {
     const rateDetail = rateRefusal.data?.detail;
     check(
       "the third request in the minute is refused 429 with a real Retry-After",
-      rateCalls[0].status === 200 && rateCalls[1].status === 200
+      rateCalls[0].status === 202 && rateCalls[1].status === 202
         && rateRefusal.status === 429
         && Number.isFinite(retryAfter) && retryAfter >= 1 && retryAfter <= 60,
       `statuses ${rateCalls.map((call) => call.status).join(",")} retry-after ${rateRefusal.headers?.get("retry-after")}`,
@@ -2030,12 +2039,24 @@ async function main() {
       JSON.stringify(rateDetail),
     );
     const afterRate = (await plane(planeBase, "/v1/usage", { token: session })).data?.usage;
+    const afterLimits = (await plane(planeBase, "/v1/limits", { token: session })).data?.limits;
+    // What a refusal costs, said precisely. The refusal comes back 429 before
+    // the ceiling is ever consulted, so the two allowed requests moved the
+    // month's reservation by exactly two texts and the refused one moved it by
+    // nothing — and it is still a row in the meter, under its own status.
     check(
-      "a refused request costs no characters and shows up in the meter as 429",
-      afterRate.characters - beforeRate.characters === LIMIT_TEXT.length * 2
-        && afterRate.by_status?.["429"] >= 1,
-      `characters ${beforeRate.characters} -> ${afterRate.characters}, 429 rows ${afterRate.by_status?.["429"]}`,
+      "a refused request is a 429 row that reserved no characters",
+      afterRate.by_status?.["429"] >= 1
+        && afterRate.characters === beforeRate.characters
+        && afterLimits.characters_reserved - beforeLimits.characters_reserved === LIMIT_TEXT.length * 2,
+      `characters ${beforeRate.characters} -> ${afterRate.characters}, 429 rows ${afterRate.by_status?.["429"]}, reserved ${beforeLimits.characters_reserved} -> ${afterLimits.characters_reserved}`,
     );
+    // Leave the month as the run found it: cancelling the two queued jobs gives
+    // their reservations back, which is the same path the jobs page exercises.
+    for (const call of rateCalls.slice(0, 2)) {
+      const jobId = call.data?.job?.id;
+      if (jobId) await plane(planeBase, `/v1/jobs/${jobId}`, { method: "DELETE", token: limitsKey });
+    }
 
     // A ceiling three characters above what this workspace has already been
     // charged: the next request has to be refused, and refused *by the plane*.
