@@ -1,0 +1,19 @@
+$ git push origin work/m1-headless   # credential read from secrets/gh_token.txt at run time, never printed
+To https://github.com/Kulraj69/qualiabits-voicestudio.git
+   815662b8b..9cee02f19  work/m1-headless -> work/m1-headless
+
+$ git ls-remote origin work/m1-headless
+9cee02f197205951175603cb41e9b5cc30b60d05	refs/heads/work/m1-headless
+
+$ git rev-parse HEAD
+9cee02f197205951175603cb41e9b5cc30b60d05
+
+$ git push origin work/m1-headless   # the corrected log
+To https://github.com/Kulraj69/qualiabits-voicestudio.git
+   9cee02f19..c86afdd0c  work/m1-headless -> work/m1-headless
+
+$ git ls-remote origin work/m1-headless
+c86afdd0cdf854b2d45b2a0af108f47517f212c3	refs/heads/work/m1-headless
+
+$ git rev-parse HEAD
+c86afdd0cdf854b2d45b2a0af108f47517f212c3
