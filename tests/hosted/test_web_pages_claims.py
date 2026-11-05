@@ -66,7 +66,13 @@ WORD_NUMBERS = {
     "one-hundred-forty-eight": 148,
 }
 
-SCREENSHOT_CHECK = "every page was captured as a screenshot"
+#: The checks that exist only under `--keep`, because they assert that the
+#: screenshots have somewhere to be written: the page sweep's own, plus the width
+#: section's phone-and-tablet one (slice H). A guard that assumed exactly one was
+#: right when there was one; the difference is read rather than assumed now, and
+#: the expected number is asserted so a third one cannot appear unnoticed.
+KEEP_ONLY_RE = re.compile(r"was captured as a screenshot")
+EXPECTED_KEEP_ONLY = 2
 UNIT_COUNT_RE = re.compile(r"(\w[\w-]*) checks, no browser")
 REAL_ENGINE = WEB / "e2e" / "real-engine.sh"
 
@@ -96,7 +102,12 @@ def counted(result: dict) -> tuple[list[str], int, int]:
     """(check names, checks with --keep, checks without it)."""
     names = [check["name"] for check in result["checks"]]
     with_keep = len(names)
-    without_keep = with_keep - 1 if SCREENSHOT_CHECK in names else with_keep
+    keep_only = [name for name in names if KEEP_ONLY_RE.search(name)]
+    assert len(keep_only) == EXPECTED_KEEP_ONLY, (
+        f"expected {EXPECTED_KEEP_ONLY} screenshot-only checks, found {len(keep_only)}: "
+        f"{keep_only}; the arithmetic below is only right if that number is"
+    )
+    without_keep = with_keep - len(keep_only)
     assert result["passed"] == with_keep, "a cited run has failing checks"
     # A judge pass on round 2 pointed out that "passed" is the harness's own count:
     # a tampered file could keep the total and flip one check's own verdict, and

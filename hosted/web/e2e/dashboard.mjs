@@ -615,6 +615,181 @@ async function main() {
         JSON.stringify(result.pages.map((p) => [p.route, p.screenshot_bytes])));
     }
 
+    // ── the width: a phone, a tablet, a desktop ────────────────────────────
+    // The brief's second adjective, measured rather than eyeballed. Before this
+    // section existed the stylesheet held exactly one `@media` rule and it was
+    // `prefers-color-scheme`: there was no width breakpoint in the file at all,
+    // and this suite walked the nine pages at one viewport. So the defect this
+    // section looks for is not hypothetical and the run below is its record:
+    // it was written before the breakpoints were, and failed on them.
+    //
+    // Two things are asserted per width, both read out of the real layout:
+    // the document must not scroll sideways, and no element may be wider than
+    // the window it is in — except inside a deliberate scroll container
+    // (`.table-wrap`), which is how a wide table is allowed to exist on a
+    // phone without dragging the page with it.
+    const VIEWPORTS = [
+      { id: "phone", width: 390, height: 844 },
+      { id: "tablet", width: 768, height: 1024 },
+      { id: "desktop", width: 1440, height: 900 },
+    ];
+    const widthDir = path.join(runDir, "widths");
+    if (KEEP) mkdirSync(widthDir, { recursive: true });
+    result.widths = [];
+    for (const viewport of VIEWPORTS) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      const entry = { ...viewport, pages: [] };
+      for (const route of PAGES) {
+        await page.goto(webBase + route, { waitUntil: "load" });
+        const measured = await page.evaluate(() => {
+          const vw = window.innerWidth;
+          const inScrollContainer = (node) => {
+            let parent = node.parentElement;
+            while (parent) {
+              const style = getComputedStyle(parent);
+              if ((style.overflowX === "auto" || style.overflowX === "scroll")
+                  && parent.scrollWidth > parent.clientWidth + 1) {
+                return true;
+              }
+              parent = parent.parentElement;
+            }
+            return false;
+          };
+          const offenders = [];
+          for (const node of document.querySelectorAll("body *")) {
+            const box = node.getBoundingClientRect();
+            if (box.width === 0 && box.height === 0) continue;
+            if (box.right <= vw + 1 && box.left >= -1) continue;
+            offenders.push({
+              tag: node.tagName.toLowerCase(),
+              cls: String(node.className || "").slice(0, 48),
+              left: Math.round(box.left),
+              right: Math.round(box.right),
+              in_scroll_container: inScrollContainer(node),
+            });
+          }
+          const controls = [...document.querySelectorAll(".topbar a, .topbar button")]
+            .map((node) => {
+              const box = node.getBoundingClientRect();
+              return {
+                name: (node.getAttribute("aria-label") || node.textContent || "").trim().slice(0, 24),
+                left: Math.round(box.left), right: Math.round(box.right),
+                width: Math.round(box.width), height: Math.round(box.height),
+              };
+            });
+          const navTops = [...document.querySelectorAll(".nav a")]
+            .map((node) => Math.round(node.getBoundingClientRect().top));
+          // The top bar's own rows, counted from its direct children. A row is a
+          // group of children whose boxes overlap vertically; counting distinct
+          // `top` values instead would call one row four, because a tall brand
+          // and a short switch are centred at different offsets. The spacer is
+          // excluded: at a narrow width it is display:none.
+          const bar = document.querySelector(".topbar");
+          const boxed = bar
+            ? [...bar.children]
+              .filter((node) => getComputedStyle(node).display !== "none")
+              .map((node) => node.getBoundingClientRect())
+              .filter((box) => box.height > 0)
+              .sort((a, b) => a.top - b.top)
+            : [];
+          let barRows = 0;
+          let rowBottom = -Infinity;
+          for (const box of boxed) {
+            if (box.top >= rowBottom - 1) {
+              barRows += 1;
+              rowBottom = box.bottom;
+            } else {
+              rowBottom = Math.max(rowBottom, box.bottom);
+            }
+          }
+          const barBox = bar ? bar.getBoundingClientRect() : null;
+          const heading = document.querySelector("h1");
+          const headingBox = heading ? heading.getBoundingClientRect() : null;
+          return {
+            inner_width: vw,
+            document_scroll_width: document.documentElement.scrollWidth,
+            horizontal_overflow: document.documentElement.scrollWidth > vw + 1,
+            offenders: offenders.slice(0, 10),
+            offender_count: offenders.length,
+            outside: offenders.filter((item) => !item.in_scroll_container).length,
+            topbar_controls: controls,
+            nav_row_tops: [...new Set(navTops)].length,
+            topbar_rows: barRows.length,
+            topbar_height: barBox ? Math.round(barBox.height) : 0,
+            heading_visible: Boolean(headingBox && headingBox.width > 0 && headingBox.height > 0
+              && headingBox.right <= vw + 1 && headingBox.left >= -1),
+          };
+        });
+        entry.pages.push({ route, ...measured });
+        if (KEEP && viewport.id !== "desktop") {
+          const file = path.join(widthDir, `${viewport.id}-${route === "/" ? "home" : route.slice(1)}.png`);
+          await page.screenshot({ path: file, fullPage: true });
+        }
+      }
+      const label = `${viewport.width}x${viewport.height}`;
+      const over = entry.pages.filter((p) => p.horizontal_overflow);
+      check(`${label}: no page scrolls sideways`,
+        over.length === 0,
+        over.map((p) => `${p.route} ${p.document_scroll_width}>${p.inner_width}`).join(", "));
+      const wide = entry.pages.filter((p) => p.outside > 0);
+      check(`${label}: no element is wider than the window`,
+        wide.length === 0,
+        wide.map((p) => `${p.route} ${p.outside} element(s): ${p.offenders.filter((o) => !o.in_scroll_container).map((o) => `${o.tag}.${o.cls}[${o.left}..${o.right}]`).join(" ")}`).join(" | "));
+      const headless = entry.pages.filter((p) => !p.heading_visible);
+      check(`${label}: every page shows its heading inside the window`,
+        headless.length === 0,
+        headless.map((p) => p.route).join(", "));
+      if (viewport.id === "desktop") {
+        check("desktop: the nav still sits on one line, as the shipped design has it",
+          entry.pages.every((p) => p.nav_row_tops === 1),
+          JSON.stringify(entry.pages.map((p) => [p.route, p.nav_row_tops])));
+      }
+      if (viewport.id === "phone" || viewport.id === "tablet") {
+        const sprawling = entry.pages.filter((p) => p.topbar_rows > 2 || p.nav_row_tops > 2);
+        check(`${label}: the top bar lays out in at most two rows, nav included`,
+          sprawling.length === 0,
+          entry.pages.map((p) => `${p.route} ${p.topbar_rows} bar row(s), nav ${p.nav_row_tops} line(s), ${p.topbar_height}px tall`).join(", "));
+        const spilled = entry.pages.flatMap((p) => p.topbar_controls
+          .filter((c) => c.right > p.inner_width + 1 || c.left < -1)
+          .map((c) => `${p.route} ${c.name}[${c.left}..${c.right}]`));
+        check(`${label}: every top bar control stays inside the window`,
+          spilled.length === 0, spilled.join(", "));
+        const tiny = entry.pages.flatMap((p) => p.topbar_controls
+          .filter((c) => c.height < 24 || c.width < 20)
+          .map((c) => `${p.route} ${c.name} ${c.width}x${c.height}`));
+        check(`${label}: every top bar control is still big enough to press`,
+          tiny.length === 0, tiny.join(", "));
+        if (KEEP) {
+          // The screenshots are asserted by one check after the loop, because the
+          // suite's own arithmetic (and a guard that reads it) counts the checks
+          // that exist only under `--keep`: one per run, not one per width.
+          entry.screenshots = PAGES
+            .map((route) => `widths/${viewport.id}-${route === "/" ? "home" : route.slice(1)}.png`)
+            .filter((relative) => {
+              const file = path.join(runDir, relative);
+              return existsSync(file) && statSync(file).size > 10000;
+            });
+          entry.screenshots_expected = PAGES.length;
+        }
+      }
+      result.widths.push(entry);
+    }
+    if (KEEP) {
+      // One check for both narrow widths, named so the same sentence answers for
+      // the phone and the tablet: 18 images, not 9.
+      const wanted = result.widths
+        .filter((viewport) => viewport.id !== "desktop")
+        .reduce((total, viewport) => total + (viewport.screenshots_expected || 0), 0);
+      const got = result.widths
+        .filter((viewport) => viewport.id !== "desktop")
+        .reduce((total, viewport) => total + (viewport.screenshots || []).length, 0);
+      check("phone and tablet: every page was captured as a screenshot at both widths",
+        wanted > 0 && got === wanted, `${got}/${wanted}`);
+    }
+    // Back to the viewport every other check in this suite runs at, so the
+    // section above cannot change what the ones below measure.
+    await page.setViewportSize({ width: 1280, height: 720 });
+
     // ── the theme: dark by default, light on request, remembered ───────────
     // M3's brief asks for a dashboard that is "responsive, fast, dark/light".
     // Everything above ran in a context that asks for dark (the shipped

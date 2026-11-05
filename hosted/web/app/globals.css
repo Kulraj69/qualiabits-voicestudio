@@ -981,3 +981,102 @@ th.num {
   color: var(--fg-subtle);
   font-size: 0.85rem;
 }
+
+/* ── the width the brief asked for ─────────────────────────────────────── */
+/*
+ * M3's brief asks for a dashboard that is "responsive", and until slice H this
+ * file had no width breakpoint in it at all: the rules above are the ones the
+ * desktop design was drawn with, and a narrow window simply got them squeezed.
+ * The run in `hermes-reports/M3-slot81-*` is what that looked like — every page
+ * scrolled sideways (the document measured 560px wide in a 390px window), the
+ * session controls sat off the right edge, and the theme switch was squeezed
+ * from a 34px circle to a 17px sliver, because a flex row whose items have
+ * `min-width: auto` cannot get narrower than the sum of their content.
+ *
+ * So the two rules below do two different jobs. The 900px one lays the top bar
+ * out as two rows — brand, theme switch and session on the first, the nine nav
+ * links on their own full-width line underneath — which is also where the
+ * padding starts to breathe. The 640px one is the phone proper: the page padding
+ * tightens, the brand's "Dashboard" suffix goes, and everything that was a fixed
+ * minimum width is allowed to shrink. Nothing above is edited: a window wider
+ * than 900px never matches either block, which is what keeps the desktop
+ * pixel-for-pixel what it was, and the run asserts that at 1440px the nav is
+ * still one line.
+ *
+ * A hidden-cost note, because it is the reason these are width-only: the
+ * light/dark palettes are *not* touched here. The theme promises that a token
+ * declared for one theme is declared for the other, and a breakpoint that
+ * re-coloured anything would break that promise; `tests/hosted/test_theme_tokens.py`
+ * still parses both blocks and would fail if it did.
+ */
+@media (max-width: 900px) {
+  /* The top bar becomes two rows here rather than at the phone width, and that
+     is deliberate: its one-row minimum content is 560px, so between 640 and 900
+     a single row still *fits*, but only by squeezing the nine nav links into
+     whatever is left — the run measured three lines of links beside a one-line
+     brand. The nav gets its own full-width row, which is one tidy wrap instead
+     of a shatter, and the session controls keep their place. */
+  .topbar {
+    flex-wrap: wrap;
+    column-gap: var(--space-3);
+    row-gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+  }
+  .nav {
+    order: 3;
+    width: 100%;
+  }
+  .topbar__spacer {
+    display: none;
+  }
+  /* Never let the switch be squeezed: it is a hit target, not a flexible gap. */
+  .theme-toggle {
+    flex: 0 0 auto;
+  }
+  .main {
+    padding: var(--space-6) var(--space-5);
+  }
+  .footer {
+    padding: var(--space-5);
+  }
+  .hero {
+    padding: var(--space-6) 0 var(--space-4);
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: var(--space-3) var(--space-4);
+  }
+  .brand__sub {
+    display: none;
+  }
+  .who {
+    min-width: 0;
+  }
+  .who__email {
+    max-width: 32vw;
+  }
+  .main {
+    padding: var(--space-5) var(--space-4);
+  }
+  .footer {
+    padding: var(--space-5) var(--space-4);
+  }
+  .card {
+    padding: var(--space-5);
+  }
+  .hero {
+    padding: var(--space-5) 0 var(--space-3);
+  }
+  .hero__title {
+    max-width: none;
+  }
+  .secret__value {
+    min-width: 0;
+  }
+  th,
+  td {
+    padding: 10px 12px;
+  }
+}
