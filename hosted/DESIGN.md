@@ -236,3 +236,58 @@ to what is *not* here: nothing prunes `rate_windows` yet, and a request that die
 mid-flight leaves its reservation standing until the period turns over. The dashboard
 shows `characters_reserved` apart from `characters_settled`, so that difference is
 visible rather than inferred.
+
+## The width: two breakpoints, and what decided them
+
+M3's brief asks for a dashboard that is "responsive, fast, dark/light" — and until slice H
+the first of those three words had nothing behind it. `hosted/web/app/globals.css` held
+exactly one `@media` rule and it was `prefers-color-scheme`; there was no width breakpoint
+in the file at all, and the browser suite drove the nine pages at one viewport. What that
+cost was measured before it was fixed, and the run that measured it is the reason the
+numbers in this section are numbers rather than adjectives: at 390px **every one of the
+nine pages scrolled sideways**, the document measuring 560px wide in a 390px window; the
+session controls (`span.who`, the sign-out button) sat at x=415..560, off the right edge;
+the theme switch, a 34px circle by design, was squeezed to 17x34.
+
+**Why the page was 560px wide.** The top bar is a flex row, and a flex item's automatic
+minimum size is its content's, so a row of items that cannot shrink below their content
+cannot be narrower than the sum of those minima either. The bar's minimum came to 560px
+and every page inherited it. No amount of padding or wrapping *inside* the page could fix
+that, because the offending row was the page's own frame.
+
+**Why the breakpoints are where they are.** Below 900px the bar lays out as two rows — the
+brand, the theme switch and the session on the first, the nine nav links on their own
+full-width line underneath — because that is the honest way to give nine links room without
+either hiding some or letting the row push the session off the page. It used to be decided
+at 640px only, and the run showed what that looked like between 640 and 900: the nav
+shattered into three cramped lines beside a one-line brand, because a single row still
+“fitted” by squeezing. The free space in that row is what the nav has to live in, so the
+nav is given its own instead. Below 640px the page padding tightens once more, the brand's
+“Dashboard” suffix goes, and the two places with a fixed minimum width — the session block
+and the revealed API key — are allowed to shrink.
+
+**What the check refuses to call a defect.** A wide table on a phone may scroll inside its
+own box: `.table-wrap` is an `overflow-x: auto` container and that is the whole reason it
+exists. So the run walks every element on every page and accepts one that overflows *only*
+if it sits inside a scroll container that is itself scrollable; anything else is reported
+with its tag, class and coordinates. That is also why the assertion is per element and not
+per page: `scrollWidth > innerWidth` alone would say a page is broken without saying what
+broke it, and the fix would be guesswork.
+
+**Why a width block may not declare a token.** The light palette is declared twice — once
+under `data-theme="light"`, once inside `prefers-color-scheme` — and
+`tests/hosted/test_theme_tokens.py` exists to keep the two copies identical. A breakpoint
+that declared a colour token would be a third copy that guard knows nothing about, so the
+rule is that width blocks are layout only, and `tests/hosted/test_dashboard_width_rules.py`
+fails if one declares a custom property. The same file checks the breakpoints' order
+(widest first, so a narrower rule can override a wider one) and that the specific rules
+that hold the two-row bar together are still there: deleting one of them would put the
+560px minimum back, and only a browser run would notice.
+
+**What this does not claim.** Three widths, one browser, on loopback: Chromium at 390x844,
+768x1024 and 1440x900, driven by the same harness as everything else in this suite. There
+is no testing on a real phone, no touch-device testing, no Safari or Firefox pass, and no
+claim about a width between the three (the rules are `max-width`, so a 500px window gets
+the 640px block and a 900px one gets the desktop layout). The screenshots the run keeps —
+every page at both narrow widths — are the artefact a reader can look at; the numbers are
+what the run asserts.

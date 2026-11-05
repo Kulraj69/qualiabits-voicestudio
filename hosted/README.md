@@ -92,7 +92,12 @@ subtitle file would count timecodes as speech; its seconds are still recorded.
 The dashboard has nine pages now — home, Speak, Voices, Transcribe, Dub, Jobs, Projects,
 Keys, Usage. It is dark and light: dark is the default, the switch in the top bar
 flips it and remembers the choice, and a reader whose system asks for light starts on
-the light palette. The
+the light palette. It holds its shape at a narrow width too: below 900px the top bar
+lays out as two rows — the brand, the theme switch and the session on the first, the
+nine nav links on their own line underneath — and below 640px the page padding tightens
+and the session block is allowed to shrink. Before slice H there was no width rule in
+the stylesheet at all and every page scrolled sideways at 390px, which is what the
+browser suite's three viewport widths now check page by page. The
 browser front end that speaks through this plane lives in
 [`hosted/web/`](web/README.md) — its own Next.js package, importing nothing from
 `backend/`, this plane's own routes being its only contact with it. Run it, and
