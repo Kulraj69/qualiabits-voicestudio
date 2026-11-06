@@ -2030,3 +2030,141 @@ guard.
 Chain, each link a file a reader can open: run → `dc63603ba` → push
 (`V0-slot81-push-r1.log`, both pushes, remote SHA read back equal) → cold clone at
 `b65be4302`.
+
+## Slot 88 — V0-build — 2026-11-06 — slice H resumed: the first pass's fixes, the pair re-taken, and two more passes
+
+ROTATION. `lane-rotation.txt` ends with a record labelled V0-build dated 2026-11-06 whose
+own content was a hackathon check ("all H1-H6 blocked/gated ... no eligible epic"), and
+the two records before it are hackathon (slots 86). Counting the slots that actually did
+lane work, the last two are slot 79 (V0-build) and slot 80 (V0-growth), and the rule that
+after a V0-growth comes a V0-build makes this tick **V0-build** — the same reading the
+unexecuted slot-83 plan in a second checkout assumed when it wrote "resume M3 from
+`hermes-reports/V0-rounds.md`". Slice H was opened by a run that was cut off (HTTP 429 at
+01:06 on 2026-11-06) after it had written the pair at `dc63603ba`, one judge pass, and
+uncommitted fixes; this slot resumed slice H to the end of its self-loop rather than
+opening a second slice in the lane, which is the rule.
+
+PLAN (slice H's own definition of done, written in Round 1 above and unchanged): finish
+the self-loop the cut-off run could not — verify and complete its fixes, run the real
+suites and the real app paths, re-take both browser paths at ONE revision over clean
+trees, commit them, cold-clone the result, run the judge passes it owes with a fix after
+each and no honesty flaw in the last, and push. Judging criteria targeted: taste and human
+feel, technical depth, criteria fit against the M3 brief, README do-X-see-Y, honesty.
+Originality and criteria fit against the whole V0 product stay the owner's.
+
+### Round 3 — the suites first, which found the state the last run left
+
+`venv/bin/python -m pytest tests/hosted -q` at `7441acc7e` (the inherited fixes, before
+this slot touched anything): **1 failed, 267 passed**, and the failure was the guard doing
+its job — `test_the_code_the_cited_run_exercised_has_not_changed_since` read
+`M hosted/web/app/globals.css`, i.e. the fixed stylesheet no longer matched the pair the
+pages cited. A fresh browser run is owed by this repository's own rule, which is Round 6
+below. Also read back, and confirmed rather than taken on trust: the two inherited fixes
+were both correct and both about honesty — the cold-clone contradiction in
+`hosted/web/README.md` and the stylesheet's "pixel-for-pixel" desktop claim.
+
+### Round 4 — the desktop claim given a comparison instead of an adjective
+
+The uncommitted comment in `globals.css` said the desktop was *not* kept
+"pixel-for-pixel", which removes a false claim but leaves the true one unevidenced. Added:
+`tests/hosted/fixtures/globals-before-slice-h.css` — the stylesheet as it stood at
+`bd6c51bba`, the last push before this slice, sha256
+`c930ab80f56d104056355a92378c60e3e6b72a091451c47c036382add117ebf2` pinned in the test — and
+`tests/hosted/test_dashboard_width_rules.py::test_the_only_stylesheet_change_outside_the_width_blocks_is_a_comment`,
+which strips comments and whole `@media` blocks from both files and fails if a single rule
+outside the two width blocks differs. Verified by mutation in both directions: changing a
+rule outside the blocks fails it (`th.num` gained a declaration), adding a rule inside them
+does not, and the file was restored byte-identical afterwards
+(`37af319e9b17930b6250876a3ca5077e76aaea5ffb12d5ed4aad17340792adc0` before and after). The
+acceptance page's desktop row now names the fixture, and its prose says what the
+comparison is and is not.
+
+### Round 5 — the cold-clone number made a read-back rather than a sentence
+
+`tests/hosted/test_web_pages_claims.py::test_the_cold_clone_count_in_the_readme_is_the_transcript_s_own`
+finds the cold-clone log the README cites, reads the count out of that log's own summary
+lines, and fails if the page states anything else — including if the log ever grows a
+skip, because then "0 skipped" would be the wrong sentence. Mutation-checked: editing
+`# 32 passed` to `# 33 passed` in the page fails it. The README's skip-case paragraph no
+longer states a count that was never measured; it names the two tests that can skip, their
+two reasons, and says plainly that no transcript of that case is in this repository.
+
+### Round 6 — the pair re-taken at ONE revision over clean trees
+
+Archives staged outside the repository (`/workspace/devpost/hermes-reports/.probe/slot88-evidence`),
+so neither run could report itself dirty:
+
+* stub path: **159/159**, `engine_is_stub true`, `worktree_dirty false`,
+  `hermes-reports/M3-slot88-web-e2e-stub-r1/result.json`;
+* real engine (sherpa-onnx on the pinned Kokoro int8, faster-whisper-small pinned by
+  `model.bin`): **165/165**, `engine_is_stub false`, `worktree_dirty false`,
+  `hermes-reports/M3-slot88-web-e2e-r1/result.json`; both `tested_commit 7441acc7e`.
+
+What the re-take moved, corrected from the run rather than from memory: the real run's
+transcript heard **two** of the five Hindi words this time (एक, है) where the run it
+replaces heard three, so the acceptance page now says two, discloses both results in its
+history of the moving count, and adds what this run heard instead (हिन्दी came back as
+हिंदी). Suites at that revision: `tests/hosted` **270 passed**
+(`V0-slot88-tests-r1.log`), web unit **118 pass / 0 fail** (`V0-slot88-web-unit-r1.log`),
+the pinned-bytes guard **5 passed** (`V0-slot88-pins-r1.log`).
+
+### Round 7 — cold clone at the pushed revision, and the first push
+
+Pushed `Kulraj69/qualiabits-voicestudio` `work/m1-headless` `981b2a75c..531f782af`, remote
+SHA read back equal (`V0-slot88-push-r1.log`); the diff the acceptance guard runs
+(`7441acc7e..531f782af` over the measured directories) is empty. The cold clone at
+`531f782af` — no `.venv`, no `node_modules`, no model of its own, the four files the
+README's route names — ran **33 passed, 0 skipped** twice
+(`V0-slot88-coldclone-r1.log`, one more test than the last slice's clone because Round 5
+added one).
+
+### Round 8 — judge pass 2 (cheap+), and the one fixable finding it made
+
+`M3-slot88-review2.txt`: **2 / 4 / 4 / 4 / 2 / 4 / 4**, "no direct honesty flaw is
+evident". Against pass 1 that is reviewer path 3 → 4 and honesty 2 → 4. Its sub-four rows
+are originality 2 and criteria fit 2, both the owner's, and it named one flaw in this
+slice's own work: the width checks tolerate a wide table scrolling inside its own
+`.table-wrap` box, and that clause was documented only in a harness comment and
+`DESIGN.md`, so the acceptance page's "no page scrolls sideways" read as absolute. Fixed
+in both reader-facing pages, with the run's own per-page numbers for what the clause was
+used for — at 390px the usage page reported 11 elements inside a scroll container and the
+jobs page 9, none outside it, and at 768px and 1440px no page needed the exception.
+
+### Round 9 — judge pass 3 (cheap+), after that fix
+
+`M3-slot88-review3.txt`: **2 / 4 / 4 / 4 / 2 / 4 / 4**, and on honesty it says it in
+its own words: "The `.table-wrap` overflow exception is now disclosed in both
+`hosted/M3-ACCEPTANCE.md` and `hosted/web/README.md`; no direct honesty flaw remains in
+the supplied final artifacts." D7 is demonstrated this time — "by the supplied prior
+judge passes, the listed post-pass fixes, the retaken runs, and the second post-pass fix
+disclosure", i.e. the bundle now carries both passes and what each one moved. Every D item
+is demonstrated except D3, which it marks *partly* for the one thing this repository does
+not claim: a pixel comparison. The two rows still under four are originality 2 and
+criteria fit 2, and it names them as the owner's — a differentiator and the parts of the
+V0 milestone that do not exist yet.
+
+### Slice H closeout
+
+Slice H's definition of done is met on all eight items: (a) nine pages at three widths
+with no sideways scroll and no element wider than the window, asserted element-by-element
+in a real browser — with the one deliberate `.table-wrap` exception now stated on the page
+and measured; (b) the top bar's controls inside the window and pressable at phone width
+(narrowest 34px, shortest 25px); (c) the desktop claim carried by a rule-for-rule
+comparison against the pre-slice stylesheet plus the run's own desktop facts, with no pixel
+claim; (d) eighteen narrow-width screenshots committed as the artefact; (e) the geometry
+rules guarded without a browser; (f) the four pages carrying the rows, with guards reading
+them back; (g) both browser paths at ONE revision over clean trees, a cold clone at the
+pushed revision, `tests/hosted` 270 passed, web unit 118 pass / 0 fail, pins 5 passed; (h)
+three cheap+ passes with fixes after each and no honesty flaw in the last.
+
+The *milestone's* gate is not met and no pass is claimed: the last pass still scores
+originality 2 and criteria fit 2, and both are the owner's. Voice Clone and Voice Design
+are still not built and the acceptance page still says so with the engine evidence for why
+this box cannot build them truthfully. M1's GPU/listening gate is unchanged.
+
+Reports: `hermes-reports/M3-slot81-review1.txt` (the pass the cut-off run obtained),
+`M3-slot88-review{2,3}.txt` with their prompts, and the two since-notes that say what each
+pass moved. The review-prompt builder now refuses to print a bundle over 120 KB instead of
+letting the shell answer with `exit=126` — the defect that made slot 79's first pass
+useless, caught again here on pass 3's first attempt (125,728 bytes) and fixed by trimming
+excerpt ranges rather than by handing the judge a stub.

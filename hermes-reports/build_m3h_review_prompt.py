@@ -48,7 +48,8 @@ CSS_RANGES = (
     (985, 1090),     # the width section itself: the comment, the 900px block, the 640px block
 )
 HARNESS_RANGES = (
-    (620, 790),      # the whole width section: the measurement and the five checks
+    (620, 762),      # the width section: the measurement and the checks up to the
+    #                  screenshots; the last two checks are named in the result file below
 )
 TEST_RANGES = (
     (1, 40),         # what the file is for
@@ -225,11 +226,11 @@ def main() -> None:
         "last. Originality is expected to stay under 4: a responsive layout is not a "
         "novel idea, and the product differentiator is the owner's decision.\n",
         "## The README a reviewer reads first (hosted/web/README.md, first 130 lines of the file)\n",
-        show(WEB / "README.md", head=90), "\n",
+        show(WEB / "README.md", head=70), "\n",
         "## The hosted layer's README (hosted/README.md, first 130 lines)\n",
-        show(REPO / "hosted" / "README.md", head=70), "\n",
+        show(REPO / "hosted" / "README.md", head=45), "\n",
         "## The design notes for this slice (hosted/DESIGN.md, the width section)\n",
-        excerpt(REPO / "hosted" / "DESIGN.md", ((238, 293),)), "\n",
+        excerpt(REPO / "hosted" / "DESIGN.md", ((252, 293),)), "\n",
         "## The stylesheet (hosted/web/app/globals.css, the palette and the width blocks)\n",
         excerpt(WEB / "app" / "globals.css", CSS_RANGES), "\n",
         "## The harness's width section (hosted/web/e2e/dashboard.mjs, the measurement and the five checks)\n",
@@ -240,9 +241,9 @@ def main() -> None:
         "### tests/hosted/test_dashboard_width_rules.py (the whole file)\n",
         show(REPO / "tests" / "hosted" / "test_dashboard_width_rules.py"), "\n",
         "### the parts of tests/hosted/test_web_pages_claims.py that read the two runs\n",
-        excerpt(REPO / "tests" / "hosted" / "test_web_pages_claims.py", ((40, 70), (89, 120), (169, 240))), "\n",
+        excerpt(REPO / "tests" / "hosted" / "test_web_pages_claims.py", ((40, 70), (89, 120), (169, 205))), "\n",
         "### the parts of tests/hosted/test_m3_acceptance_matrix.py that read the table\n",
-        excerpt(REPO / "tests" / "hosted" / "test_m3_acceptance_matrix.py", ((43, 60), (99, 145))), "\n",
+        excerpt(REPO / "tests" / "hosted" / "test_m3_acceptance_matrix.py", ((43, 60), (99, 130))), "\n",
         "## The acceptance page this slice owes rows in (hosted/M3-ACCEPTANCE.md, the slice list and the width rows)\n",
         excerpt(REPO / "hosted" / "M3-ACCEPTANCE.md", ((1, 20), (58, 120), (196, 222))), "\n",
         "## The end-to-end, real engine, this revision (--keep): the width measurements\n",

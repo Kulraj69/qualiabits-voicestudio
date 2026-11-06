@@ -1,0 +1,59 @@
+Overall verdict: FAIL
+
+1. Originality — 2/5
+
+The core contribution is a responsive dashboard, which D7 explicitly admits is not novel. The memorable moment is engineering-focused—the corrected `undefined` top-bar row check—not a distinctive customer experience. Voice cloning, voice design, agents, and phone calls are absent, so there is no product differentiator visible in this slice.
+
+2. Taste — 4/5
+
+The nine-page surface has coherent naming, deliberate breakpoints, dark/light support, and a focused information architecture. The README and `hosted/DESIGN.md` explain specific layout decisions rather than presenting a generic template. The evidence material is overly long and defensive, but the underlying UI and copy are designed rather than dumped.
+
+3. Human feel — 4/5
+
+The writing is specific to this repository: it names routes, engines, failure modes, measurements, and unresolved work. It avoids the prohibited generic startup language and plainly says “Not deployed,” “No GPU,” and “No human has listened to the audio.” The repeated em-dash construction and evidence-heavy prose are noticeable, but not enough to make it AI-generic.
+
+4. Technical depth — 4/5
+
+The slice contains real browser geometry checks across nine routes and three viewport sizes, per-element overflow inspection, screenshot capture, a corrected top-bar row counter, stylesheet-preservation guards, and regression tests. The wider hosted product also has authentication, metering, limits, jobs, transcription, dubbing, projects, and real-engine evidence, backed by the stated 270 hosted tests, 118 web unit tests, and 165-check real-engine run. This is solid engineering, although the slice itself is primarily responsive CSS and evidence hardening rather than a difficult new product capability.
+
+5. Criteria fit — 2/5
+
+The slice fits the narrow M3 responsive-dashboard objective: nine pages, responsive behavior, dark/light support, screenshots, browser checks, and documented acceptance rows. It does not evidence major requirements of the owner’s V0 milestone: Voice Clone, Voice Design, voice agents, phone calls, public deployment, HTTPS, real S3, GPU autoscaling, public signup, M1 GPU/listening evidence, the demo video, or M7 growth work. These omissions are explicitly acknowledged in `hosted/M3-ACCEPTANCE.md:98-100, 248-249` and `hosted/web/README.md:16-18`.
+
+6. Reviewer path — 4/5
+
+`hosted/web/README.md` gives concrete fresh-clone commands and separates the quick stub path from the real-engine path. The cited runs, acceptance matrix, pinned model checks, and cold-clone transcript make the claims unusually auditable. The full path still requires a substantial Python environment, Node dependencies, and model assets, so the real product is not reviewable in a few minutes on an ordinary clean machine.
+
+7. Honesty — 4/5
+
+The artifacts consistently distinguish stub from real-engine evidence and state that the product is not deployed, has no public URL, uses no real S3 or GPU, and has not had its audio human-checked. The earlier contradictory cold-clone count and unsupported “pixel-for-pixel” desktop claim were corrected with guards and narrower wording. The `.table-wrap` overflow exception is now disclosed in both `hosted/M3-ACCEPTANCE.md` and `hosted/web/README.md`; no direct honesty flaw remains in the supplied final artifacts.
+
+Five most damaging flaws
+
+1. Missing V0 differentiators — `hosted/M3-ACCEPTANCE.md:98-100, 248-249`
+   Voice Clone and Voice Design are not built, and there is no evidence for voice agents, phone calls, or the wider product differentiator.
+
+2. Full milestone scope is absent — `hosted/web/README.md:16-18`
+   There is no deployment, public URL, HTTPS signup, real S3, GPU autoscaling, demo video, or M7 growth evidence.
+
+3. No memorable product moment — `hosted/web/app/globals.css:985-1089`
+   The slice demonstrates competent responsive layout work, but nothing that would make a judge remember this product over other voice dashboards.
+
+4. Reviewer setup remains heavy — `hosted/web/README.md:37-80`, `hosted/README.md:9-28`
+   The stub path is accessible, but validating the real engine requires a large environment and model assets. That weakens the “few minutes from a fresh clone” claim for the actual product experience.
+
+5. Real-world validation is narrow — `hosted/web/e2e/dashboard.mjs:620-790`
+   Evidence comes from one browser on loopback at three emulated widths. There is no real phone, touch interaction, Safari, Firefox, or intermediate-width pass; the accepted `.table-wrap` exception also narrows what “no element is wider” proves.
+
+D-item status
+
+- D1: Demonstrated, with the disclosed `.table-wrap` scroll-container exception.
+- D2: Demonstrated by the 390px measurements: controls remain inside the viewport; the narrowest control is 34px wide and the shortest is 25px high.
+- D3: Partly demonstrated. The stylesheet guard proves unchanged desktop rules outside the two width blocks, and desktop geometry checks pass, but there is no pixel comparison or complete evidence that every prior desktop behavior remains unchanged.
+- D4: Demonstrated. Nine pages are captured at both narrow widths: 18 narrow-width screenshots.
+- D5: Demonstrated. `tests/hosted/test_dashboard_width_rules.py` covers breakpoint structure, layout-only rules, viewport coverage, top-bar behavior, row-count publication, and desktop-rule preservation.
+- D6: Demonstrated. The acceptance matrix and README claims point to existing code, tests, and named browser-run checks.
+- D7: Demonstrated by the supplied prior judge passes, the listed post-pass fixes, the retaken runs, and the second post-pass fix disclosure. The builder’s round log is unnecessary to establish this from the supplied material.
+
+What would make it win: add a demonstrable voice differentiator—cloning, design, agents, and phone workflows—then deploy it end to end with public signup, real storage, measured evidence, and a short reviewer path.
+exit=0
