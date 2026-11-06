@@ -999,9 +999,11 @@ th.num {
  * padding starts to breathe. The 640px one is the phone proper: the page padding
  * tightens, the brand's "Dashboard" suffix goes, and everything that was a fixed
  * minimum width is allowed to shrink. Nothing above is edited: a window wider
- * than 900px never matches either block, which is what keeps the desktop
- * pixel-for-pixel what it was, and the run asserts that at 1440px the nav is
- * still one line.
+ * than 900px never matches either block, so the rules a desktop reader gets are the
+ * ones that were there before this slice. That is asserted by the four desktop facts
+ * the run records — the nav on one line, no page scrolling sideways, no element wider
+ * than the window, headings inside it — and it is *not* a pixel comparison, which is
+ * what "pixel-for-pixel" would imply and this repository cannot show.
  *
  * A hidden-cost note, because it is the reason these are width-only: the
  * light/dark palettes are *not* touched here. The theme promises that a token

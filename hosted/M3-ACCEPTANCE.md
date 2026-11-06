@@ -95,6 +95,19 @@ transcript it is because that run was taken over a working tree and no `result.j
 exists. The artefact
 is the screenshots: every page at both narrow widths, committed beside the run.
 
+The other half of the claim — that the desktop layout is the one the dashboard already
+had — is held to what can actually be shown rather than to a phrase. A guard compares
+the stylesheet with the same file as it stood at `bd6c51bba`, the last push before this
+slice: the pre-slice copy is committed at
+`tests/hosted/fixtures/globals-before-slice-h.css` with its sha256 pinned in the test, and
+the test fails if any rule outside the two `@media (max-width: ...)` blocks changed. That
+is a comparison of the rules a desktop reader gets, byte for byte, not of pixels, and it
+is why the stylesheet's own comment now says what is true: the run's desktop evidence is
+four geometry facts — the nav on one line, no page scrolling sideways, no element wider
+than the window, headings inside it — and a first cheap+ judge pass on this slice was
+right to refuse the phrase the comment carried before, "pixel-for-pixel", which this
+repository has no run to support.
+
 Two of the pages
 M3 names — Voice Clone with a consent checkbox and Voice Design — are
 **not built**, and the last section of this page says so
@@ -205,7 +218,7 @@ the chain runs run → commit → push and every link is a file a reader can ope
 | The theme switch is a hit target, so a narrow bar may not squeeze it | `hosted/web/app/globals.css` | `tests/hosted/test_dashboard_width_rules.py` | `390x844: every top bar control is still big enough to press` |
 | The tablet width is measured too, not only the phone | `hosted/web/e2e/dashboard.mjs` | `tests/hosted/test_dashboard_width_rules.py` | `768x1024: no page scrolls sideways` |
 | Every page at both narrow widths, captured as the artefact | `hosted/web/e2e/dashboard.mjs` | `hosted/web/test/harness.test.mjs` | `phone and tablet: every page was captured as a screenshot at both widths` |
-| The desktop layout the dashboard already had is unchanged by the width work | `hosted/web/app/globals.css` | `tests/hosted/test_dashboard_width_rules.py` | `desktop: the nav still sits on one line, as the shipped design has it` |
+| The desktop layout the dashboard already had is unchanged by the width work | `hosted/web/app/globals.css`, `tests/hosted/fixtures/globals-before-slice-h.css` | `tests/hosted/test_dashboard_width_rules.py` | `desktop: the nav still sits on one line, as the shipped design has it` |
 
 Two sentences that belong beside that table, because the gap between what is proven
 and what is not is exactly where a product page starts lying:

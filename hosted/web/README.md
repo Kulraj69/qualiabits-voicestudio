@@ -67,17 +67,24 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
 # and what the clone does not have. That transcript records both
 # attempts, both the same: 32 passed, 0 skipped, because this box had room for
-# the 112 MB asset one guard stages. On a box that has no room, that one test skips
-# and the same command prints 31 passed with one skip; the command is the same either
-# way, only the box changes.
+# the 112 MB asset the two staging guards use and the model directory to build it
+# from. Those two print `s` with their reason instead, and the run ends with fewer
+# than 32 passed, on a box that cannot stage that asset: the pinned-bytes one when
+# /workspace/m1-models/kokoro-int8-multi-lang-v1_0 is not there to build it from,
+# and both when the disk has no room for the 112 MB it writes. No transcript of
+# that case is in this repository, so the count to expect there is not claimed
+# here — read the skip reasons off the run.
 ```
 
 Those four files check that the two archived runs name one revision that is in this
 branch's history, that the counts and the Hindi word count in the prose are the
-runs' own, and that the model pins are enforced on every path into the script. On a
-machine with no model directory the two tests that stage the pinned asset skip, with
-that as their reason; on this box they did not, which is why that line says 31 passed
-and 0 skipped.
+runs' own, and that the model pins are enforced on every path into the script. The
+32 above is the number the committed transcript's own last line reports, and a guard
+reads it back out of that file rather than trusting this sentence: on a machine that
+cannot stage the pinned asset — no `/workspace/m1-models` directory to build it from,
+or no room for the 112 MB it writes — the tests that stage it ask to be skipped, with
+their reason, and that number is smaller. Rerun the command on such a box and the
+line above is the one to read.
 
 You need three processes. The dashboard is one of them; the engine and the
 control plane are the other two, and running them is described in

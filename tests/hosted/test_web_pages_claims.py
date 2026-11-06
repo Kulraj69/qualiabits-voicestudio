@@ -119,6 +119,49 @@ def counted(result: dict) -> tuple[list[str], int, int]:
     return names, with_keep, without_keep
 
 
+def test_the_cold_clone_count_in_the_readme_is_the_transcript_s_own():
+    """A number a reader is asked to reproduce, read back from the run behind it.
+
+    The fast path ends with a count a stranger should see. A first cheap+ judge pass on
+    this slice found the page stating two different numbers for the same command — 32
+    passed here against 31 passed with a skip elsewhere — and the second was never
+    measured anywhere in this repository; it came from a run that did not happen. The
+    sentence now states the transcript's own number and says plainly that the skip case
+    has no transcript. This guard is what keeps that true: it finds the log the page
+    cites, reads the count out of the log's own summary lines, and fails if the page
+    says anything else — including if the log ever grows a skip, because then "0
+    skipped" would be the wrong sentence on the page.
+    """
+    page = readme()
+    cited = re.findall(r"hermes-reports/(V0-slot\w+-coldclone-r1\.log)", page)
+    assert len(set(cited)) == 1, (
+        "the fast path should cite exactly one cold-clone transcript; this page cites "
+        f"{sorted(set(cited)) or 'none'}"
+    )
+    log_path = REPO_ROOT / "hermes-reports" / cited[0]
+    assert log_path.is_file(), f"the page cites {log_path.name}, which is not in the tree"
+
+    summaries = re.findall(
+        r"^(\d+) passed(?:, (\d+) skipped)?(?:, \d+ warnings?)? in [\d.]+s",
+        log_path.read_text(encoding="utf-8"),
+        re.M,
+    )
+    assert summaries, f"{log_path.name} no longer holds a pytest summary line"
+    counted = {(int(passed), int(skipped or 0)) for passed, skipped in summaries}
+    assert len(counted) == 1, (
+        f"the transcript's own attempts disagree: {sorted(counted)}; the page says they "
+        "are the same, so one of them has to be explained there"
+    )
+    passed, skipped = counted.pop()
+    assert f"{passed} passed, {skipped} skipped" in page, (
+        f"{log_path.name} ends {passed} passed, {skipped} skipped, and the README does not "
+        "say so; a count a reader is asked to reproduce belongs to the file that measured it"
+    )
+    assert f"# {passed} passed —" in page, (
+        f"the fast path's own output comment no longer reads {passed} passed"
+    )
+
+
 def test_the_page_names_two_runs_one_per_path():
     cited = cited_runs()
     assert len(cited) == 2, f"the page names {sorted(cited)}"
