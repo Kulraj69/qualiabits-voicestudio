@@ -261,7 +261,12 @@ export default function ProjectsView({ catalogue, initialProjects, limits }) {
                 {nextStepSentence(project)}
               </p>
 
-              <div className="table-wrap">
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="The chapters of this project"
+              >
                 <table>
                   <thead>
                     <tr>

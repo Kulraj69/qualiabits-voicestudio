@@ -19,15 +19,24 @@
   --border: rgba(255, 255, 255, 0.09);
   --border-strong: rgba(255, 255, 255, 0.16);
 
-  /* Ink. */
+  /* Ink. `--fg-subtle` is #8a87a6 rather than the #6f6b8c this theme shipped
+     with: the old value measured 3.95:1 against `--bg`, 3.75:1 against
+     `--bg-elev` and 3.53:1 against `--bg-elev-2`, and it is used for labels,
+     hints and table headers — normal-size text, where WCAG AA wants 4.5. These
+     are the numbers the `axe` pass in `e2e/dashboard.mjs` and the token guard in
+     `tests/hosted/test_theme_contrast.py` both compute; the value below is the
+     one that clears all three surfaces with margin. */
   --fg: #eceaf6;
   --fg-muted: #a9a5c2;
-  --fg-subtle: #6f6b8c;
+  --fg-subtle: #8a87a6;
 
-  /* One accent, used for the primary action and nothing else competing. */
+  /* One accent, used for the primary action and nothing else competing. The ink
+     on it is near-black rather than white: white on #7c6cff is 3.86:1 and on the
+     hover #8f82ff 3.09:1, both under 4.5 for the 0.94rem label a .btn carries.
+     Dark ink on the same two surfaces is 5.09:1 and 6.36:1. */
   --accent: #7c6cff;
   --accent-hover: #8f82ff;
-  --accent-ink: #ffffff;
+  --accent-ink: #0b0a16;
   --accent-soft: rgba(124, 108, 255, 0.14);
   --accent-line: rgba(124, 108, 255, 0.42);
 
@@ -209,6 +218,24 @@ a {
 }
 a:hover {
   text-decoration: underline;
+}
+/* A link inside a sentence is told apart by more than its colour. Axe's
+   `link-in-text-block` rule is exactly this, and it fires on the light theme,
+   where the link and the sentence holding it are closer in luminance than they
+   are in dark. Underlining the prose links fixes it in both themes without
+   touching the buttons, which are `<a>` elements too and are found by their
+   filler, not their colour. */
+p a,
+li a,
+.notice a,
+.card__hint a,
+.page-head__lede a,
+.page-head__eyebrow a,
+.hero__lede a,
+.hero a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 /* Focus is never removed — only restyled. */
@@ -517,6 +544,16 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--accent-line);
+}
+/* A pointer's focus wears the soft ring; a keyboard's focus keeps the outline
+   every other control on the page uses, because that is the indicator a
+   keyboard user is looking for and the one the browser pass asserts on every
+   control of every page. Killing the outline for both, which is what this rule
+   used to do, made a text field the one control on the page that Tab reached
+   with nothing visible to say so. */
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
   box-shadow: 0 0 0 3px var(--accent-soft);
   outline: none;
 }
@@ -920,6 +957,11 @@ th.num {
 .ss__trigger[aria-expanded="true"] {
   border-color: var(--accent-line);
   box-shadow: 0 0 0 3px var(--accent-soft);
+}
+/* The trigger is a `role="combobox"` button, so it is reached by Tab like any
+   other control; the ring above is kept and the outline is dropped for the
+   pointer only, for the same reason the text fields above split the two. */
+.ss__trigger:focus:not(:focus-visible) {
   outline: none;
 }
 .ss__trigger:disabled {

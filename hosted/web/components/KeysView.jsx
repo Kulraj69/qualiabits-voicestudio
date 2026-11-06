@@ -125,7 +125,12 @@ export default function KeysView({ initialKeys }) {
         </section>
       ) : null}
 
-      <div className="table-wrap">
+      <div
+        className="table-wrap"
+        tabIndex={0}
+        role="region"
+        aria-label="Your API keys"
+      >
         <table>
           <caption className="sr-only">Your API keys</caption>
           <thead>

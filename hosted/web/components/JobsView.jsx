@@ -145,7 +145,12 @@ export default function JobsView({ catalogue, initialJobs }) {
         </button>
       </div>
 
-      <div className="table-wrap">
+      <div
+        className="table-wrap"
+        tabIndex={0}
+        role="region"
+        aria-label="Your jobs"
+      >
         <table>
           <thead>
             <tr>

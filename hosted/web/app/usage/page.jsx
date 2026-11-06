@@ -90,7 +90,13 @@ export default async function UsagePage() {
             <h2>By key</h2>
           </div>
           <p className="card__hint">{usage.by_key_note}</p>
-          <div className="table-wrap" style={{ marginTop: "var(--space-4)" }}>
+          <div
+            className="table-wrap"
+            style={{ marginTop: "var(--space-4)" }}
+            tabIndex={0}
+            role="region"
+            aria-label="Usage by key"
+          >
             <table>
               <thead>
                 <tr>
@@ -137,7 +143,13 @@ export default async function UsagePage() {
           <div className="card__title">
             <h2>By status</h2>
           </div>
-          <div className="table-wrap" style={{ marginTop: "var(--space-4)" }}>
+          <div
+            className="table-wrap"
+            style={{ marginTop: "var(--space-4)" }}
+            tabIndex={0}
+            role="region"
+            aria-label="Usage by status"
+          >
             <table>
               <thead>
                 <tr>

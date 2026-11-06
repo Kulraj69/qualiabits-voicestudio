@@ -38,6 +38,49 @@ VIEWPORTS = ((390, 844), (768, 1024), (1440, 900))
 BEFORE_SLICE_H = Path(__file__).resolve().parent / "fixtures" / "globals-before-slice-h.css"
 BEFORE_SLICE_H_SHA256 = "c930ab80f56d104056355a92378c60e3e6b72a091451c47c036382add117ebf2"
 BEFORE_SLICE_H_REVISION = "bd6c51bba"
+#: The stylesheet as it stood when the accessibility slice started, copied out of
+#: `git show 228cdb117:hosted/web/app/globals.css` — the commit that added the axe
+#: pass to the browser suite, before a single fix was made. The width guard compares
+#: `bd6c51bba` to this one; this slice's own guard compares this one to the tree.
+BEFORE_SLICE_I = Path(__file__).resolve().parent / "fixtures" / "globals-before-slice-i.css"
+BEFORE_SLICE_I_SHA256 = "37af319e9b17930b6250876a3ca5077e76aaea5ffb12d5ed4aad17340792adc0"
+BEFORE_SLICE_I_REVISION = "228cdb117"
+#: Every rule the accessibility slice is allowed to have touched, and for each one the
+#: properties that may appear or disappear. `:root` is here because two of its tokens
+#: changed value; its property *set* is unchanged, which is what the empty tuple says.
+EXPECTED_CHANGED_SELECTORS = frozenset({
+    ":root",
+    "input:focus, select:focus, textarea:focus",
+    "input:focus:not(:focus-visible), select:focus:not(:focus-visible), "
+    "textarea:focus:not(:focus-visible)",
+    '.ss__trigger:focus-visible, .ss__trigger[aria-expanded="true"]',
+    ".ss__trigger:focus:not(:focus-visible)",
+    "p a, li a, .notice a, .card__hint a, .page-head__lede a, "
+    ".page-head__eyebrow a, .hero__lede a, .hero a",
+})
+EXPECTED_CHANGED_PROPERTIES = {
+    ":root": (),
+    "input:focus, select:focus, textarea:focus": ("outline", "box-shadow"),
+    "input:focus:not(:focus-visible), select:focus:not(:focus-visible), "
+    "textarea:focus:not(:focus-visible)": ("outline", "box-shadow"),
+    '.ss__trigger:focus-visible, .ss__trigger[aria-expanded="true"]': ("outline",),
+    ".ss__trigger:focus:not(:focus-visible)": ("outline",),
+    "p a, li a, .notice a, .card__hint a, .page-head__lede a, "
+    ".page-head__eyebrow a, .hero__lede a, .hero a": (
+        "text-decoration",
+        "text-decoration-thickness",
+        "text-underline-offset",
+    ),
+}
+#: (selector, token, value it had, value it has). These two are the contrast fix; the
+#: numbers behind them are computed again, from the file, in `test_theme_contrast.py`.
+EXPECTED_TOKEN_CHANGES = (
+    (":root", "--fg-subtle", "#6f6b8c", "#8a87a6"),
+    (":root", "--accent-ink", "#ffffff", "#0b0a16"),
+)
+#: The half of the focus split a keyboard user reaches: it must not take the outline
+#: away, because that is the indicator the browser pass asserts on every control.
+FOCUS_SPLIT_KEYBOARD = "input:focus, select:focus, textarea:focus"
 
 
 def strip_comments(text: str) -> str:
@@ -150,6 +193,28 @@ def declarations(block: str) -> dict[str, str]:
     return {name: " ".join(value.split()) for name, value in DECL_RE.findall(block)}
 
 
+#: A whole rule, and every declaration in it — not just the custom properties
+#: `DECL_RE` finds. The accessibility slice changed ordinary properties too.
+RULE_RE = re.compile(r"([^{}]+)\{([^{}]*)\}", re.DOTALL)
+ALL_DECL_RE = re.compile(r"([a-zA-Z-]+)\s*:\s*([^;{}]+);")
+
+
+def declarations_by_selector(source: str) -> dict[str, dict[str, str]]:
+    """Every rule in `source` as `selector -> {property: value}`.
+
+    Comments are set aside first. A selector written twice in the file keeps the
+    declarations of both (the later wins), which is what a browser does; the two the
+    slice's own guard names are each written once.
+    """
+    out: dict[str, dict[str, str]] = {}
+    for selector, body in RULE_RE.findall(strip_comments(source)):
+        name = " ".join(selector.split())
+        rule = out.setdefault(name, {})
+        for prop, value in ALL_DECL_RE.findall(body):
+            rule[prop] = " ".join(value.split())
+    return out
+
+
 def test_the_stylesheet_declares_width_breakpoints_in_descending_order():
     blocks = width_blocks()
     widths = [width for width, _ in blocks]
@@ -256,11 +321,11 @@ def test_the_browser_suite_drives_the_three_widths_it_claims():
         assert phrase in harness, f"the width checks lost their name: {phrase!r}"
 
 
-def test_the_only_stylesheet_change_outside_the_width_blocks_is_a_comment():
+def test_slice_h_changed_only_the_width_blocks():
     """The desktop claim, measured: every rule above the breakpoints is untouched.
 
     The acceptance page says the desktop layout the dashboard already had is
-    unchanged by the width work, and this slice's own comment in the stylesheet first
+    unchanged by the width work, and slice H's own comment in the stylesheet first
     said the desktop was kept "pixel-for-pixel" — a claim this repository cannot show,
     because the run's desktop evidence is four geometry facts (the nav on one line, no
     page scrolling sideways, no element wider than the window, headings inside it) and
@@ -270,10 +335,18 @@ def test_the_only_stylesheet_change_outside_the_width_blocks_is_a_comment():
     What *can* be shown without a browser is narrower and stronger than either: once
     comments are set aside, the rules a desktop reader gets are byte for byte the ones
     that were there before the slice, and every line the slice added sits inside one of
-    the two `@media (max-width: ...)` blocks. The comparison is against the stylesheet
-    as it stood at `bd6c51bba` (the last push before slice H), copied into `fixtures/`
-    so this guard needs neither git nor the network, with its sha256 pinned so the
-    fixture cannot quietly become a copy of the file it is checking.
+    the two `@media (max-width: ...)` blocks.
+
+    The comparison is between the stylesheet as it stood at `bd6c51bba` (the last push
+    before slice H) and the one this slice inherited (the stylesheet as it stood at
+    `228cdb117`, the commit that added the accessibility pass to the browser suite),
+    both copied into `fixtures/` so this guard needs neither git nor the network, each
+    with its sha256 pinned so a fixture cannot quietly become a copy of the file it is
+    checking. The second fixture replaced `HEAD` as this guard's right-hand side when
+    the accessibility slice below changed tokens *outside* the width blocks: pointing
+    this comparison at `HEAD` would have made it fail for a change that is not a width
+    change, and the honest repair is to name the stylesheet slice H actually produced,
+    not to loosen the rule.
     """
     raw = BEFORE_SLICE_H.read_bytes()
     assert hashlib.sha256(raw).hexdigest() == BEFORE_SLICE_H_SHA256, (
@@ -281,17 +354,22 @@ def test_the_only_stylesheet_change_outside_the_width_blocks_is_a_comment():
         f"re-run `git show {BEFORE_SLICE_H_REVISION}:hosted/web/app/globals.css`, and "
         "change the pinned sha256 only if the desktop rules really did change"
     )
+    inherited = BEFORE_SLICE_I.read_bytes()
+    assert hashlib.sha256(inherited).hexdigest() == BEFORE_SLICE_I_SHA256, (
+        "the fixture slice H produced is not the stylesheet this guard compares "
+        f"against: re-run `git show {BEFORE_SLICE_I_REVISION}:hosted/web/app/globals.css`"
+    )
 
     before_source = strip_comments(raw.decode("utf-8"))
-    after_source = css()
+    after_source = strip_comments(inherited.decode("utf-8"))
     before = rules_only(raw.decode("utf-8"))
-    after = rules_only(CSS.read_text(encoding="utf-8"))
+    after = rules_only(inherited.decode("utf-8"))
 
     assert before == after, (
-        "a rule outside the width blocks changed since "
-        f"{BEFORE_SLICE_H_REVISION}, so a desktop reader no longer gets the layout this "
-        "slice said it left alone — width work belongs inside the `@media (max-width: ...)` "
-        "blocks: " + first_line_difference(before, after)
+        "a rule outside the width blocks changed between "
+        f"{BEFORE_SLICE_H_REVISION} and {BEFORE_SLICE_I_REVISION}, so a desktop reader no "
+        "longer gets the layout slice H said it left alone — width work belongs inside "
+        "the `@media (max-width: ...)` blocks: " + first_line_difference(before, after)
     )
     assert [width for width, _ in width_blocks_in(before_source)] == [], (
         "the fixture already declares width breakpoints, so it is not the stylesheet "
@@ -300,6 +378,68 @@ def test_the_only_stylesheet_change_outside_the_width_blocks_is_a_comment():
     assert [width for width, _ in width_blocks_in(after_source)] == [900, 640], (
         "the two breakpoints slice H added are not the ones this guard compares across; "
         "a third width needs its own row in the acceptance table before it is added"
+    )
+
+
+def test_the_accessibility_slice_changed_exactly_the_rules_it_names():
+    """This slice's own stylesheet change, bounded.
+
+    The guard above stops the width work from leaking out of its media blocks. This one
+    does the same job for the accessibility work, which cannot live in a media block:
+    two dark-theme tokens moved (contrast), one prose-link rule was added (links would
+    otherwise be told apart by colour alone), and the two focus rules were split so a
+    keyboard's focus keeps the outline every other control already had. Anything outside
+    that list — a rule that changes a selector's declarations for any other reason, or a
+    selector nobody named here — fails, which is what makes the claim on the acceptance
+    page checkable without a browser.
+
+    The comparison is `(selector, property)` -> value, from the stylesheet this slice
+    inherited (`228cdb117`) to the one in the tree. Property *names* are pinned for every
+    changed rule; the values are pinned for the two tokens, because those are the two
+    numbers a contrast claim rests on, and the browser pass measures the rest for real.
+    """
+    inherited = BEFORE_SLICE_I.read_bytes()
+    assert hashlib.sha256(inherited).hexdigest() == BEFORE_SLICE_I_SHA256, (
+        "the fixture is not the stylesheet this slice started from"
+    )
+
+    before = declarations_by_selector(inherited.decode("utf-8"))
+    after = declarations_by_selector(CSS.read_text(encoding="utf-8"))
+
+    changed_selectors = {
+        selector
+        for selector in set(before) | set(after)
+        if before.get(selector) != after.get(selector)
+    }
+    assert changed_selectors == EXPECTED_CHANGED_SELECTORS, (
+        "this slice changed rules it does not name on the acceptance page: "
+        f"unexpected {sorted(changed_selectors - EXPECTED_CHANGED_SELECTORS)}, "
+        f"missing {sorted(EXPECTED_CHANGED_SELECTORS - changed_selectors)}"
+    )
+    for selector, properties in EXPECTED_CHANGED_PROPERTIES.items():
+        left = set(before.get(selector, {}))
+        right = set(after.get(selector, {}))
+        assert left ^ right == set(properties), (
+            f"{selector!r} was expected to change exactly {sorted(properties)}; it "
+            f"lost {sorted(left - right)} and gained {sorted(right - left)}"
+        )
+    for selector, property_name, old, new in EXPECTED_TOKEN_CHANGES:
+        assert before.get(selector, {}).get(property_name) == old, (
+            f"{selector} {property_name} at {BEFORE_SLICE_I_REVISION} was expected to be "
+            f"{old!r}, found {before.get(selector, {}).get(property_name)!r}"
+        )
+        assert after.get(selector, {}).get(property_name) == new, (
+            f"{selector} {property_name} should now be {new!r} (contrast), found "
+            f"{after.get(selector, {}).get(property_name)!r}"
+        )
+
+    # The focus split, stated as the behaviour rather than as a diff: no rule may take
+    # the outline away from a keyboard-focused control while leaving a mouse focus one.
+    keyboard_rules = after.get(FOCUS_SPLIT_KEYBOARD, {})
+    assert keyboard_rules.get("outline") != "none", (
+        f"{FOCUS_SPLIT_KEYBOARD!r} is the same control the split exists for; killing the "
+        "outline there puts a text field back among the controls Tab reaches with "
+        "nothing visible to say so"
     )
 
 

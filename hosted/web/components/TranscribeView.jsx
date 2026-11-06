@@ -216,7 +216,12 @@ export default function TranscribeView() {
           </pre>
 
           {segments.length > 0 ? (
-            <div className="table-wrap">
+            <div
+              className="table-wrap"
+              tabIndex={0}
+              role="region"
+              aria-label="The transcript's segments"
+            >
             <table data-testid="transcribe-segments">
               <thead>
                 <tr>

@@ -214,7 +214,12 @@ export default function DubView({ catalogue, initialDubs }) {
       {dubs.length > 0 ? (
         <section className="card stack" aria-label="Dubs this workspace has made">
           <p className="notice__title">Your dubs</p>
-          <div className="table-wrap">
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label="Your dubs"
+          >
             <table data-testid="dub-list">
               <thead>
                 <tr>

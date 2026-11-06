@@ -15,7 +15,14 @@ export default async function SiteHeader() {
 
   return (
     <header className="topbar">
-      <Link href="/" className="brand" aria-label="QualiaBits Voice home">
+      {/* No aria-label here on purpose: with one, the link's accessible name
+          ("QualiaBits Voice home") did not contain the text on screen
+          ("QualiaBits Voice Dashboard"), which is what axe's
+          `label-content-name-mismatch` rule is about — a voice-control user
+          saying what they see would not have matched the control. The brand
+          text is already a name; the mark beside it is hidden from the
+          accessibility tree, and the strapline is hidden by CSS on a phone. */}
+      <Link href="/" className="brand">
         <span className="brand__mark" aria-hidden="true">
           ◇
         </span>
