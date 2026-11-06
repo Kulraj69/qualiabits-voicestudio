@@ -33,7 +33,12 @@ from build_m3_review_prompt import (  # noqa: E402
     stub_summary,
 )
 
-SLICE = "M3-slot81"
+SLICE = "M3-slot88"
+#: Slice H's earlier label. The first cheap+ pass on this slice was archived under it by
+#: the run that opened the slice, and D7 asks for every pass on the slice rather than
+#: every pass since the last rename, so both are read back for the judge.
+EARLIER_SLABEL = "M3-slot81"
+REVIEW_GLOBS = (f"{EARLIER_SLABEL}-review*.txt", f"{SLICE}-review*.txt")
 
 #: The judge prompt goes to the model as one command-line argument and Linux refuses
 #: an argument longer than 128 KB, so the big artifacts are excerpts with their real
@@ -143,17 +148,23 @@ def width_measurements(path: Path) -> str:
 def review_files(limit: int = 4) -> str:
     """The cheap+ passes already run on this slice, verbatim, if any completed."""
     usable = []
-    for path in sorted(REPORTS.glob(f"{SLICE}-review*.txt")):
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if text.rstrip().endswith("exit=0"):
-            usable.append((path, text))
+    for pattern in REVIEW_GLOBS:
+        for path in sorted(REPORTS.glob(pattern)):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            if text.rstrip().endswith("exit=0"):
+                usable.append((path, text))
     if not usable:
         return "no completed judge pass is committed yet; this is the first"
+    usable.sort(key=lambda item: item[0].name)
     return "\n\n".join(f"### {p.name}\n" + text for p, text in usable[-limit:])
 
 
 def since_text() -> str:
-    files = sorted(REPORTS.glob(f"{SLICE}-since-review*.txt"))
+    files = sorted(
+        path
+        for pattern in (f"{EARLIER_SLABEL}-since-review*.txt", f"{SLICE}-since-review*.txt")
+        for path in REPORTS.glob(pattern)
+    )
     if not files:
         return "nothing: this is the first pass on the slice"
     return "\n\n".join(p.read_text(encoding="utf-8", errors="replace") for p in files)
@@ -175,8 +186,8 @@ def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
     evidence = REPORTS / f"{SLICE}-web-e2e-r1" / "result.json"
     stub = REPORTS / f"{SLICE}-web-e2e-stub-r1" / "result.json"
-    tests = newest("V0-slot81-tests-*.log")
-    unit = newest("V0-slot81-web-unit-*.log")
+    tests = newest("V0-slot8*-tests-*.log")
+    unit = newest("V0-slot8*-web-unit-*.log")
 
     parts = [
         f"# Judge pass {label} on M3 slice H (the width: a responsive dashboard), cheap+ tier\n",
@@ -199,7 +210,12 @@ def main() -> None:
         "D2 the top bar's own controls (brand, nav, theme switch, session) stay inside "
         "the window and remain clickable at phone width.\n"
         "D3 the desktop appearance is unchanged — the same width, and the checks that "
-        "existed before this slice still pass at the viewport they use.\n"
+        "existed before this slice still pass at the viewport they use. What backs this "
+        "now: a guard compares the stylesheet against the same file as it stood at "
+        "bd6c51bba (committed at tests/hosted/fixtures/globals-before-slice-h.css with "
+        "its sha256 pinned) and fails if any rule outside the two width blocks changed; "
+        "the run's own desktop evidence is four geometry facts, and no pixel comparison "
+        "is claimed anywhere.\n"
         "D4 screenshots of every page at both narrow widths are committed as the "
         "artefact.\n"
         "D5 any pure geometry rule worth keeping without a browser gets a unit test.\n"

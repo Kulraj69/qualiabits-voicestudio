@@ -1,0 +1,29 @@
+hermes-reports/V0-slot88-web-unit-r1.log
+`npm --prefix hosted/web test` at 7441acc7e, tail of its own output
+
+✔ a download name is derived from the upload and stays safe (2.030422ms)
+✔ groups voices by the kind the plane reported (5.226722ms)
+✔ filtering by a language the plane named keeps only those voices (0.60162ms)
+✔ a voice with no language is never guessed into a language bucket (0.408817ms)
+✔ language options are the distinct named languages, deduplicated (0.741582ms)
+✔ the first-selected voice is the engine's own default, never the first row (0.440596ms)
+✔ with no default marked, the first engine voice leads; then the first row (0.439247ms)
+✔ the catalogue heading names the kinds the plane reported (1.044437ms)
+✔ an unreachable engine is described as unreachable, not as zero voices (0.384856ms)
+✔ a missing catalogue is described without inventing one (0.357126ms)
+✔ an empty search keeps every voice the plane sent, in its order (1.376221ms)
+✔ the search folds case and trims, and matches a substring of id or name (1.032426ms)
+✔ the search reads the language the plane named, not a guessed one (0.429936ms)
+✔ the search can only ever return voices that arrived (0.745902ms)
+✔ the kind filter keeps one kind and never invents a bucket (0.586629ms)
+✔ kind counts are the plane's own numbers, and an unknown kind is counted apart (0.500488ms)
+✔ the preview sentence is one fixed line, so two voices are comparable (1.040167ms)
+ℹ tests 118
+ℹ suites 0
+ℹ pass 118
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2202.183404
+

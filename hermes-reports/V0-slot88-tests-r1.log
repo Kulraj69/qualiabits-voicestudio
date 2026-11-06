@@ -1,0 +1,17 @@
+hermes-reports/V0-slot88-tests-r1.log
+`venv/bin/python -m pytest tests/hosted -q` in /workspace/qualiabits-voicestudio at
+7441acc7e0d94153cf13ada48e5e2dc96735081b
+
+........................................................................ [ 26%]
+........................................................................ [ 53%]
+........................................................................ [ 80%]
+......................................................                   [100%]
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /workspace/qualiabits-voicestudio/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+270 passed, 1 warning in 127.89s (0:02:07)
+exit=0
+
