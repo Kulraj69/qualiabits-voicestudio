@@ -19,3 +19,20 @@
 # is empty, which is the same command tests/hosted/test_m3_acceptance_matrix.py runs.
 # The cold clone the README's fast path promises was taken at this revision,
 # 531f782af, and its transcript is hermes-reports/V0-slot88-coldclone-r1.log.
+
+# Second push, after judge pass 2's fix (the scroll-container exception said on the page)
+# and the cold-clone transcript were committed:
+#   531f782af..38b4e87a1  work/m1-headless -> work/m1-headless
+# remote SHA read back: 38b4e87a1c31cfc03a2ca703b253c7471131486f
+# local  HEAD at the same moment: 38b4e87a1c31cfc03a2ca703b253c7471131486f
+# equal: yes
+#
+# Third push, after judge pass 3 and this slot's round log:
+#   38b4e87a1..abb8b32d8  work/m1-headless -> work/m1-headless
+# remote SHA read back: abb8b32d80c474c454f444f3b8ae58d6f0e3b8e7
+# local  HEAD at the same moment: abb8b32d80c474c454f444f3b8ae58d6f0e3b8e7
+# equal: yes
+#
+# All three pushes are recorded because the acceptance page quotes "the pushed HEAD": the
+# diff it checks is against the run's own revision 7441acc7e, which all three are
+# descendants of, and the cold clone above was taken at the third.

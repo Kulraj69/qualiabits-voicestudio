@@ -4,33 +4,32 @@
 # behaves the same.
 #
 # clone: git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git <dir>
-# dir:   /tmp/s88/coldclone
+# dir:   /tmp/s88/coldclone2
 # clone exit=0
-# HEAD in the clone: 531f782af2a2998055d57930ec084067c4e0bfd6
+# HEAD in the clone: abb8b32d80c474c454f444f3b8ae58d6f0e3b8e7
 # revision the run archives cite: 7441acc7e0d94153cf13ada48e5e2dc96735081b (an ancestor of the clone's HEAD: the pair was
-#   re-taken at this revision, and the archives plus every page citing them are in the clone)
+#   re-taken at this revision, and every page and archive citing it is in the clone)
 # interpreter: the sibling checkout's .venv (this clone has none): /workspace/qualiabits-voicestudio/.venv/bin/python
 # venv in this clone: no; node_modules: no; .next: no
-# paths the pages name under hermes-reports/, present in this clone: 16 of 17
-#   missing: ['hermes-reports/V0-slot88-push-r1.log']
+# paths the pages name under hermes-reports/, present in this clone: 17 of 17
+#   missing: none
 # count: 33 passed on both attempts, 0 skipped - one more than the last slice's clone
 #   because this slice added a guard, and the guard that reads the README's cold-clone
 #   count reads this file's own summary lines.
+#
+# This clone was taken twice: once at 531f782af (the push the fixes landed in) and again
+# here at abb8b32d8, after the round log and the judge artifacts were committed. Both
+# clones ran the same 33 tests, both green. The second is the one this file records, and
+# the README cites this revision.
 
  ==
-.................................                                        [100%]
-=============================== warnings summary ===============================
-tests/hosted/conftest.py:29
-  /tmp/s88/coldclone/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
     from starlette.testclient import TestClient  # noqa: E402
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-33 passed, 1 warning in 52.22s
+33 passed, 1 warning in 63.24s (0:01:03)
 
 == attempt 2 ==
-tests/hosted/conftest.py:29
-  /tmp/s88/coldclone/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
     from starlette.testclient import TestClient  # noqa: E402
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-33 passed, 1 warning in 49.97s
+33 passed, 1 warning in 67.79s (0:01:07)
