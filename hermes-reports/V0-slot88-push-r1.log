@@ -47,3 +47,13 @@
 # Nothing under the measured directories moved in this push either: the same
 # `git diff 7441acc7e <HEAD> -- hosted/control_plane hosted/worker hosted/scripts
 # hosted/web/app hosted/web/components hosted/web/lib hosted/web/e2e` is empty.
+
+# Fifth push, this log's own lines recorded:
+#   202c30849..cf9d4a63f  work/m1-headless -> work/m1-headless
+# remote SHA read back: cf9d4a63f7515ad1cea6bb0fa73c32731508161a
+# local  HEAD at the same moment: cf9d4a63f7515ad1cea6bb0fa73c32731508161a
+# equal: yes
+#
+# Later commits that touch only prose or this log are not enumerated one by one: what the
+# acceptance guard checks is the diff over the measured directories, and those have not
+# moved since the pair was taken at 7441acc7e.
