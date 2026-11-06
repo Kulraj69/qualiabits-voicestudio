@@ -2168,3 +2168,13 @@ pass moved. The review-prompt builder now refuses to print a bundle over 120 KB 
 letting the shell answer with `exit=126` — the defect that made slot 79's first pass
 useless, caught again here on pass 3's first attempt (125,728 bytes) and fixed by trimming
 excerpt ranges rather than by handing the judge a stub.
+
+### Final state of this slot
+
+Four pushes, each with the remote SHA read back equal, all recorded in
+`hermes-reports/V0-slot88-push-r1.log`: `981b2a75c..531f782af` (the fixes and the re-taken
+pair), `531f782af..38b4e87a1` (pass 2's fix), `38b4e87a1..abb8b32d8` (pass 3 and this log),
+`abb8b32d8..202c30849` (the README pointing at the final cold clone). Nothing under the
+measured directories moved after the pair was taken at `7441acc7e`, which is the `git diff`
+the acceptance guard runs. The clone was taken at `abb8b32d8` and the citation commit came
+after it, which is the same shape as the earlier slices' chains.

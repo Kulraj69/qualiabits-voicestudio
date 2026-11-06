@@ -36,3 +36,14 @@
 # All three pushes are recorded because the acceptance page quotes "the pushed HEAD": the
 # diff it checks is against the run's own revision 7441acc7e, which all three are
 # descendants of, and the cold clone above was taken at the third.
+
+# Fourth push, the citation-only commit after the cold clone above was re-taken (the
+# README now names abb8b32d8, the revision that clone ran at):
+#   abb8b32d8..202c30849  work/m1-headless -> work/m1-headless
+# remote SHA read back: 202c30849271fb20c28822109a15f98ce7deee96
+# local  HEAD at the same moment: 202c30849271fb20c28822109a15f98ce7deee96
+# equal: yes
+#
+# Nothing under the measured directories moved in this push either: the same
+# `git diff 7441acc7e <HEAD> -- hosted/control_plane hosted/worker hosted/scripts
+# hosted/web/app hosted/web/components hosted/web/lib hosted/web/e2e` is empty.
