@@ -35,6 +35,11 @@ sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) 
 one command that re-takes the real one, and it refuses to run on weights other than
 the pinned bytes. `npm run e2e` is the two-minute stub path: it proves the app, the
 plane, the worker and the browser, and it deliberately proves nothing about speech.
+Both runs walk all nine pages at 390x844, 768x1024 and 1440x900 and fail on sideways
+scroll or on an element wider than the window — with one deliberate exception, a wide
+table scrolling inside its own `.table-wrap` box, which is what the phone-width usage
+and jobs pages use it for and what `hosted/M3-ACCEPTANCE.md` spells out with the run's
+own per-page numbers.
 
 The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
 this repository, and their transcripts are committed beside the two run files:
@@ -61,15 +66,15 @@ puts those in `.venv`. With an interpreter like that, from a bare clone:
 git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git qb && cd qb
 <python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py \
     tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
-# 32 passed — no venv in that clone, no model, no browser. Transcript:
-# hermes-reports/V0-slot81-coldclone-r1.log, taken from a clone of the pushed
-# revision b65be4302, whose first lines are the clone, the revision, the
+# 33 passed — no venv in that clone, no model, no browser. Transcript:
+# hermes-reports/V0-slot88-coldclone-r1.log, taken from a clone of the pushed
+# revision 531f782af, whose first lines are the clone, the revision, the
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
 # and what the clone does not have. That transcript records both
-# attempts, both the same: 32 passed, 0 skipped, because this box had room for
+# attempts, both the same: 33 passed, 0 skipped, because this box had room for
 # the 112 MB asset the two staging guards use and the model directory to build it
 # from. Those two print `s` with their reason instead, and the run ends with fewer
-# than 32 passed, on a box that cannot stage that asset: the pinned-bytes one when
+# than 33 passed, on a box that cannot stage that asset: the pinned-bytes one when
 # /workspace/m1-models/kokoro-int8-multi-lang-v1_0 is not there to build it from,
 # and both when the disk has no room for the 112 MB it writes. No transcript of
 # that case is in this repository, so the count to expect there is not claimed
@@ -79,7 +84,7 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
 Those four files check that the two archived runs name one revision that is in this
 branch's history, that the counts and the Hindi word count in the prose are the
 runs' own, and that the model pins are enforced on every path into the script. The
-32 above is the number the committed transcript's own last line reports, and a guard
+33 above is the number the committed transcript's own last line reports, and a guard
 reads it back out of that file rather than trusting this sentence: on a machine that
 cannot stage the pinned asset — no `/workspace/m1-models` directory to build it from,
 or no room for the 112 MB it writes — the tests that stage it ask to be skipped, with

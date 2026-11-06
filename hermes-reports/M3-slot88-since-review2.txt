@@ -1,0 +1,38 @@
+# What changed after judge pass 2 (M3-slot88-review2.txt), for the third pass
+
+Pass 2 scored the slice 2 / 4 / 4 / 4 / 2 / 4 / 4 and said "no direct honesty flaw is
+evident in the supplied final artifacts" — its two sub-four rows are originality and
+criteria fit against the whole V0 milestone, which are the owner's and are stated as
+such on the page. One fixable flaw was named in this slice's own work; it is fixed, and
+the fix is a file rather than a sentence here.
+
+**Named: "Evidence is strong for geometry but narrow for real-world usability" — the
+`.table-wrap` exception.** The width checks tolerate an element wider than the window
+inside a deliberate horizontal scroll container, and that clause was documented only in
+the harness's own comment and in `hosted/DESIGN.md`. A reader of the acceptance page saw
+"no page scrolls sideways" with no mention of an exception, so the sentence was truer in
+the harness than on the page. Now stated in plain words in two reader-facing places:
+`hosted/M3-ACCEPTANCE.md` has it as its own bullet in the "what is proven and what is
+not" list, with the run's own per-page numbers for what the clause was used for (at
+390px the usage page reported 11 elements inside a scroll container and the jobs page 9,
+none outside it; at 768px and 1440px no page needed the exception), and
+`hosted/web/README.md` says the same in one sentence beside the two runs it cites.
+
+**Also moved since pass 2, because the cold clone is a fact the page states and it had
+to be re-taken anyway:** the README's fast-path count is now 33 passed, 0 skipped rather
+than 32 — the clone at the pushed revision ran 33 tests because pass 1's fixes added a
+guard to the four files that route names — and the transcript it cites is
+`hermes-reports/V0-slot88-coldclone-r1.log`, taken at the pushed revision `531f782af`.
+The guard added after pass 1 reads that number out of the log the page names, so the two
+cannot drift apart again.
+
+**The other items pass 2 named are not fixable in this lane and are unchanged:**
+originality (2) needs the owner's one differentiator; criteria fit (2) needs the parts of
+the V0 milestone this repository does not have — Voice Clone, Voice Design, agents,
+phone calls, deployment, a public URL, a real bucket, a GPU, a human listening check and
+the growth lane's work — all of which the acceptance page already lists as absent;
+reviewer path (4) is structural (a fresh clone needs a Python environment for the guard
+files and Node plus a model for the real browser path, which is why the stub path exists);
+and the single-browser, loopback-only nature of the width evidence is stated in the
+bundle's own "what is NOT claimed" section. D7 asks for rounds with fixes after each —
+this pass-2 fix is that, and its evidence is this file plus the commits it names.

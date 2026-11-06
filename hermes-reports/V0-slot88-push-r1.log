@@ -1,0 +1,21 @@
+# The pushes this slice's evidence chain ends in, read back from the remote.
+#
+# command (the token is read from /workspace/devpost/secrets/gh_token.txt at run time,
+# its header is never written here and never echoed):
+#   git -c http.extraheader="Authorization: Basic ***" push origin work/m1-headless
+#   git -c http.extraheader="Authorization: Basic ***" ls-remote origin refs/heads/work/m1-headless
+#
+# push output:
+# To https://github.com/Kulraj69/qualiabits-voicestudio.git
+#    981b2a75c..531f782af  work/m1-headless -> work/m1-headless
+#
+# remote SHA read back: 531f782af2a2998055d57930ec084067c4e0bfd6
+# local  HEAD at the same moment: 531f782af2a2998055d57930ec084067c4e0bfd6
+# equal: yes
+#
+# The run both evidence archives carry is 7441acc7e, an ancestor of this push:
+#   git diff 7441acc7e 531f782af -- hosted/control_plane hosted/worker hosted/scripts \
+#       hosted/web/app hosted/web/components hosted/web/lib hosted/web/e2e
+# is empty, which is the same command tests/hosted/test_m3_acceptance_matrix.py runs.
+# The cold clone the README's fast path promises was taken at this revision,
+# 531f782af, and its transcript is hermes-reports/V0-slot88-coldclone-r1.log.

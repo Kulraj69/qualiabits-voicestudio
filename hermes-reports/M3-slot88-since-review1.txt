@@ -1,0 +1,55 @@
+# What changed after judge pass 1 (M3-slot81-review1.txt), for the second pass
+
+Pass 1 failed the slice on honesty 2/5 and named three flaws that were the builder's
+rather than the owner's. Each is fixed, and each fix is a file a reader can open rather
+than a sentence here.
+
+1. **The README stated two different cold-clone counts for one command.** It said
+   "32 passed" in the fast path and "31 passed and 0 skipped" a paragraph later, and the
+   second number had never been measured anywhere in this repository — it was arithmetic
+   written as though it were a run. The page now states the number the committed
+   transcript's own last line reports (32 passed, 0 skipped) and says out loud that the
+   skip case has no transcript here, naming the two tests that can skip and their two
+   reasons. A guard added in the same commit
+   (`tests/hosted/test_web_pages_claims.py::test_the_cold_clone_count_in_the_readme_is_the_transcript_s_own`)
+   finds the log the page cites, reads the count out of that log's own summary lines and
+   fails if the page says anything else — including if the log ever grows a skip.
+
+2. **The desktop claim rested on a phrase the run does not support.**
+   `hosted/web/app/globals.css` said a window wider than 900px keeps the desktop
+   "pixel-for-pixel", and the run's desktop evidence is four geometry facts, not a pixel
+   comparison. The comment now says what is true, and the claim gained a real comparison
+   rather than a weaker sentence:
+   `tests/hosted/fixtures/globals-before-slice-h.css` is the stylesheet as it stood at
+   `bd6c51bba` (the last push before this slice), committed with its sha256 pinned in
+   `tests/hosted/test_dashboard_width_rules.py::test_the_only_stylesheet_change_outside_the_width_blocks_is_a_comment`,
+   which fails if any rule outside the two `@media (max-width: ...)` blocks changed.
+   Verified by mutation, both ways: changing a rule outside the blocks fails it, adding a
+   rule inside them does not. The acceptance page carries the same two sentences and its
+   desktop row now names the fixture.
+
+3. **The cited pair sat at `dc63603ba` while the prose had moved on.** Because the fixes
+   above touch `hosted/web/app`, which is one of the directories a browser run measures,
+   the rule this repository already states applies: a fresh run is owed. Both paths were
+   re-taken at ONE revision over clean trees, archives staged outside the repository —
+   stub 159/159 and real engine 165/165, both `tested_commit 7441acc7e`, both
+   `worktree_dirty false` — and every page that cited the old pair now cites
+   `hermes-reports/M3-slot88-web-e2e-r1/result.json` and its stub sibling. The acceptance
+   page's revision sentence and the push log it names moved with them.
+
+Two things the re-take moved, corrected from the run rather than from memory, because
+pass 1 also asked for that:
+
+* the real run's transcript heard **two** of the five Hindi words this time (एक, है)
+  where the run it replaces heard three, and the acceptance page now says two and lists
+  both results in its history of the moving count;
+* `tests/hosted` is **270 passed** at this revision rather than 268 — the two guards added
+  above are the difference — and the web unit suite is unchanged at 118 pass / 0 fail,
+  with the pinned-bytes guard at 5 passed.
+
+What is NOT claimed, unchanged from pass 1's own reading and stated here so the second
+pass is not asked to take it on trust: originality and criteria fit against the whole V0
+milestone are the owner's (a product differentiator, a deployment, a public URL, a real
+bucket, a GPU and a listening check, the next M3 page); nothing is deployed; Voice Clone
+and Voice Design are not built; and the width work is three viewports in one browser on
+loopback — no real phone, no touch device, no second browser.

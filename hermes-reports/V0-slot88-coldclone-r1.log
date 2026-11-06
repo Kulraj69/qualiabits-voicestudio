@@ -1,0 +1,36 @@
+# The cold clone: a directory with no .venv, no node_modules and no model of its own,
+# cloned from the pushed revision, running the four files the README's own route names.
+# Both attempts are recorded because the point of the exercise is that a stranger's box
+# behaves the same.
+#
+# clone: git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git <dir>
+# dir:   /tmp/s88/coldclone
+# clone exit=0
+# HEAD in the clone: 531f782af2a2998055d57930ec084067c4e0bfd6
+# revision the run archives cite: 7441acc7e0d94153cf13ada48e5e2dc96735081b (an ancestor of the clone's HEAD: the pair was
+#   re-taken at this revision, and the archives plus every page citing them are in the clone)
+# interpreter: the sibling checkout's .venv (this clone has none): /workspace/qualiabits-voicestudio/.venv/bin/python
+# venv in this clone: no; node_modules: no; .next: no
+# paths the pages name under hermes-reports/, present in this clone: 16 of 17
+#   missing: ['hermes-reports/V0-slot88-push-r1.log']
+# count: 33 passed on both attempts, 0 skipped - one more than the last slice's clone
+#   because this slice added a guard, and the guard that reads the README's cold-clone
+#   count reads this file's own summary lines.
+
+ ==
+.................................                                        [100%]
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /tmp/s88/coldclone/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+33 passed, 1 warning in 52.22s
+
+== attempt 2 ==
+tests/hosted/conftest.py:29
+  /tmp/s88/coldclone/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+33 passed, 1 warning in 49.97s

@@ -225,9 +225,9 @@ def main() -> None:
         "last. Originality is expected to stay under 4: a responsive layout is not a "
         "novel idea, and the product differentiator is the owner's decision.\n",
         "## The README a reviewer reads first (hosted/web/README.md, first 130 lines of the file)\n",
-        show(WEB / "README.md", head=130), "\n",
+        show(WEB / "README.md", head=90), "\n",
         "## The hosted layer's README (hosted/README.md, first 130 lines)\n",
-        show(REPO / "hosted" / "README.md", head=130), "\n",
+        show(REPO / "hosted" / "README.md", head=70), "\n",
         "## The design notes for this slice (hosted/DESIGN.md, the width section)\n",
         excerpt(REPO / "hosted" / "DESIGN.md", ((238, 293),)), "\n",
         "## The stylesheet (hosted/web/app/globals.css, the palette and the width blocks)\n",
@@ -240,11 +240,11 @@ def main() -> None:
         "### tests/hosted/test_dashboard_width_rules.py (the whole file)\n",
         show(REPO / "tests" / "hosted" / "test_dashboard_width_rules.py"), "\n",
         "### the parts of tests/hosted/test_web_pages_claims.py that read the two runs\n",
-        excerpt(REPO / "tests" / "hosted" / "test_web_pages_claims.py", ((40, 70), (89, 120), (169, 300))), "\n",
+        excerpt(REPO / "tests" / "hosted" / "test_web_pages_claims.py", ((40, 70), (89, 120), (169, 240))), "\n",
         "### the parts of tests/hosted/test_m3_acceptance_matrix.py that read the table\n",
-        excerpt(REPO / "tests" / "hosted" / "test_m3_acceptance_matrix.py", ((43, 60), (99, 145), (159, 215))), "\n",
+        excerpt(REPO / "tests" / "hosted" / "test_m3_acceptance_matrix.py", ((43, 60), (99, 145))), "\n",
         "## The acceptance page this slice owes rows in (hosted/M3-ACCEPTANCE.md, the slice list and the width rows)\n",
-        excerpt(REPO / "hosted" / "M3-ACCEPTANCE.md", ((1, 20), (58, 125), (185, 225))), "\n",
+        excerpt(REPO / "hosted" / "M3-ACCEPTANCE.md", ((1, 20), (58, 120), (196, 222))), "\n",
         "## The end-to-end, real engine, this revision (--keep): the width measurements\n",
         width_measurements(evidence), "\n",
         "## The end-to-end, stub engine (the default smoke path)\n",
@@ -278,7 +278,21 @@ def main() -> None:
         "references. Then one sentence on what would make it win. Say plainly which D "
         "items are demonstrated, partly demonstrated, or not.\n",
     ]
-    sys.stdout.write("\n".join(parts))
+    prompt = "\n".join(parts)
+    #: Linux refuses a single command-line argument over 128 KiB, and this prompt goes
+    #: to the judge as exactly that. A first pass on this slice was handed the shell's
+    #: exit=126 stub instead of a completed review because the bundle had grown past the
+    #: limit - so the builder refuses to print one that would not fit, rather than
+    #: letting the caller discover it as a mystery.
+    limit = 120_000
+    size = len(prompt.encode())
+    if size > limit:
+        raise SystemExit(
+            f"the prompt is {size} bytes and this builder allows {limit}: trim an "
+            "excerpt range, do not let the shell refuse the argument"
+        )
+    print(f"[{size} bytes, limit {limit}]", file=sys.stderr)
+    sys.stdout.write(prompt)
 
 
 if __name__ == "__main__":
