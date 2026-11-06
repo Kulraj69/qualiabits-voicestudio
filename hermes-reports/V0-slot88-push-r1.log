@@ -33,9 +33,9 @@
 # local  HEAD at the same moment: abb8b32d80c474c454f444f3b8ae58d6f0e3b8e7
 # equal: yes
 #
-# All three pushes are recorded because the acceptance page quotes "the pushed HEAD": the
-# diff it checks is against the run's own revision 7441acc7e, which all three are
-# descendants of, and the cold clone above was taken at the third.
+# Every push is recorded because the acceptance page quotes "the pushed HEAD": the diff it
+# checks is against the run's own revision 7441acc7e, which all of them are descendants of,
+# and the cold clone was taken at the third.
 
 # Fourth push, the citation-only commit after the cold clone above was re-taken (the
 # README now names abb8b32d8, the revision that clone ran at):
