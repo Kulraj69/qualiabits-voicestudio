@@ -790,6 +790,242 @@ async function main() {
     // section above cannot change what the ones below measure.
     await page.setViewportSize({ width: 1280, height: 720 });
 
+    // ── accessibility: what a screen reader and a keyboard get ─────────────
+    // M4's own text is "fix bugs found in M1-M3; add tests (backend + Playwright
+    // E2E for every page)". The width section above measures geometry; the theme
+    // section below measures three computed colours on the home page. Neither
+    // reads the accessibility tree, which is what an assistive-technology user
+    // actually consumes, and neither would have caught a form field with no
+    // label or a button whose only content is a glyph. So this runs axe (WCAG
+    // 2.1 A + AA) over the same nine pages at the same three viewports, in both
+    // themes, and then walks every page with Tab, per control.
+    //
+    // The tool is a pinned dependency rather than a vendored copy so that what
+    // ran is recorded by `package-lock.json` (version, integrity) and the
+    // sha256 of the file this process injects is asserted by a host test.
+    const axePath = createRequire(import.meta.url).resolve("axe-core/axe.min.js");
+    const axeSource = readFileSync(axePath, "utf8");
+    const axeSha = createHash("sha256").update(axeSource).digest("hex");
+    //: WCAG 2.1 level A and AA. Axe has stricter and more opinionated rule sets
+    //: (`best-practice`); they are deliberately not run, because this suite's
+    //: claim is the standard, and a suite that fails on taste is a suite people
+    //: learn to ignore.
+    const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
+    const axeRun = async (target, route) => {
+      await target.goto(webBase + route, { waitUntil: "load" });
+      await target.addScriptTag({ content: axeSource });
+      return target.evaluate(async (tags) => {
+        if (!window.axe || typeof window.axe.run !== "function") {
+          return { version: null, rules_run: 0, passes: 0, violations: [], error: "axe did not attach" };
+        }
+        const results = await window.axe.run(document, {
+          runOnly: { type: "tag", values: tags },
+          // The element references axe returns by default are live DOM nodes,
+          // which cannot cross the CDP boundary; the selector strings below are
+          // what a reader needs to find the node anyway.
+          elementRef: false,
+        });
+        const violations = (results.violations || []).map((rule) => ({
+          id: rule.id,
+          impact: rule.impact || "unknown",
+          help: String(rule.help || "").slice(0, 120),
+          nodes: (rule.nodes || []).length,
+          targets: (rule.nodes || [])
+            .slice(0, 3)
+            .map((node) => String((node.target || []).join(" ")).slice(0, 140)),
+        }));
+        return {
+          version: window.axe.version,
+          rules_run: (results.passes || []).length + violations.length
+            + (results.incomplete || []).length,
+          passes: (results.passes || []).length,
+          incomplete: (results.incomplete || []).length,
+          violations,
+        };
+      }, AXE_TAGS);
+    };
+
+    result.a11y = {
+      tool: {
+        name: "axe-core",
+        package: "axe-core/axe.min.js",
+        sha256: axeSha,
+        version: null,
+      },
+      tags: AXE_TAGS,
+      runs: [],
+      keyboard: [],
+      violations_total: 0,
+      pages: PAGES.length,
+      viewports: VIEWPORTS.map((viewport) => viewport.id),
+    };
+
+    const axeThemes = [
+      { theme: "dark", target: page },
+    ];
+    const lightA11yContext = await browser.newContext({ colorScheme: "light" });
+    const lightA11yPage = await lightA11yContext.newPage();
+    axeThemes.push({ theme: "light", target: lightA11yPage, context: lightA11yContext });
+
+    for (const { theme, target } of axeThemes) {
+      // The light pass runs at desktop width: the three widths are a geometry
+      // claim and the width section already carries it; what the light theme can
+      // change is colour, and colour does not depend on the viewport.
+      const themeViewports = theme === "light"
+        ? VIEWPORTS.filter((viewport) => viewport.id === "desktop")
+        : VIEWPORTS;
+      for (const viewport of themeViewports) {
+        await target.setViewportSize({ width: viewport.width, height: viewport.height });
+        for (const route of PAGES) {
+          const summary = await axeRun(target, route);
+          result.a11y.runs.push({
+            theme,
+            viewport: viewport.id,
+            viewport_width: viewport.width,
+            route,
+            version: summary.version,
+            rules_run: summary.rules_run,
+            passes: summary.passes,
+            violations: summary.violations,
+          });
+          if (summary.version && !result.a11y.tool.version) {
+            result.a11y.tool.version = summary.version;
+          }
+        }
+      }
+    }
+    await lightA11yContext.close();
+
+    result.a11y.violations_total = result.a11y.runs
+      .reduce((total, run) => total + run.violations.length, 0);
+    result.a11y.rules_run_min = Math.min(...result.a11y.runs.map((run) => run.rules_run));
+
+    check("axe-core runs and reports its own version",
+      Boolean(result.a11y.tool.version) && /^\d+\.\d+/.test(String(result.a11y.tool.version)),
+      JSON.stringify({ version: result.a11y.tool.version, sha256: axeSha.slice(0, 16) }));
+    check("axe ran its own rule set on every page, so no page passed by not running",
+      result.a11y.runs.every((run) => run.rules_run >= 20),
+      JSON.stringify(result.a11y.runs.map((run) => [run.route, run.rules_run]).slice(0, 6)));
+
+    for (const theme of ["dark", "light"]) {
+      for (const route of PAGES) {
+        const runs = result.a11y.runs.filter((run) => run.theme === theme && run.route === route);
+        const found = runs.flatMap((run) => run.violations
+          .map((violation) => `${run.viewport}:${violation.id}(${violation.impact}, ${violation.nodes})`));
+        check(`${route} has no WCAG 2.1 A/AA violation (${theme})`,
+          runs.length > 0 && found.length === 0,
+          found.join(", "));
+      }
+    }
+
+    // ── the keyboard, per control rather than per page ─────────────────────
+    // The check above this section ("every page takes a keyboard Tab onto a
+    // focusable control") proves one control per page is reachable. That is the
+    // lowest bar there is: a page whose second control is unreachable passes it.
+    // This walks the whole set instead, and names what it never reached.
+    const FOCUSABLE_JS = `(() => {
+      const selector = 'a[href], button, input, select, textarea, [tabindex]';
+      const nodes = [...document.querySelectorAll(selector)].filter((node) => {
+        if (node.disabled) return false;
+        if (node.getAttribute('aria-hidden') === 'true') return false;
+        if (node.tabIndex < 0) return false;
+        const box = node.getBoundingClientRect();
+        if (box.width === 0 && box.height === 0) return false;
+        const style = getComputedStyle(node);
+        if (style.visibility === 'hidden' || style.display === 'none') return false;
+        return true;
+      });
+      window.__qbFocusable = nodes;
+      return nodes.map((node, index) => ({
+        index,
+        tag: node.tagName.toLowerCase(),
+        name: (node.getAttribute('aria-label') || node.textContent || node.getAttribute('name') || '')
+          .trim().replace(/\\s+/g, ' ').slice(0, 40),
+      }));
+    })()`;
+
+    for (const route of PAGES) {
+      await page.goto(webBase + route, { waitUntil: "load" });
+      const controls = await page.evaluate(FOCUSABLE_JS);
+      const reached = new Set();
+      const noOutline = [];
+      // Two presses past the last control, so a page that needs one extra Tab to
+      // start (or that skips a hidden element) is not called unreachable for it.
+      const presses = Math.min(120, controls.length + 2);
+      for (let i = 0; i < presses; i += 1) {
+        await page.keyboard.press("Tab");
+        const hit = await page.evaluate(() => {
+          const active = document.activeElement;
+          const nodes = window.__qbFocusable || [];
+          const index = nodes.indexOf(active);
+          const style = active ? getComputedStyle(active) : null;
+          return {
+            index,
+            outline: style ? `${style.outlineStyle} ${style.outlineWidth}` : "",
+            focused: active ? active.tagName.toLowerCase() : "",
+          };
+        });
+        if (hit.index >= 0) {
+          reached.add(hit.index);
+          if (!(hit.outline.startsWith("solid") && !hit.outline.includes("0px"))) {
+            noOutline.push(`${controls[hit.index].tag}[${hit.index}] ${hit.outline}`);
+          }
+        }
+      }
+      const missed = controls.filter((control) => !reached.has(control.index));
+      result.a11y.keyboard.push({
+        route,
+        controls: controls.length,
+        reached: reached.size,
+        missed: missed.slice(0, 5),
+        no_outline: [...new Set(noOutline)].slice(0, 5),
+      });
+      check(`every control on ${route} is reachable by Tab`,
+        controls.length > 0 && missed.length === 0,
+        `${reached.size}/${controls.length}; missed ${JSON.stringify(missed.slice(0, 5))}`);
+      check(`every control on ${route} shows a focus outline`,
+        noOutline.length === 0,
+        [...new Set(noOutline)].slice(0, 4).join(" | "));
+    }
+    result.a11y.keyboard_controls = result.a11y.keyboard.reduce((total, row) => total + row.controls, 0);
+
+    // Enter has to do something, not just Tab: the theme toggle is the one
+    // control on every page whose effect the run can read back out of the DOM.
+    await page.goto(`${webBase}/`, { waitUntil: "load" });
+    await page.evaluate(() => window.__qbFocusable = undefined);
+    await page.evaluate(FOCUSABLE_JS);
+    const toggleIndex = await page.evaluate(() =>
+      (window.__qbFocusable || []).findIndex((node) => node.getAttribute("data-testid") === "theme-toggle"));
+    const toggleTheme = async () => page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+    const themeBefore = await toggleTheme();
+    let pressed = 0;
+    let toggleFocused = false;
+    for (let i = 0; i < 40 && !toggleFocused; i += 1) {
+      await page.keyboard.press("Tab");
+      pressed += 1;
+      toggleFocused = await page.evaluate(() => {
+        const active = document.activeElement;
+        return Boolean(active && active.getAttribute("data-testid") === "theme-toggle");
+      });
+    }
+    if (toggleFocused) await page.keyboard.press("Enter");
+    await sleep(250);
+    const themeAfter = await toggleTheme();
+    result.a11y.keyboard_toggle = {
+      toggle_index: toggleIndex,
+      tabs_to_reach: pressed,
+      theme_before: themeBefore,
+      theme_after: themeAfter,
+    };
+    check("the theme toggle is operable from the keyboard, and Enter flips the theme",
+      toggleIndex >= 0 && toggleFocused && themeAfter !== themeBefore,
+      JSON.stringify(result.a11y.keyboard_toggle));
+    if (themeAfter !== themeBefore) {
+      await page.keyboard.press("Enter");
+      await sleep(250);
+    }
+    await page.setViewportSize({ width: 1280, height: 720 });
+
     // ── the theme: dark by default, light on request, remembered ───────────
     // M3's brief asks for a dashboard that is "responsive, fast, dark/light".
     // Everything above ran in a context that asks for dark (the shipped

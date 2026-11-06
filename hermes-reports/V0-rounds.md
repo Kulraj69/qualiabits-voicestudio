@@ -2178,3 +2178,62 @@ pair), `531f782af..38b4e87a1` (pass 2's fix), `38b4e87a1..abb8b32d8` (pass 3 and
 measured directories moved after the pair was taken at `7441acc7e`, which is the `git diff`
 the acceptance guard runs. The clone was taken at `abb8b32d8` and the citation commit came
 after it, which is the same shape as the earlier slices' chains.
+
+## Rotation slot 89 — V0-build — 2026-11-06 — M4 slice A: the dashboard a screen reader and a keyboard can use
+
+ROTATION. `lane-rotation.txt` ends with the slot-81 V0-growth closeout (its own line and
+the correction line above it), and the last three slots that did lane work are 79
+(V0-build), 80 (V0-growth) and 88 (V0-build). The next position of
+`[V0-build, hackathon, V0-build, V0-growth]` after a V0-growth record is **V0-build**, so
+this tick is V0-build and the product lane runs. Slot 88 closed M3 slice H; slice H was a
+presentation slice (widths), and M3's buildable pages are now all built — the two that are
+not (Voice Clone with consent, Voice Design) are recorded on the acceptance page with the
+engine evidence for why this box cannot build them truthfully, and the agents tab is M5,
+which needs provider calls this lane may not spend on. The next milestone in the plan is
+M4: "Fix bugs found in M1–M3; add tests (backend + Playwright E2E for every page)". This
+slot opens M4's first slice, which is a class of defect a real tool run finds and neither
+the width pass nor the theme pass looked for: accessibility.
+
+PLAN (written before touching code). Vendor axe-core as a pinned dev dependency, drive it
+from the existing browser suite over all nine pages at the three viewports the width
+section already uses, take the **stub run before any fix** as the defect record, fix every
+violation that is ours, and then make the claim checkable without a browser by computing
+WCAG contrast ratios straight out of `app/globals.css` for both themes.
+
+The measured starting point, from this slot's own arithmetic on the stylesheet before any
+edit (ratio = WCAG 2.1 relative luminance, normal text needs 4.5): dark `--fg-subtle` on
+`--bg` **3.95**, and white `--accent-ink` on `--accent` **3.86**. Both fail. The light
+theme's lowest pair is 5.5. So the defect is not hypothetical here either.
+
+DEFINITION OF DONE for this slice:
+1. `axe-core` is a dev dependency pinned to an exact version, its version and the sha256 of
+   the file the suite actually injects are asserted by a test, and the licence is named.
+2. the browser suite runs axe (WCAG 2.1 A + AA) over all nine pages at 390x844, 768x1024
+   and 1440x900, records per page every violation with its rule id, impact, node count and
+   first target, writes them into `result.json`, and fails the run on any violation.
+3. every violation that is the dashboard's own markup or stylesheet is fixed; anything
+   that is not ours (if the tool finds one) is recorded with its rule id and the reason it
+   is not ours, on the acceptance page, rather than suppressed.
+4. contrast stops being an opinion: a test reads the two theme blocks out of
+   `app/globals.css`, computes the WCAG ratio for the text-on-surface pairs the design
+   declares, and fails under 4.5 — with the pair list itself read from the stylesheet, not
+   from a copy.
+5. the keyboard path is asserted per page per control, not per page: every control on every
+   page is reachable and operable by Tab and Enters, with the count of controls in the run.
+6. `hosted/M4-ACCEPTANCE.md` carries the claim -> code -> test -> run-evidence rows, and
+   `tests/hosted/test_m4_acceptance_matrix.py` reads them back; the numbers a reader reads
+   on the page come out of the run's own `result.json`.
+7. both browser paths re-taken at ONE revision over clean trees (archives staged outside the
+   repository), `tests/hosted` and the web unit suite green, the pinned-bytes guard green, a
+   cold clone at the pushed revision green.
+8. two cheap+ judge passes on the real artifacts with a fix after each, and no honesty flaw
+   in the last.
+9. pushed to `Kulraj69/qualiabits-voicestudio` `work/m1-headless` with the remote SHA read
+   back equal.
+
+Judging criteria targeted: taste and human feel (a screen-reader user is a user), technical
+depth (the contrast guard is arithmetic on the stylesheet, not a screenshot diff), criteria
+fit against M4's own text, README do-X-see-Y, honesty. Originality and criteria fit against
+the whole V0 product stay the owner's and no pass is claimed for them.
+
+### Round 1 — the plan, the dependency, and the defect record taken before the fix
