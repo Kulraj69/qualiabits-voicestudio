@@ -223,7 +223,18 @@ def test_the_axe_claim_is_the_run_s_own_counts():
     )
     assert {run["theme"] for run in runs} == {"dark", "light"}
     assert {run["viewport"] for run in runs} == {"phone", "tablet", "desktop"}
-    assert len(runs) == 36, f"the run covered {len(runs)} page/theme viewport passes, not 36"
+    # Every combination of theme, viewport and page, rather than a total that a
+    # run could reach by covering one theme thinly: an earlier version of this
+    # section ran the light theme at desktop width only (36 runs, 27 dark against
+    # 9 light) while the page claimed both themes at all three viewports, and a
+    # cheap+ pass on this slice called that a lie. The count and the set are both
+    # asserted now, so a theme that quietly narrows fails here.
+    combinations = {(run["theme"], run["viewport"], run["route"]) for run in runs}
+    assert len(combinations) == len(runs) == 54, (
+        f"the run covered {len(runs)} passes and {len(combinations)} distinct "
+        "theme/viewport/page combinations, not 54 (2 themes x 3 viewports x 9 pages): "
+        f"{sorted(combinations)}"
+    )
     text = page_text()
     for stated in ("axe-core", "4.14.0", "MPL-2.0"):
         assert stated in text, f"the page never names {stated}"

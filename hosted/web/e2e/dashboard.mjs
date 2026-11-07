@@ -868,13 +868,16 @@ async function main() {
     axeThemes.push({ theme: "light", target: lightA11yPage, context: lightA11yContext });
 
     for (const { theme, target } of axeThemes) {
-      // The light pass runs at desktop width: the three widths are a geometry
-      // claim and the width section already carries it; what the light theme can
-      // change is colour, and colour does not depend on the viewport.
-      const themeViewports = theme === "light"
-        ? VIEWPORTS.filter((viewport) => viewport.id === "desktop")
-        : VIEWPORTS;
-      for (const viewport of themeViewports) {
+      // Both themes run the same three viewports. An earlier version of this
+      // section ran the light theme at desktop width only, on the argument that
+      // the three widths are a geometry claim the width section already carries
+      // and that colour does not depend on the viewport. A cheap+ pass on this
+      // slice refused the argument: the page went on to say the pass covered the
+      // three viewports "in both themes", which the run's own 36 records did not
+      // support -- 27 dark against 9 light. A claim is only as good as the run
+      // behind it, so the light theme now runs all three widths and the page and
+      // the run say the same thing.
+      for (const viewport of VIEWPORTS) {
         await target.setViewportSize({ width: viewport.width, height: viewport.height });
         for (const route of PAGES) {
           const summary = await axeRun(target, route);
