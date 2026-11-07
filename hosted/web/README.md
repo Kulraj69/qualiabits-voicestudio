@@ -47,7 +47,7 @@ The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run
 this repository, and their transcripts are committed beside the two run files:
 `hermes-reports/V0-slot99-tests-r1.log` (the Python guard suite),
 `V0-slot99-web-unit-r1.log` (the web unit suite, 119 passed), `V0-slot99-pins-r1.log`
-(the pinned-bytes guard, 5 passed), `V0-slot88-coldclone-r1.log` (the same guards twice
+(the pinned-bytes guard, 5 passed), `V0-slot99-coldclone-r1.log` (the same guards twice
 from a clone of the revision below, with no `.venv`, no `node_modules` and no model),
 `V0-slot99-stub-run1.log` and
 `V0-slot99-real-run1.log` (the two browser runs the archives hold). A reader who
@@ -66,32 +66,37 @@ puts those in `.venv`. With an interpreter like that, from a bare clone:
 
 ```sh
 git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git qb && cd qb
-<python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_web_pages_claims.py \
-    tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py -q
-# 33 passed — no venv in that clone, no model, no browser. Transcript:
-# hermes-reports/V0-slot88-coldclone-r1.log, taken from a clone of the pushed
-# revision abb8b32d8, whose first lines are the clone, the revision, the
+<python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_m4_acceptance_matrix.py \
+    tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py \
+    tests/hosted/test_readme_measured_is_generated.py -q
+# 41 passed — no venv in that clone, no model, no browser. Transcript:
+# hermes-reports/V0-slot99-coldclone-r1.log, taken from a clone of the pushed
+# revision da7de9007, whose first lines are the clone, the revision, the
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
 # and what the clone does not have. That transcript records both
-# attempts, both the same: 33 passed, 0 skipped, because this box had room for
+# attempts, both the same: 41 passed, 0 skipped, because this box had room for
 # the 112 MB asset the two staging guards use and the model directory to build it
 # from. Those two print `s` with their reason instead, and the run ends with fewer
-# than 33 passed, on a box that cannot stage that asset: the pinned-bytes one when
+# than 41 passed, on a box that cannot stage that asset: the pinned-bytes one when
 # /workspace/m1-models/kokoro-int8-multi-lang-v1_0 is not there to build it from,
 # and both when the disk has no room for the 112 MB it writes. No transcript of
 # that case is in this repository, so the count to expect there is not claimed
 # here — read the skip reasons off the run.
 ```
 
-Those four files check that the two archived runs name one revision that is in this
+Those five files check that the two archived runs name one revision that is in this
 branch's history, that the counts and the Hindi word count in the prose are the
-runs' own, and that the model pins are enforced on every path into the script. The
-33 above is the number the committed transcript's own last line reports, and a guard
+runs' own, that every row of both acceptance tables still names code and tests that
+exist, and that the model pins are enforced on every path into the script. The
+41 above is the number the committed transcript's own last line reports, and a guard
 reads it back out of that file rather than trusting this sentence: on a machine that
 cannot stage the pinned asset — no `/workspace/m1-models` directory to build it from,
 or no room for the 112 MB it writes — the tests that stage it ask to be skipped, with
 their reason, and that number is smaller. Rerun the command on such a box and the
-line above is the one to read.
+line above is the one to read. `tests/hosted/test_axe_is_pinned.py` is deliberately
+not in this list: it compares the recorded hash against the installed
+`node_modules/axe-core/axe.min.js`, which a cold clone does not have, and it says so
+when that comparison is unavailable instead of passing quietly.
 
 You need three processes. The dashboard is one of them; the engine and the
 control plane are the other two, and running them is described in
