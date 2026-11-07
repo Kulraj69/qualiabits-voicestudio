@@ -146,3 +146,20 @@ test("the run records the long-form numbers it measured, not a summary of them",
     assert.match(HARNESS, new RegExp(`${field}:`));
   }
 });
+
+test("the keyboard walk covers a page's whole control set, not its first 120", () => {
+  // The real engine's 54-voice library renders 150 controls on /voices. A fixed
+  // cap of 120 Tab presses in this harness made that page fail the reachability
+  // check on a limit of the harness's own, with a detail string that read like a
+  // page defect: 120/150, five controls named as unreachable that were never
+  // tried. The bound is now the control count, plus the two lookahead presses,
+  // and the ceiling that remains is for a pathological page -- recorded in the
+  // run so a reader can tell "the page could not be tabbed through" apart from
+  // "the walk gave up".
+  assert.match(HARNESS, /const MAX_TAB_PRESSES = \d+;/);
+  assert.match(HARNESS, /const presses = Math\.min\(MAX_TAB_PRESSES, controls\.length \+ 2\)/);
+  assert.doesNotMatch(HARNESS, /Math\.min\(120,/, "the fixed 120-press cap is back");
+  assert.match(HARNESS, /const truncated = controls\.length \+ 2 > MAX_TAB_PRESSES/);
+  assert.match(HARNESS, /truncated,/);
+  assert.match(HARNESS, /!truncated/);
+});

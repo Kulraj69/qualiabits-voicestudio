@@ -42,7 +42,7 @@ WEB_README = WEB / "README.md"
 LIBRARY = WEB / "components" / "VoiceLibraryView.jsx"
 SELECT = WEB / "components" / "SearchableSelect.jsx"
 SELECT_LOGIC = WEB / "lib" / "searchable-select.js"
-RUN_RE = re.compile(r"hermes-reports/(M3-slot\d+-web-e2e(?:-stub)?-r\d+)/result\.json")
+RUN_RE = re.compile(r"hermes-reports/(M[0-9]-slot\d+-web-e2e(?:-stub)?-r\d+)/result\.json")
 
 #: The page spells its small numbers out, so they are read back the same way.
 WORD_NUMBERS = {
@@ -66,6 +66,9 @@ WORD_NUMBERS = {
     "one-hundred-forty-eight": 148,
     "one-hundred-fifty-nine": 159,
     "one-hundred-sixty-five": 165,
+    "one-hundred-ninety-eight": 198,
+    "two-hundred-four": 204,
+    "one-hundred-nineteen": 119,
 }
 
 #: The checks that exist only under `--keep`, because they assert that the

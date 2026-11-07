@@ -29,7 +29,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PAGE = REPO_ROOT / "hosted" / "M3-ACCEPTANCE.md"
 #: The browser suite's own evidence file, in the fork's hermes-reports/ directory.
-EVIDENCE_RE = re.compile(r"hermes-reports/(M3-slot\d+-web-e2e-r\d+)/result\.json")
+#: The milestone letter is read as `M[0-9]` rather than pinned to `M3`: the newest
+#: pair is named for the slice that re-took it (M4's first one, which added the axe
+#: pass and the keyboard walk to the same harness over the same nine pages), and
+#: pinning the letter here would have made this guard fail on a citation that is
+#: correct. What the guard checks is unchanged -- the cited run exists, was taken
+#: over a clean tree, and still describes this tree.
+EVIDENCE_RE = re.compile(r"hermes-reports/(M[0-9]-slot\d+-web-e2e-r\d+)/result\.json")
 ROW_RE = re.compile(r"^\|\s*(?P<cells>.+?)\s*\|\s*$", re.MULTILINE)
 #: A row's cells are read for backticked names individually. Scanning the whole page
 #: for backticks (as this suite first did) also picks up the checks named in the
