@@ -1,15 +1,35 @@
-# cold clone for rotation slot 104, 2026-11-08 (revision and both transcripts filled in from the clone below)
+# cold clone for rotation slot 104, 2026-11-08
 # clone:
-#   git clone --branch work/m1-headless <origin> <scratch>/c104
-# revision: PLACEHOLDER — written from a clone of the pushed revision, below
+#   git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git <scratch>/c104
+# revision: 5c954221769e9d081dd0afbb63c5a417c0db48ce
 # interpreter borrowed: /workspace/qualiabits-voicestudio/.venv/bin/python
 # what this clone does not have:
 #   no .venv
 #   no hosted/web/node_modules
 #   /workspace/m1-models is on the box (the two staging guards can build their asset)
+#
+# The two staging guards ask to be skipped when this filesystem has less than the
+# 400000 KB the 112 MB asset and its extraction need, which happened twice here
+# (39 passed, 2 skipped and 40 passed, 1 skipped) while this slot's own clone and
+# pytest's temp directory filled the disk. With room for the asset both attempts
+# are the same, and that is what is kept below.
 
 ## attempt 1
-41 passed, 0 skipped, 1 warning in 47.66s
+.........................................                                [100%]
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /home/ubuntu/.hermes/cache/scratch/m4a-slot104/c104/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+41 passed, 1 warning in 48.80s
 
 ## attempt 2
-41 passed, 0 skipped, 1 warning in 51.07s
+.........................................                                [100%]
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /home/ubuntu/.hermes/cache/scratch/m4a-slot104/c104/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+41 passed, 1 warning in 48.73s

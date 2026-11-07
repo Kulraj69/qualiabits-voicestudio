@@ -71,7 +71,7 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
     tests/hosted/test_readme_measured_is_generated.py -q
 # 41 passed — no venv in that clone, no model, no browser. Transcript:
 # hermes-reports/V0-slot104-coldclone-r1.log, taken from a clone of the pushed
-# revision SLOT104_PUSHED_REV, whose first lines are the clone, the revision, the
+# revision 5c9542217, whose first lines are the clone, the revision, the
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
 # and what the clone does not have. That transcript records both
 # attempts, both the same: 41 passed, 0 skipped, because this box had room for
@@ -79,9 +79,10 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
 # from. Those two print `s` with their reason instead, and the run ends with fewer
 # than 41 passed, on a box that cannot stage that asset: the pinned-bytes one when
 # /workspace/m1-models/kokoro-int8-multi-lang-v1_0 is not there to build it from,
-# and both when the disk has no room for the 112 MB it writes. No transcript of
-# that case is in this repository, so the count to expect there is not claimed
-# here — read the skip reasons off the run.
+# and both when the disk has no room for the 112 MB it writes. That case was hit
+# twice while this slot's own clone filled the disk, and both runs are recorded in
+# the transcript's own header — 39 passed, 2 skipped and 40 passed, 1 skipped —
+# rather than left unclaimed; read the skip reasons off the run.
 ```
 
 Those five files check that the two archived runs name one revision that is in this
