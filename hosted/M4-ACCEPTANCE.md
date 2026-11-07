@@ -58,9 +58,9 @@ Two runs of the *same* code show the difference: the run before the fix
 records 202 passed and 1 failed, with `/voices` at 120 of 150; the cited run records
 **204 checks, 204 passed**, with `/voices` at 150 of 150.
 
-Axe now reports **no violation in any of its 36 passes** — nine pages × three
-viewports in the dark theme, nine pages at desktop width in the light one — with
-its thinnest pass running 22 rules, and the keyboard walk reaches **all 283
+Axe now reports **no violation in any of its 54 passes** — nine pages × three
+viewports, in both themes — with its thinnest pass running 22 rules, and the
+keyboard walk reaches **all 283
 controls** across the nine pages. The pages and viewports the axe pass covers, the
 rule-set floor, the absence of violations and every per-page control count are read
 back out of the run file by `tests/hosted/test_m4_acceptance_matrix.py`; a page
@@ -72,9 +72,9 @@ voice cloning and voice design stay unbuilt on this box for the engine reasons
 nothing here claims the voice is good. That remains the owner's check.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M4-slot99-web-e2e-r1/result.json`, taken
-with the real engine at `1eae8d6f6` and a clean tree (the pair's stub path is
-`hermes-reports/M4-slot99-web-e2e-stub-r1/result.json`). `tests/hosted/test_m4_acceptance_matrix.py`
+at: the checks come from `hermes-reports/M4-slot104-web-e2e-r1/result.json`, taken
+with the real engine at `21d7de111` and a clean tree (the pair's stub path is
+`hermes-reports/M4-slot104-web-e2e-stub-r1/result.json`). `tests/hosted/test_m4_acceptance_matrix.py`
 reads this table and fails if a path stops existing, a named check stops appearing
 in the run the page cites, or the code under the directories that run measured has
 changed since — so the table cannot quietly become a description of an earlier

@@ -36,7 +36,7 @@ from build_m3_review_prompt import (  # noqa: E402
     stub_summary,
 )
 
-SLICE = "M4-slot99"
+SLICE = "M4-slot104"
 #: Linux refuses a command-line argument over 128 KB. Refuse to print a bundle that
 #: would be handed to the shell as an argument it cannot take.
 MAX_BUNDLE_BYTES = 120_000
@@ -108,10 +108,10 @@ def main() -> None:
     real = REPORTS / f"{SLICE}-web-e2e-r1" / "result.json"
     stub = REPORTS / f"{SLICE}-web-e2e-stub-r1" / "result.json"
     before = REPORTS / "M4-slot99-web-e2e-before-real" / "result.json"
-    tests = newest("V0-slot99-tests-*.log")
-    unit = REPORTS / "V0-slot99-web-unit-r1.log"
-    pins = REPORTS / "V0-slot99-pins-r1.log"
-    cold = REPORTS / "V0-slot99-coldclone-r1.log"
+    tests = newest("V0-slot104-tests-*.log")
+    unit = REPORTS / "V0-slot104-web-unit-r1.log"
+    pins = REPORTS / "V0-slot104-pins-r1.log"
+    cold = REPORTS / "V0-slot104-coldclone-r1.log"
 
     parts = [
         f"# Judge pass {label} on M4 slice A (accessibility: what a screen reader and a "

@@ -1,0 +1,15 @@
+# cold clone for rotation slot 104, 2026-11-08 (revision and both transcripts filled in from the clone below)
+# clone:
+#   git clone --branch work/m1-headless <origin> <scratch>/c104
+# revision: PLACEHOLDER — written from a clone of the pushed revision, below
+# interpreter borrowed: /workspace/qualiabits-voicestudio/.venv/bin/python
+# what this clone does not have:
+#   no .venv
+#   no hosted/web/node_modules
+#   /workspace/m1-models is on the box (the two staging guards can build their asset)
+
+## attempt 1
+41 passed, 0 skipped, 1 warning in 47.66s
+
+## attempt 2
+41 passed, 0 skipped, 1 warning in 51.07s
