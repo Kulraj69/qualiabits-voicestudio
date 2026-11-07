@@ -2396,3 +2396,59 @@ D7 now meaning a pair whose two runs share ONE revision and each record
 Judging criteria targeted: honest evidence chains (the M3/M4 pages follow the run), taste
 and human feel in the acceptance page, technical depth, reviewer path. Originality and
 whole-product criteria fit stay the owner's.
+
+## Rotation slot 104 — V0-build — 2026-11-08 — M4 slice A: one revision for both browser paths
+
+ROTATION. `lane-rotation.txt` ends at slot 103 (V0-growth), so the position that
+follows it in `[V0-build, hackathon, V0-build, V0-growth]` is **V0-build** and this
+is slot 104. Slot 100 committed this slice's plan and stopped before taking the
+runs it describes; this slot resumes that plan rather than opening a new slice.
+
+STATE FOUND BY RUNNING THE SUITES, not by reading the log. `tests/hosted` is **284
+passed, 4 failed**, and all four failures are the same class of defect:
+
+  * `test_web_pages_claims.py::test_the_two_cited_runs_were_taken_at_one_revision` —
+    the page's pair is `M4-slot99-web-e2e-r1` at `1eae8d6f6` and
+    `M4-slot99-web-e2e-stub-r1` at `ebc611800`. Two revisions, so the pair describes
+    no single state of this code.
+  * `test_m3_acceptance_matrix.py::test_the_code_the_cited_run_exercised_has_not_changed_since`
+    and `test_m4_acceptance_matrix.py::test_the_code_the_cited_run_exercised_has_not_changed_since`
+    — slice A edited `hosted/web/app` and `hosted/web/components` after `1eae8d6f6`,
+    so the cited run is stale under this repository's own rule.
+  * `test_m4_acceptance_matrix.py::test_the_axe_claim_is_the_run_s_own_counts` — the
+    cited run holds 36 axe passes (light theme at desktop width only) while the page
+    claims a coverage the fix has since widened to 54.
+
+A fourth defect is visible in the page and is *not* caught by a guard: line 61 of
+`hosted/M4-ACCEPTANCE.md` still says "no violation in any of its **36 passes** —
+nine pages × three viewports in the dark theme, nine pages at desktop width in the
+light one", which is the pre-fix coverage. The run on this box now holds 54 passes
+(two themes × three viewports × nine pages) and the guard asserts that set, so the
+page's own sentence has to follow it. That is the FINDING-2 class again, and this
+slot closes it where it is wrong rather than by rewording.
+
+Also found, and not assumed: `hosted/web/e2e/.evidence/result.json` holds a
+real-engine run whose own `revision` block says `659618ccd` with
+`worktree_dirty: false` and 204/204 checks — but its screenshot directory is dated a
+day earlier than the run, so it is not an artifact this slot can vouch for. It is
+not cited and it is not reused; the pair is re-taken here.
+
+PLAN (self-loop step 1). Commit this plan so the tree is clean, then take BOTH
+browser paths at ONE revision over clean trees, with the archives staged outside the
+repository in `/home/ubuntu/.hermes/cache/scratch/m4a-slot104/`: the stub path first
+(about two minutes), then the real engine with the pinned Kokoro int8 speech model
+and the pinned faster-whisper small transcription model already on this box at
+`/workspace/m1-models` (about half an hour on CPU). Archive them as
+`hermes-reports/M4-slot104-web-e2e-r1/` and `-stub-r1/`, each holding `result.json`,
+`screenshots/` and `widths/` exactly as the slot-99 archives do. Re-point every
+citation — `hosted/M3-ACCEPTANCE.md`, `hosted/M4-ACCEPTANCE.md`,
+`hosted/web/README.md` and `hermes-reports/build_m4a_review_prompt.py` — and correct
+every number the guards read back out of the new pair.
+
+DEFINITION OF DONE: slice A's own D1-D9 (unchanged, in the slot-89 section above),
+with D7 read as a pair whose two runs share ONE revision and each record
+`worktree_dirty: false`, and D8 read as a judge pass on the corrected bundle.
+
+Judging criteria targeted: honest evidence chains (the pages follow the run), taste
+and human feel in the acceptance page, technical depth, reviewer path. Originality
+and whole-product criteria fit stay the owner's, and no pass is claimed for them.
