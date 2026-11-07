@@ -951,7 +951,17 @@ async function main() {
       const noOutline = [];
       // Two presses past the last control, so a page that needs one extra Tab to
       // start (or that skips a hidden element) is not called unreachable for it.
-      const presses = Math.min(120, controls.length + 2);
+      //
+      // The whole control set is walked. A fixed cap of 120 used to be here and
+      // it truncated the walk on /voices the moment the real engine's 54-voice
+      // library rendered — 150 controls, 120 reached — so this check failed
+      // while naming a harness limit as if it were a page defect. The bound
+      // below exists only to stop a pathological page; when it is hit the run
+      // says so, in the detail string, instead of implying the rest of the page
+      // was tried and found unreachable.
+      const MAX_TAB_PRESSES = 1000;
+      const truncated = controls.length + 2 > MAX_TAB_PRESSES;
+      const presses = Math.min(MAX_TAB_PRESSES, controls.length + 2);
       for (let i = 0; i < presses; i += 1) {
         await page.keyboard.press("Tab");
         const hit = await page.evaluate(() => {
@@ -979,10 +989,14 @@ async function main() {
         reached: reached.size,
         missed: missed.slice(0, 5),
         no_outline: [...new Set(noOutline)].slice(0, 5),
+        truncated,
+        max_tab_presses: MAX_TAB_PRESSES,
       });
       check(`every control on ${route} is reachable by Tab`,
-        controls.length > 0 && missed.length === 0,
-        `${reached.size}/${controls.length}; missed ${JSON.stringify(missed.slice(0, 5))}`);
+        controls.length > 0 && missed.length === 0 && !truncated,
+        truncated
+          ? `${reached.size}/${controls.length}; the walk stopped at its own bound of ${MAX_TAB_PRESSES} presses`
+          : `${reached.size}/${controls.length}; missed ${JSON.stringify(missed.slice(0, 5))}`);
       check(`every control on ${route} shows a focus outline`,
         noOutline.length === 0,
         [...new Set(noOutline)].slice(0, 4).join(" | "));
