@@ -1,0 +1,47 @@
+Decision: FAIL
+
+1. Originality: 2/5
+   A careful accessibility harness is useful, but it is an incremental QA fix rather than a memorable product idea. The work itself admits that the differentiator and deployment are still owner decisions.
+
+2. Taste: 4/5
+   The acceptance page is unusually deliberate: it names the defect, distinguishes tool bugs from page bugs, records limits, and avoids claiming audio quality. It is long, but mostly purposeful.
+
+3. Human feel: 4/5
+   The writing is specific and technically grounded. It avoids most generic AI language and explains why the harness changed. The acceptance page is somewhat overlong and occasionally sounds like an argument with a prior judge, but it still reads as authored rather than templated.
+
+4. Technical depth: 5/5
+   Strong evidence: pinned axe-core 4.14.0, injected-file SHA-256 verification, WCAG A/AA runs, 36 accessibility passes, per-control keyboard traversal, a regression test for the former 120-control cap, 288 backend tests, 119 web-unit tests, and a real non-stub engine run. The cited run records 204/204 checks passed and reaches all 283 controls.
+
+5. Criteria fit: 3/5
+   This is credible evidence for one M4 slice, but not for M4 as a whole. The milestone asks for bugs from M1–M3 plus backend tests and Playwright E2E for every page. Voice cloning and voice design remain unbuilt; no deployment or hosted production path is demonstrated; and the cold-clone evidence does not demonstrate a complete browser run. The acceptance page explicitly confirms those omissions.
+
+6. Reviewer path: 2/5
+   A stranger cannot reproduce the cited real run from a fresh clone in a few minutes. The cold-clone log says it borrowed `/workspace/qualiabits-voicestudio/.venv/bin/python`, depended on `/workspace/m1-models`, had no `node_modules`, and ran only 41 staging checks per attempt. The cited browser run also depends on an external model directory and installed dependencies.
+
+7. Honesty: 2/5
+   There is a material scope contradiction. The acceptance page says axe runs over the same nine pages at the same three viewports “in both themes,” but later says the light-theme pass is desktop-only: nine pages × three viewports in dark, nine pages × one viewport in light. The cited 36-pass total confirms 27 dark + 9 light, not 54 theme/viewport combinations. This is an honesty flaw under the stated pass rule.
+
+Five most damaging flaws
+
+1. Light-theme axe coverage is overstated
+   Location: `hosted/M4-ACCEPTANCE.md`, Slice A description and the paragraph beginning “Axe now reports no violation in any of its 36 passes.”
+   The page first claims all three viewports in both themes, then documents light as desktop-only. Correct the claim or run the missing 18 light-theme passes.
+
+2. The cold-clone claim is weaker than the product claim
+   Location: `V0-slot99-coldclone-r1.log`, timestamp `2026-11-07T06:05:28Z`.
+   The clone borrows Python, relies on an external model directory, lacks web dependencies, and runs only staging guards. It does not establish that a fresh clone can run the claimed dashboard accessibility suite.
+
+3. The cited browser run and cold-clone run are not at the same revision
+   Locations: cited real run: `1eae8d6f6dd7d2aa95c6d8e50487a60cda0af254`; cold clone: `da7de9007a1b40992708ec122edfed8de6ef4076`; later commit: `8bf9ada12`.
+   D7 requires both browser paths and the cold clone to be verified at one pushed revision. The supplied evidence shows different revisions.
+
+4. M4 remains only partially delivered
+   Location: `hosted/M4-ACCEPTANCE.md`, “What is not here, and is not stubbed.”
+   Voice cloning and voice design are absent, and the work does not demonstrate the complete M4 requirement of fixing all relevant M1–M3 bugs with backend plus Playwright coverage for every product page.
+
+5. Automated axe and Tab checks are presented close to a screen-reader verdict
+   Locations: `hosted/M4-ACCEPTANCE.md`, Slice A introduction; `hosted/web/e2e/dashboard.mjs:793-801`.
+   The evidence establishes automated WCAG checks, focus reachability, and focus outlines. It does not include a manual screen-reader pass, spoken announcements, landmark navigation, or name/role/value verification beyond axe’s rules. The wording should distinguish “automated accessibility checks” from “what a screen reader gets.”
+
+What would make this win: rerun the complete accessibility matrix, including all three light-theme viewports, at the final pushed revision; make the fresh-clone path installable and reproducible without borrowed local assets; and complete or explicitly narrow the M4 scope so every claimed page and test requirement is actually demonstrated.
+EXIT=0

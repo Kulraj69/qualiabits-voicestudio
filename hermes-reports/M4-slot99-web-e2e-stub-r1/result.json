@@ -9,9 +9,9 @@
   "transcription_model_source": null,
   "transcription_model_pinned": null,
   "revision": {
-    "tested_commit": "1eae8d6f6dd7d2aa95c6d8e50487a60cda0af254",
+    "tested_commit": "ebc611800b4cdbccec787c8043e6916157ec23dc",
     "worktree_dirty": false,
-    "generated_at_utc": "2026-11-07T04:58:50.138Z"
+    "generated_at_utc": "2026-11-07T06:21:44.295Z"
   },
   "browser": "156.0.8078.4",
   "deployed": false,
@@ -32,7 +32,7 @@
     {
       "name": "the control plane can see the engine",
       "ok": true,
-      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:46209\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
+      "detail": "{\"upstream_base_url\":\"http://127.0.0.1:35539\",\"reachable\":true,\"status\":\"ok\",\"device\":\"cpu\",\"version\":\"engine-stub\"}"
     },
     {
       "name": "the dashboard builds",
@@ -592,7 +592,7 @@
     {
       "name": "the Speak page returns real WAV bytes through the plane",
       "ok": true,
-      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":72044,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.183s · engine build sherpa-onnxDownload WAV\"}"
+      "detail": "{\"secondsHeader\":null,\"header\":\"RIFF\",\"bytes\":72044,\"download\":\"speech-hf_alpha.wav\",\"playerText\":\"Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.156s · engine build sherpa-onnxDownload WAV\"}"
     },
     {
       "name": "the audio has a download link",
@@ -602,7 +602,7 @@
     {
       "name": "the player reports the measured duration and size",
       "ok": true,
-      "detail": "Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.183s · engine build sherpa-onnxDownload WAV"
+      "detail": "Spoken: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.156s · engine build sherpa-onnxDownload WAV"
     },
     {
       "name": "an unknown voice is refused by the plane with the engine's own sentence",
@@ -707,7 +707,7 @@
     {
       "name": "a minted key is shown once and looks like a key",
       "ok": true,
-      "detail": "qbv_b7d6fa18a5a6d194_NDaWJfwAhJ1ibzEi5wp5dQPvFgPJPiUpZYH_b5iqjqI"
+      "detail": "qbv_daecc1382559a205_2Sb6Jkiw_mfomC5MTpQwHbicalIOmwR5QMm5UJsQdcw"
     },
     {
       "name": "the key is not shown again after a reload",
@@ -797,7 +797,7 @@
     {
       "name": "the preview player reports the measured duration and size",
       "ok": true,
-      "detail": "Previewing: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.005sDownload W / preview-hf_alpha.wav"
+      "detail": "Previewing: hf_alpha1.5 s of audio · 72,044 bytes · engine took 0.009sDownload W / preview-hf_alpha.wav"
     },
     {
       "name": "the preview was metered as exactly one more speech request under this workspace",
@@ -842,7 +842,7 @@
     {
       "name": "a cancelled job reads as cancelled and was never spoken",
       "ok": true,
-      "detail": "#1Cancelledhf_alpha55Nov 07, 2026, 05:00:42never spoken—"
+      "detail": "#1Cancelledhf_alpha55Nov 07, 2026, 06:23:25never spoken—"
     },
     {
       "name": "cancelling a queued job did not move the meter",
@@ -852,7 +852,7 @@
     {
       "name": "the real worker drained the queue",
       "ok": true,
-      "detail": "2964162: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.023, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-2964162\"}\n"
+      "detail": "3030415: job 2 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 1, \"engine_seconds\": 0.025, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 1, \"worker_id\": \"ip-172-31-19-105-3030415\"}\n"
     },
     {
       "name": "the plane records the spoken job as succeeded",
@@ -907,7 +907,7 @@
     {
       "name": "the real worker spoke every chapter",
       "ok": true,
-      "detail": "2964208: job 4 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 2, \"engine_seconds\": 0.042, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 2, \"worker_id\": \"ip-172-31-19-105-2964208\"}\n"
+      "detail": "3030427: job 4 succeeded, 1.5 s of audio (stored 40/74/40747934e67f1b835e0fe437200c936623522c6efdbd9ca3c8de5ae75f41b5a0.wav)\n{\"claimed\": 2, \"engine_seconds\": 0.043, \"failed\": 0, \"idle_polls\": 1, \"lost_lease\": 0, \"mode\": \"once\", \"requeued\": 0, \"succeeded\": 2, \"worker_id\": \"ip-172-31-19-105-3030427\"}\n"
     },
     {
       "name": "the audiobook downloads from the page as one WAV holding every chapter",
@@ -947,12 +947,12 @@
     {
       "name": "the third request in the minute is refused 429 with a real Retry-After",
       "ok": true,
-      "detail": "statuses 202,202,429 retry-after 58"
+      "detail": "statuses 202,202,429 retry-after 14"
     },
     {
       "name": "the refusal carries a machine-readable code and the numbers behind it",
       "ok": true,
-      "detail": "{\"error\":\"request_rate_exceeded\",\"detail\":\"This key has made 2 requests in the minute beginning 2026-11-07T05:01:00+00:00, and the workspace allows 2. The window is fixed, not sliding: waiting out Retry-After always clears it.\",\"limit\":2,\"used\":2,\"remaining\":0,\"retry_after\":58}"
+      "detail": "{\"error\":\"request_rate_exceeded\",\"detail\":\"This key has made 2 requests in the minute beginning 2026-11-07T06:23:00+00:00, and the workspace allows 2. The window is fixed, not sliding: waiting out Retry-After always clears it.\",\"limit\":2,\"used\":2,\"remaining\":0,\"retry_after\":14}"
     },
     {
       "name": "a refused request is a 429 row that reserved no characters",
@@ -1016,7 +1016,7 @@
     "version": "engine-stub"
   },
   "plane_health": {
-    "upstream_base_url": "http://127.0.0.1:46209",
+    "upstream_base_url": "http://127.0.0.1:35539",
     "reachable": true,
     "status": "ok",
     "device": "cpu",
@@ -4255,6 +4255,186 @@
       },
       {
         "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/",
+        "version": "4.14.0",
+        "rules_run": 22,
+        "passes": 20,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/speak",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/voices",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/transcribe",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/dub",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/keys",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/usage",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/jobs",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "phone",
+        "viewport_width": 390,
+        "route": "/projects",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/",
+        "version": "4.14.0",
+        "rules_run": 22,
+        "passes": 20,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/speak",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/voices",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/transcribe",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/dub",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/keys",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/usage",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/jobs",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
+        "viewport": "tablet",
+        "viewport_width": 768,
+        "route": "/projects",
+        "version": "4.14.0",
+        "rules_run": 26,
+        "passes": 24,
+        "violations": []
+      },
+      {
+        "theme": "light",
         "viewport": "desktop",
         "viewport_width": 1440,
         "route": "/",
@@ -4817,7 +4997,7 @@
     "upload_seconds_measured": 1.5,
     "transcript_characters_in_meter": 19,
     "segments": 1,
-    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.137s · engine build engine-stub",
+    "meta": "1.5 s measured · 19 characters · 70.4 KiB sent · engine took 0.157s · engine build engine-stub",
     "downloads": {
       "txt": {
         "filename": "spoken.transcript.txt",
@@ -4886,7 +5066,7 @@
     "ceiling_set": 3099,
     "ceiling_refusal_status": 402,
     "rate_refusal_status": 429,
-    "retry_after": 58,
+    "retry_after": 14,
     "characters_before": 3096,
     "characters_after_first_two": 3096,
     "characters_after_refusal": 3096,
@@ -4901,11 +5081,11 @@
   "diagnostics": [
     {
       "process": "web",
-      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:39207\n- Network:       http://127.0.0.1:39207\n✓ Ready in 407ms\n✓ Running next.config.mjs took 39ms\n"
+      "tail": "▲ Next.js 16.4.3\n- Local:         http://127.0.0.1:41001\n- Network:       http://127.0.0.1:41001\n✓ Ready in 529ms\n✓ Running next.config.mjs took 53ms\n"
     },
     {
       "process": "control-plane",
-      "tail": "INFO:     127.0.0.1:52912 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:59440 - \"GET /v1/limits HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52912 - \"GET /v1/voices HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52912 - \"POST /v1/audio/speech HTTP/1.1\" 402 Payment Required\nINFO:     127.0.0.1:59418 - \"PUT /v1/limits HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:52912 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:59440 - \"GET /v1/limits HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [2940967]\n"
+      "tail": "INFO:     127.0.0.1:53676 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:53714 - \"GET /v1/limits HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:53676 - \"GET /v1/voices HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:53676 - \"POST /v1/audio/speech HTTP/1.1\" 402 Payment Required\nINFO:     127.0.0.1:53692 - \"PUT /v1/limits HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:53676 - \"GET /v1/usage HTTP/1.1\" 200 OK\nINFO:     127.0.0.1:53714 - \"GET /v1/limits HTTP/1.1\" 200 OK\nINFO:     Shutting down\nINFO:     Waiting for application shutdown.\nINFO:     Application shutdown complete.\nINFO:     Finished server process [3029732]\n"
     },
     {
       "process": "engine",

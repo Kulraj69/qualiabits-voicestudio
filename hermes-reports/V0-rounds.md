@@ -2283,3 +2283,82 @@ Owner gates are unchanged and none of them is in this lane: M1's approved GPU
 runtime and listening check, ONE product differentiator, a deployment and object-store
 decision, and the official criteria file. No deployment, publication, message,
 submission, provider call, terms acceptance, spend or pricing in this slot.
+
+## Rotation slot 99 — V0-build — 2026-11-07 — M4 slice A resumed: the pair re-taken, and a bound of the harness's own
+
+ROTATION. `lane-rotation.txt` ends with a hackathon record (slot 98), behind it a
+V0-build record (slot 97) and a hackathon one (slot 96). A hackathon stands at
+position 2 of `[V0-build, hackathon, V0-build, V0-growth]`, so this tick is position 3
+and the lane is **V0-build**. Slot 97 had committed M4 slice A's plan and stopped
+before taking a single run; this slot resumed that slice rather than opening a new
+one, which is the rule.
+
+STATE AT THE START, found by reading rather than by assuming. `tests/hosted` was
+274 passed, 1 failed: the repository's own provenance guard
+(`test_m3_acceptance_matrix.py::test_the_code_the_cited_run_exercised_has_not_changed_since`)
+because slice A's fixes edited `hosted/web/app` and `hosted/web/components` after the
+pair the M3 page cited. A fresh pair was owed, and a real-engine run left in
+`hosted/web/e2e/.evidence/` at `dea9141b0` (202 passed, 1 failed, taken 08:46 IST by
+the cut-off run) said exactly what was wrong.
+
+FINDING 1, the run's own: `every control on /voices is reachable by Tab` failed
+**120/150**. The real engine renders 54 voices on `/voices`; the Tab walk in
+`hosted/web/e2e/dashboard.mjs` stopped after `Math.min(120, controls.length + 2)`
+presses, so the check named five controls it had never tried. Not a page defect — a
+bound of the harness's own reading like one.
+
+FINDING 2, from a cheap+ pass on the finished page: it claimed the axe pass covered
+the three viewports **"in both themes"** while the run's own records were 27 dark
+against 9 light — the light theme ran at desktop width only. That is an honesty flaw
+and it was fixed where it was wrong rather than by rewording: the light theme now
+runs all three widths, so every theme/viewport/page combination is covered (54
+passes) and the matrix guard asserts the set, not the total.
+
+### Round 1 — plan, fix, real tests
+
+The plan was slot 97's own, already in this file (resumed at step 2: take both paths
+at one revision over clean trees, re-point the M3 page, write `hosted/M4-ACCEPTANCE.md`
+and its matrix guard, the axe pin guard, the cold clone, two judge passes, push).
+
+Built in this round:
+
+1. `hosted/web/e2e/dashboard.mjs`: the Tab bound is the page's control count plus two
+   lookahead presses, with `MAX_TAB_PRESSES = 1000` for a pathological page recorded
+   in the run as `truncated` and failing the check when it is hit.
+2. `tests/hosted/test_axe_is_pinned.py`: the pin (exact version, dev dependency), the
+   lockfile's licence and integrity, the sha256 of the file the suite injects against
+   the hash the run recorded, the source assertions that the harness resolves it by
+   `require` and records its own hash, and the page naming the pin and the licence.
+3. `tests/hosted/test_m4_acceptance_matrix.py`: the M4 acceptance table read against
+   the repository and the cited run, plus this slice's own two claims as numbers —
+   every keyboard row with `reached == controls` and `truncated` false, the control
+   total, the axe violation count, the rule-set floor, the coverage set and 54 passes.
+4. A new test in `hosted/web/test/harness.test.mjs` that fails if the fixed 120-press
+   cap comes back (119 web unit checks, from 118).
+5. `hosted/M4-ACCEPTANCE.md`: the slice's table, the four defects axe found with the
+   ratios measured before the fixes, the harness finding, and what is not here.
+
+Real tests, round 1: both browser paths at ONE revision `1eae8d6f6` over clean trees,
+archives staged outside the repository — stub **198/198** and real **204/204**, each
+`worktree_dirty` false (`hermes-reports/M4-slot99-web-e2e-stub-r1/result.json`,
+`hermes-reports/M4-slot99-web-e2e-r1/result.json`), with `/voices` at **150 of
+150**. The run before the fix is committed as the defect record
+(`hermes-reports/M4-slot99-web-e2e-before-real/result.json`, `dea9141b0`, 202 passed
+1 failed). `tests/hosted` **288 passed**; web unit **119 pass / 0 fail**; the
+pinned-bytes guard **5 passed**; a cold clone of `da7de9007` with no `.venv`, no
+`node_modules` and no model ran the README's five guard files twice: **41 passed,
+0 skipped** both times. Seven mutations were run against the new guards and every one
+of them bit (page says 282 controls; a check name the run lacks; a tampered run
+verdict; the 120-press cap restored; a ranged axe pin; the licence dropped from the
+page; `axe.min.js` swapped for other bytes).
+
+Judge pass 1 (cheap+): 2 / 4 / 4 / 5 / 3 / 2 / 2 = 22/35, FAIL, honesty 2. Its one
+real flaw was the coverage sentence FINDING 2 describes; the rest are the milestone's
+owner gates (originality, the whole-product criteria fit, a deployment), the
+repository's documented cold-clone limits, and the screen-reader wording, all fixed
+where they could be (round 2).
+
+### Round 2 — the re-take, and the page that matches it
+
+Both paths re-taken at ONE revision `ebc611800` over clean trees after the light
+theme gained the other two viewports.
