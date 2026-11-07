@@ -2362,3 +2362,37 @@ where they could be (round 2).
 
 Both paths re-taken at ONE revision `ebc611800` over clean trees after the light
 theme gained the other two viewports.
+
+## Rotation slot 100 — V0-build — 2026-11-07 — M4 slice A: the pair taken over clean trees, and the pages that follow it
+
+ROTATION. `lane-rotation.txt` ends with a hackathon record (slot 99), so this tick of
+`[V0-build, hackathon, V0-build, V0-growth]` is V0-build. Slot 99 had been cut off in
+the middle of round 2: it had fixed FINDING 2 (the light theme now runs all three
+viewports) and re-taken the *stub* path at `ebc611800`, but that re-take was still
+uncommitted, the *real* path was still the older `1eae8d6f6` run, and no judge pass had
+been taken on the corrected bundle. That is where this slot resumes, rather than
+opening a new slice.
+
+STATE FOUND BY READING, not assumed: `hosted/web/e2e/.evidence/result.json` held a
+real-engine run at `ebc611800` with 204/204 checks, but its own `revision` block says
+`worktree_dirty: true` (the previous stub archive had been copied into the repository
+before it started), so it is not evidence about any revision and is not usable as the
+cited run. The committed real run is `1eae8d6f6` and the committed stub was `ebc611800`
+for the same tree-modulo-the-harness-fix — the pair does not describe one revision.
+
+PLAN (self-loop step 1). Commit the pending stub re-take so the tree is clean, then
+re-take BOTH paths at the resulting revision over clean trees with the archives staged
+outside the repository (`/home/ubuntu/.hermes/cache/scratch/m4a-slot100/`), archive them
+as `M4-slot100-web-e2e-r1` and `M4-slot100-web-e2e-stub-r1`, re-point every citation
+(the M3 page, the M4 page, the web README, the judge-bundle builder) at the new pair,
+run `tests/hosted`, the web unit suite and the pinned-bytes guard, take a cold clone at
+the pushed revision, take a cheap+ judge pass on the artifacts, fix what it finds, and
+push to `work/m1-headless` with the remote SHA read back.
+
+Definition of done: the slice's own D1-D8 (unchanged, in the slot-89 section above), with
+D7 now meaning a pair whose two runs share ONE revision and each record
+`worktree_dirty: false`, and D8 meaning a judge pass on the corrected bundle.
+
+Judging criteria targeted: honest evidence chains (the M3/M4 pages follow the run), taste
+and human feel in the acceptance page, technical depth, reviewer path. Originality and
+whole-product criteria fit stay the owner's.
