@@ -2237,3 +2237,49 @@ fit against M4's own text, README do-X-see-Y, honesty. Originality and criteria 
 the whole V0 product stay the owner's and no pass is claimed for them.
 
 ### Round 1 — the plan, the dependency, and the defect record taken before the fix
+
+### Round 1 (resumed in rotation slot 97, 2026-11-07) — state, plan, and what is owed
+
+The slot-89 run was cut off right here, after committing the axe pass and the four
+fixes it produced (`228cdb117`, `95399cc81`) and before taking a single run at the
+fixed revision. Running the suites first named the state exactly, as this lane does:
+`tests/hosted` **274 passed, 1 failed** — the failure is
+`test_m3_acceptance_matrix.py::test_the_code_the_cited_run_exercised_has_not_changed_since`,
+which is the repository's own rule working: slice A edited `hosted/web/app` and
+`hosted/web/components`, so the pair cited on the M3 page (`M3-slot88-web-e2e-r1` /
+`-stub-r1`, taken at `7441acc7e`) no longer describes this tree and a fresh pair is
+owed. The web unit suite is 118 pass / 0 fail. `head -c`: the archived pre-fix stub
+run (`hermes-reports/M4-slot89-web-e2e-stub-before/result.json`) records **172 passed,
+26 failed** over 198 checks, and it was untracked; it is committed here as the defect
+record this slice's own plan asked for.
+
+RESUMED PLAN for this slot (the slice's own definition of done stands, unchanged, in
+the section above; this is the order the rest of it is paid in):
+
+1. Commit the pre-fix defect record and this plan, so the tree is clean before any
+   run, and so the pair that follows is taken over a clean tree (`worktree_dirty`
+   false) at ONE revision.
+2. Take both browser paths at that revision, at the same commit, over clean trees,
+   with the archives staged outside the repository and copied in afterwards: the
+   stub path (~2 min) and the real-engine path (~30 min, the CPU Kokoro model and
+   the pinned Whisper small are already on this box at `/workspace/m1-models`).
+3. Re-point the M3 page's citation at the new pair and correct every number a guard
+   reads back out of it, so the failing guard passes because the page follows the
+   run, not because the guard was weakened.
+4. Write `hosted/M4-ACCEPTANCE.md` (slice A rows: axe pinned and licensed, axe over
+   every page at every viewport, the contrast arithmetic, the per-control keyboard
+   walk, the violations found and what each fix was) and
+   `tests/hosted/test_m4_acceptance_matrix.py` to read it back, with every count the
+   page states coming out of the run's own `result.json`.
+5. Add the axe pin/licence guard if the tests do not already carry one.
+6. Cold-clone check at the pushed revision, the full `tests/hosted` suite and the web
+   unit suite green, the pinned-bytes guard green.
+7. Two cheap+ judge passes on the real artifacts, a fix after each, and no honesty
+   flaw in the last.
+8. Push to `Kulraj69/qualiabits-voicestudio` `work/m1-headless`, remote SHA read back
+   equal, and record the push in the log.
+
+Owner gates are unchanged and none of them is in this lane: M1's approved GPU
+runtime and listening check, ONE product differentiator, a deployment and object-store
+decision, and the official criteria file. No deployment, publication, message,
+submission, provider call, terms acceptance, spend or pricing in this slot.
