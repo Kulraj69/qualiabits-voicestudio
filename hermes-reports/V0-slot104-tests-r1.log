@@ -8,4 +8,4 @@ tests/hosted/conftest.py:29
     from starlette.testclient import TestClient  # noqa: E402
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-288 passed, 1 warning in 109.23s (0:01:49)
+288 passed, 1 warning in 114.18s (0:01:54)
