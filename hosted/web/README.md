@@ -72,29 +72,34 @@ puts those in `.venv`. With an interpreter like that, from a bare clone:
 git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git qb && cd qb
 <python> -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_m4_acceptance_matrix.py \
     tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py \
-    tests/hosted/test_readme_measured_is_generated.py -q
-# 41 passed — no venv in that clone, no model, no browser. Transcript:
-# hermes-reports/V0-slot106-coldclone-r1.log, taken from a clone of the pushed
-# revision a2a0b2a15, whose first lines are the clone, the revision, the
+    tests/hosted/test_readme_measured_is_generated.py tests/hosted/test_plane_failure_pages.py -q
+# 47 passed — no venv in that clone, no model, no browser. Transcript:
+# hermes-reports/V0-slot106-coldclone-r1.log, taken in a clone of the pushed
+# revision 7c8346f48, whose first lines are the clone, the revision, the
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
-# and what the clone does not have. That transcript records both
-# attempts, both the same: 41 passed, 0 skipped, because this box had room for
-# the 112 MB asset the two staging guards use and the model directory to build it
-# from. Those two print `s` with their reason instead, and the run ends with fewer
-# than 41 passed, on a box that cannot stage that asset: the pinned-bytes one when
-# /workspace/m1-models/kokoro-int8-multi-lang-v1_0 is not there to build it from,
-# and both when the disk has no room for the 112 MB it writes. That case was hit
-# twice while this slot's own clone filled the disk, and both runs are recorded in
-# the transcript's own header — 39 passed, 2 skipped and 40 passed, 1 skipped —
-# rather than left unclaimed; read the skip reasons off the run.
+# and what the clone does not have. That transcript records three attempts: the
+# first was taken before the transcript existed in the repository, so the one test
+# that reads it failed by construction and that attempt is kept rather than
+# deleted; the clone was then fast-forwarded to the commit that added it and the
+# same command run twice more, both the same: 47 passed, 0 skipped, because this
+# box had room for the 112 MB asset the two staging guards use and the model
+# directory to build it from. On a box that cannot stage that asset the run ends
+# with fewer: those two guards print `s` with their reason instead — the
+# pinned-bytes one when /workspace/m1-models/kokoro-int8-multi-lang-v1_0 is not
+# there to build it from, and both when the disk has no room for the 112 MB it
+# writes. How much smaller is not restated here: an earlier slot measured it while
+# its own clone filled the disk, and this slot did not, so the number would be
+# arithmetic rather than evidence. Read the skip reasons off the run.
 ```
 
-Those five files check that the two archived runs name one revision that is in this
+Those six files check that the two archived runs name one revision that is in this
 branch's history, that the counts and the Hindi word count in the prose are the
 runs' own, that every row of both acceptance tables still names code and tests that
-exist, and that the model pins are enforced on every path into the script. The
-41 above is the number the committed transcript's own last line reports, and a guard
-reads it back out of that file rather than trusting this sentence: on a machine that
+exist, that every page which reads the plane while it renders shows the plane's
+notice rather than its empty state when the read fails, and that the model pins are
+enforced on every path into the script. The 47 above is the number the committed
+transcript's own last line reports, and a guard reads it back out of that file rather
+than trusting this sentence: on a machine that
 cannot stage the pinned asset — no `/workspace/m1-models` directory to build it from,
 or no room for the 112 MB it writes — the tests that stage it ask to be skipped, with
 their reason, and that number is smaller. Rerun the command on such a box and the

@@ -71,6 +71,7 @@ WORD_NUMBERS = {
     "two-hundred-seven": 207,
     "two-hundred-thirteen": 213,
     "one-hundred-thirty-two": 132,
+    "forty-seven": 47,
     "one-hundred-nineteen": 119,
 }
 

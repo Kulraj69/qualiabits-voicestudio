@@ -1,0 +1,68 @@
+# cold clone for rotation slot 106, 2026-11-08
+# clone:
+#   git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voicestudio.git /tmp/qb-slot106-clone
+# revision: 7c8346f487d5e6848c88f084b8226015f922e8d1
+#
+#     The same revision the two browser runs beside this file were taken at
+#     (M4-slot106-web-e2e-r1 and -stub-r1 both record a2a0b2a15, clean tree; this
+#     clone is of the later commit that made those runs and this page cite each
+#     other, and no commit after a2a0b2a15 touches hosted/web/app, components, lib,
+#     e2e, control_plane, worker or scripts -- that is what the M3 and M4 matrix
+#     guards read).
+# interpreter borrowed: /workspace/qualiabits-voicestudio/.venv/bin/python
+# what this clone does not have:
+#   no .venv
+#   no hosted/web/node_modules
+#   no model of its own; /workspace/m1-models is on the box, which is what the two
+#   staging guards use to build the 112 MB asset they hash-check
+#
+# The six files below are the five the dashboard README names plus this slot's own
+# guard for what a page shows when the plane refuses. ATTEMPT A was taken in this
+# clone before this transcript existed in the repository, so the one test that
+# reads this file failed by construction ('the page cites V0-slot106-coldclone-r1.log,
+# which is not in the tree'); it is kept here rather than deleted. The clone was
+# then fast-forwarded to the commit that added this file and the same command was
+# run twice more: ATTEMPTS B and C, clean, and those are the ones that agree.
+
+$ /workspace/qualiabits-voicestudio/.venv/bin/python -m pytest tests/hosted/test_m3_acceptance_matrix.py tests/hosted/test_m4_acceptance_matrix.py tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py tests/hosted/test_readme_measured_is_generated.py tests/hosted/test_plane_failure_pages.py -q
+--- ATTEMPT A
+.................F..............................                         [100%]
+=================================== FAILURES ===================================
+_______ test_the_cold_clone_count_in_the_readme_is_the_transcript_s_own ________
+
+    def test_the_cold_clone_count_in_the_readme_is_the_transcript_s_own():
+        """A number a reader is asked to reproduce, read back from the run behind it.
+    
+        The fast path ends with a count a stranger should see. A first cheap+ judge pass on
+        this slice found the page stating two different numbers for the same command — 32
+        passed here against 31 passed with a skip elsewhere — and the second was never
+        measured anywhere in this repository; it came from a run that did not happen. The
+        sentence now states the transcript's own number and says plainly that the skip case
+        has no transcript. This guard is what keeps that true: it finds the log the page
+        cites, reads the count out of the log's own summary lines, and fails if the page
+        says anything else — including if the log ever grows a skip, because then "0
+        skipped" would be the wrong sentence on the page.
+        """
+        page = readme()
+        cited = re.findall(r"hermes-reports/(V0-slot\w+-coldclone-r1\.log)", page)
+        assert len(set(cited)) == 1, (
+            "the fast path should cite exactly one cold-clone transcript; this page cites "
+            f"{sorted(set(cited)) or 'none'}"
+        )
+        log_path = REPO_ROOT / "hermes-reports" / cited[0]
+>       assert log_path.is_file(), f"the page cites {log_path.name}, which is not in the tree"
+E       AssertionError: the page cites V0-slot106-coldclone-r1.log, which is not in the tree
+E       assert False
+E        +  where False = is_file()
+E        +    where is_file = PosixPath('/tmp/qb-slot106-clone/hermes-reports/V0-slot106-coldclone-r1.log').is_file
+
+tests/hosted/test_web_pages_claims.py:148: AssertionError
+=============================== warnings summary ===============================
+tests/hosted/conftest.py:29
+  /tmp/qb-slot106-clone/tests/hosted/conftest.py:29: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient  # noqa: E402
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/hosted/test_web_pages_claims.py::test_the_cold_clone_count_in_the_readme_is_the_transcript_s_own
+1 failed, 47 passed, 1 warning in 61.43s (0:01:01)
