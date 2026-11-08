@@ -108,6 +108,11 @@ which is exactly what the two runs above are for.
 
 ## What is not here, and is not stubbed
 
+- **No screen reader was driven.** The axe pass reads the accessibility tree a screen
+  reader consumes and the keyboard walk drives Tab, Enter and Escape for real; neither
+  is a session with NVDA, VoiceOver or TalkBack, and this page does not claim one. Two
+  cheap+ passes were right that a slice about what a screen reader gets should say that
+  in the place a reader looks for the boundaries rather than only in the harness.
 - **No human has listened to anything.** Machine checks, metering and header bytes
   are what the runs prove; the listening verdict is the owner's and is unchanged
   from M1.

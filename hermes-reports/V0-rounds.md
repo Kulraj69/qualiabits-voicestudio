@@ -2452,3 +2452,110 @@ with D7 read as a pair whose two runs share ONE revision and each record
 Judging criteria targeted: honest evidence chains (the pages follow the run), taste
 and human feel in the acceptance page, technical depth, reviewer path. Originality
 and whole-product criteria fit stay the owner's, and no pass is claimed for them.
+
+## Rotation slot 104 — V0-build — 2026-11-08 — M4 slice A: one revision for the browser pair and the clone
+
+ROTATION. `lane-rotation.txt` ends at slot 103 (V0-growth), so the position that
+follows it in `[V0-build, hackathon, V0-build, V0-growth]` is **V0-build**. Slot 100
+committed this slice's plan and stopped before the runs it describes; this slot resumed
+that plan rather than opening a new slice.
+
+STATE THE SUITES FOUND, not the log. `tests/hosted` was **284 passed, 4 failed**, all
+four one class: the page's browser pair was `M4-slot99-web-e2e-r1` at `1eae8d6f6` and its
+stub at `ebc611800` (two revisions, so the pair describes no state of the code), the cited
+run predated slice A's edits to `hosted/web/app` and `hosted/web/components`, and the
+cited run held 36 axe passes where the page claimed a coverage the light-theme fix widened.
+A fourth defect no guard read: `hosted/M4-ACCEPTANCE.md` still said "no violation in any of
+its **36 passes** — nine pages at desktop width in the light one", the pre-fix coverage.
+
+### ROUND 1 — the pair re-taken at one revision
+
+Plan logged first, committed at `21d7de111`. Both browser paths taken at that revision over
+clean trees with the archives staged outside the repository: stub **198/198** in about two
+minutes, real engine **204/204** in about thirty on the pinned Kokoro int8 speech model and
+the pinned faster-whisper small transcription model at `/workspace/m1-models`. Archived as
+`M4-slot104-web-e2e-r1` and `-stub-r1`, every citation re-pointed, and the stale coverage
+sentence replaced by the run's own: **54 axe passes** (nine pages x three viewports x two
+themes), thinnest pass 22 rules, **283 controls** walked.
+
+FINDING 1, and it was not in the diff: the transcripts were never committed. A real
+`git clone` of the branch contained not one `V0-slot*` transcript — `hermes-reports/` has
+`*.log` in `.gitignore` and every earlier slot added its logs without `-f`. The dashboard
+README calls those transcripts "committed beside the two run files" and the cold-clone
+paragraph quotes one of them, so from a real clone the README's own five-file command
+returned **35 passed, 5 failed, 1 skipped**, including
+`test_the_cold_clone_count_in_the_readme_is_the_transcript_s_own` — the guard could not
+find the transcript the page cites. Fixed as a class: this slot force-adds every
+transcript its pages cite, and states the count a clone really prints.
+
+FINDING 2, from the same command: the clone's count is not fixed. With less than the
+400000 KB the 112 MB staging asset needs, two guards skip and the run ends **39 passed,
+2 skipped** or **40 passed, 1 skipped** — both measured here while this slot's own clone
+and pytest's temp directory filled the disk. The README said that case had no transcript
+and left the count unclaimed; it now says what was measured, and the transcript's header
+records both runs.
+
+Judge pass 1 (cheap+) on the real bundle: **22/35** — 2 / 3 / 3 / 5 / 3 / 4 / **2**, FAIL.
+Its honesty finding was real and is why this slot did not stop at round 1: the two browser
+runs named `21d7de111` while the cold-clone transcript named `5c9542217`, so D7's "a cold
+clone at the pushed revision" was not met by one revision.
+
+### ROUND 2 — one revision for all three artifacts
+
+Both browser paths were taken again at `45af954bb` — the revision the cold clone is taken
+at — and the clone was re-taken there, so the pair and the clone are evidence about one
+state of the code. Archived as `M4-slot104-web-e2e-r2` and `-stub-r2` (204 and 198 checks,
+each `worktree_dirty` false, `/voices` 150 of 150). The M3 page's shared-word sentence
+followed the new run rather than being left behind: the r2 run heard यह as *यहा* and वाक्य
+as *वाग के*, so the page says that again and the r1 run's *यह, एक and है* joins the
+history list in front of `M4-slot99-web-e2e-r1`.
+
+Judge pass 2: **25/35** — 2 / 3 / 4 / 5 / 3 / 4 / **4**, FAIL, no honesty flaw. Its one
+fixable finding: D2 promises a per-violation record (rule id, impact, node count, first
+target) and a bundle of two zero-violation runs cannot show the shape of one.
+
+### ROUND 3 — the schema D2 promises, made checkable
+
+`tests/hosted/test_m4_acceptance_matrix.py` gained
+`test_the_violation_record_the_page_describes_is_in_the_defect_record`: it reads the run
+taken before the fixes (`hermes-reports/M4-slot89-web-e2e-stub-before/result.json`, the
+only artifact here that holds violations — 64 of them), asserts every one carries the four
+fields D2 promises, and asserts the four rule ids the page names are the ids actually
+recorded. Proven to bite: with `link-in-text-block` renamed out of the page the guard fails
+("the defect record holds link-in-text-block and the page never names it"), and passes
+again when it is restored. The page now names that file and those 64 records, and the judge
+bundle prints the schema.
+
+Judge pass 3: **26/35** — 2 / 4 / 4 / 4 / 3 / 4 / **5**, FAIL, **no honesty flaw**. Every
+criterion except originality (2) and criteria fit (3) is at or above 4.
+
+### ROUND 4 — a boundary stated where a reader looks for it
+
+The last fixable thing the last pass named: the slice is about what a screen reader gets,
+and no screen reader was driven. The M4 page's "what is not here" section now says that
+first, in plain words, rather than leaving it to a harness comment; axe reads the
+accessibility tree and the keyboard walk drives Tab, Enter and Escape for real, and neither
+is a session with NVDA, VoiceOver or TalkBack.
+
+### Tests at the final revision
+
+`tests/hosted` **289 passed** (`hermes-reports/V0-slot104-tests-r1.log`); the web unit
+suite **119 pass / 0 fail**; the pinned-bytes guard **5 passed**; a clone of the pushed
+revision, with no `.venv`, no `node_modules` and no model, runs the README's five guard
+files **41 passed** twice (`V0-slot104-coldclone-r1.log`); the two browser paths re-taken
+at ONE revision over clean trees, 204 and 198 checks, every check `ok`.
+
+### Done gate, and why this is not done
+
+The slice's own D1-D6, D8 and D9 are met with evidence above, and the last judge pass has
+no honesty flaw and every row at 4 or above except two. D7's "one revision" now holds for
+the pair and the clone. **No pass is claimed and the milestone is not done**: originality 2
+is Kulraj's ONE product differentiator, criteria fit 3 is the whole M4 milestone (the
+bugs M1-M3 found beyond this class, and a deployment), no screen reader session can be run
+on this headless box, and the reviewer path stays expensive because a clone cannot carry
+node_modules or the model — that is the owner's bundling decision (#4).
+
+Owner gates unchanged and none of them is in this lane: M1's approved GPU runtime and
+listening check, ONE product differentiator, a deployment and object-store decision, the
+official criteria file, and the bundling decision. No deployment, publication, message,
+submission, provider call, terms acceptance, spend or pricing in this slot.

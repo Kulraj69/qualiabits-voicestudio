@@ -1,0 +1,43 @@
+Decision: FAIL
+
+Scores
+
+1. Originality: 2/5  
+Accessibility auditing is worthwhile, but it is a standard axe-core plus keyboard-regression pass. No memorable product-level differentiator is demonstrated, and D8 explicitly says originality against the whole V0 product should remain below 4.
+
+2. Taste: 3/5  
+The acceptance page is unusually evidence-oriented and specific, but it is long, defensive, and dense. The artifact presents a strong test report rather than a tightly designed hackathon story.
+
+3. Human feel: 3/5  
+The writing is specific and candid in places, especially around unbuilt cloning/design and unreviewed audio. However, the acceptance document has bullet-wall density, repeated qualification, and frequent em-dash-heavy prose that reads like an audit generated for reviewers rather than one person explaining the work naturally.
+
+4. Technical depth: 5/5  
+The implementation goes beyond a superficial axe invocation: exact dependency and byte hashing, WCAG A/AA coverage across 54 page/theme/viewport combinations, per-control keyboard traversal, contrast computation, real-engine E2E, regression coverage, and acceptance-matrix guards are all evidenced. The cited real run records 204/204 checks passing at `2026-11-07T22:18:07Z`.
+
+5. Criteria fit: 3/5  
+It addresses one narrow M4 slice convincingly, but the M4 milestone requires fixing bugs found across M1–M3 and adding backend plus Playwright E2E tests for every page. The supplied evidence establishes the accessibility slice, not comprehensive M1–M3 bug closure. Voice cloning and voice design remain unbuilt, and deployment is absent as acknowledged in `hosted/M4-ACCEPTANCE.md`.
+
+6. Reviewer path: 4/5  
+The acceptance matrix, cited JSON, test logs, exact revision, and cold-clone transcript make review substantially easier than a typical submission. It falls short of 5 because the cold clone did not run the browser suite: it had no `node_modules`, no model, and only the Python guard subset was executed.
+
+7. Honesty: 2/5 — fatal honesty issue  
+The evidence does not support the D7 claim that the cold clone was green at the same pushed revision as the browser paths. The real and stub browser runs cite commit `21d7de111` (`M4-slot104-web-e2e-r1/result.json` and the stub result), while `V0-slot104-coldclone-r1.log` says the cold clone was at `5c9542217`. The submitted commit list also shows later commits `7a9249156` and `45af954bb`. This is a provenance mismatch, not merely missing polish.
+
+Five most damaging flaws
+
+1. Cold-clone revision mismatch — fatal  
+   `M4-slot104-web-e2e-r1/result.json`: tested commit `21d7de111`; `V0-slot104-coldclone-r1.log`: clone revision `5c954221769e...`; commit list later reaches `45af954bb`. D7 requires the cold-clone evidence at the pushed revision, but these artifacts are not at one revision.
+
+2. Cold clone did not exercise the claimed browser path  
+   `V0-slot104-coldclone-r1.log`, attempts 1–2: only `41 passed` Python tests; the log explicitly says no `hosted/web/node_modules` and no model. This cannot substantiate a clean-clone Playwright/real-engine verification claim.
+
+3. The slice does not establish the full M4 milestone  
+   `hosted/M4-ACCEPTANCE.md`, “What is not here” section: voice cloning and voice design remain unbuilt, and the evidence covers accessibility rather than all bugs found in M1–M3. The milestone’s broader backend and every-page E2E obligations are only partially evidenced here.
+
+4. Accessibility is inferred, not tested with an actual screen reader  
+   `hosted/web/e2e/dashboard.mjs:793-825, 950-1000`: the suite runs axe and simulates Tab traversal, but no NVDA, VoiceOver, TalkBack, or other assistive-technology transcript is supplied. Axe and keyboard reachability are strong proxies, not proof of the complete screen-reader experience.
+
+5. The real-engine transcript evidence exposes product-quality errors  
+   `M4-slot104-web-e2e-r1/result.json`, around the transcription checks at `2026-11-07T22:18:07Z`: spoken Hindi is recorded as `यह एक हिन्दी वाक्य है।`, while the engine returns `यह एक हिंदी वाग के है`. The run passes because some words overlap, but this is weak evidence for a polished transcription/dubbing product and should not be presented as fully accurate behavior.
+
+What would make this win: retake both browser paths and the complete cold-clone verification from one final pushed commit, then present a shorter, human-readable demo showing a real assistive-technology workflow and evidence that the broader M4 bug-fix/test milestone—not only this accessibility slice—is complete.

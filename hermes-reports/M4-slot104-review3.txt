@@ -1,0 +1,51 @@
+Verdict: FAIL
+
+Scores
+
+1. Originality: 2/5  
+Accessibility remediation with axe, contrast checks, and keyboard traversal is valuable but not a distinctive product idea. The artifact itself admits this is one defect class in a larger product plan (`hosted/M4-ACCEPTANCE.md:10-20`).
+
+2. Taste: 4/5  
+The acceptance page is unusually specific and evidence-oriented. It has some overlong defensive prose and repeated explanation, but the scope, naming, and evidence table are coherent.
+
+3. Human feel: 4/5  
+The writing is specific to this repository and avoids the banned generic language. It does use frequent em dashes and lengthy explanatory blocks, but I found no material AI-generic copy or invented narrative.
+
+4. Technical depth: 4/5  
+The real-engine run, 54 axe passes, 283-control keyboard walk, pinned injected bytes, defect record, and regression guards demonstrate real work. The supplied logs report 288 Python tests, 119 web unit tests, 5 pin tests, and 204 browser checks passing.
+
+5. Criteria fit: 3/5  
+This is a credible slice of M4, but not evidence that the full milestone is complete. No evidence is supplied here for fixing the broader M1-M3 bug set, and the acceptance page explicitly says voice cloning and voice design remain unbuilt (`hosted/M4-ACCEPTANCE.md:73-76`, `109-119`). The page correctly says there is no official hackathon rules file, so there is no mapping to external judging criteria.
+
+6. Reviewer path: 4/5  
+The acceptance page gives exact paths, run IDs, revisions, commands/logs, and a cold-clone record. A fresh clone still cannot run the browser suite without dependencies and models, which the page acknowledges; the few-minute reproduction path is therefore not fully turnkey.
+
+7. Honesty: 5/5  
+No honesty flaw found. The artifact clearly labels the stub run, real CPU engine, unbuilt cloning/design pages, absent deployment, absent GPU, absent S3, and lack of human audio review. Claims are tied to committed run files rather than presented as unsupported marketing.
+
+Five most damaging flaws
+
+1. The core work is not original enough for the rubric.
+   - `hosted/M4-ACCEPTANCE.md:10-20`
+   - This is a conventional accessibility-quality pass, not a memorable product differentiator. It improves the product but does not make the hackathon entry stand out.
+
+2. The milestone is only partially delivered.
+   - `hosted/M4-ACCEPTANCE.md:7-8`
+   - `hosted/M4-ACCEPTANCE.md:73-76`
+   - M4 asks to fix bugs found across M1-M3 and add backend plus Playwright E2E tests for every page. This slice proves one accessibility class, while voice cloning and voice design remain unbuilt and no evidence shows the broader M1-M3 bug inventory is closed.
+
+3. There is no actual screen-reader execution evidence.
+   - `hosted/M4-ACCEPTANCE.md:10-20`
+   - `hosted/web/e2e/dashboard.mjs:793-813`
+   - Axe inspects markup and the keyboard harness checks focus traversal, but neither demonstrates behavior in NVDA, VoiceOver, TalkBack, or another screen reader. The title claim “what a screen reader and a keyboard get” is therefore stronger than the supplied execution evidence for the screen-reader half.
+
+4. The fresh-clone reviewer path is not self-contained.
+   - `hermes-reports/V0-slot104-coldclone-r1.log`, lines beginning `# what this clone does not have`
+   - The cold clone has no `.venv`, `node_modules`, or model and does not run the browser paths. The acceptance page acknowledges this at `hosted/M4-ACCEPTANCE.md:89-91`; the reviewer must rely on committed historical run artifacts rather than reproduce the central result quickly from the clone.
+
+5. The current checkout cannot independently rerun the claimed Python verification in this environment.
+   - Current verification attempt: `pytest -q tests/hosted/test_m4_acceptance_matrix.py tests/hosted/test_axe_is_pinned.py tests/hosted/test_web_pages_claims.py`
+   - Result: `/usr/bin/bash: pytest: command not found`
+   - The committed `V0-slot104-tests-r1.log` and related logs are valid supplied evidence, but the present artifact environment does not independently reproduce them without setup. This is a reviewer friction and reproducibility weakness, not an honesty violation.
+
+What would make it win: turn the accessibility harness into a distinctive, reproducible product-quality story by completing the remaining M4 bug/test scope, adding real screen-reader-session evidence, and making a fresh clone run the decisive checks without hidden model or environment dependencies.

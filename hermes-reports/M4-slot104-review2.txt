@@ -1,0 +1,46 @@
+Verdict: FAIL
+
+1. Originality: 2/5  
+Accessibility regression testing is valuable, but not a memorable product differentiator. The owner explicitly says this lane may not invent the V0 differentiator.
+
+2. Taste: 3/5  
+The code comments and acceptance page show deliberate choices, but the acceptance document is extremely long and defensive. It reads more like an audit dossier than a focused reviewer experience.
+
+3. Human feel: 4/5  
+The writing is specific to this repository and includes concrete failure history. It avoids most generic AI language, though the repeated explanatory asides and dense bullet structure reduce naturalness.
+
+4. Technical depth: 5/5  
+Strong evidence: axe 4.14.0 is pinned and hashed; 54 WCAG A/AA passes ran; all 283 controls were reached; the prior 120/150 harness failure is reproduced; backend, unit, pin, browser, and cold-clone transcripts are supplied.
+
+5. Criteria fit: 3/5  
+The slice provides evidence for one M4 accessibility/testing defect, backend tests, and Playwright coverage of nine existing pages. It does not show that all bugs found in M1–M3 were fixed, and it provides no evidence for the remaining V0 deployment, hosted production, cloning, voice design, agents, phone calls, or public signup requirements. Those are not required to complete slice A, but they prevent a 4+ score against the stated product milestone.
+
+6. Reviewer path: 4/5  
+The acceptance matrix, cited run files, exact revision, cold-clone transcript, and named test commands give a stranger a credible verification path. The path is still expensive: the real browser run depends on local models, a configured environment, and substantial CPU time, while the cold clone explicitly cannot run the browser suite.
+
+7. Honesty: 4/5  
+No fatal honesty flaw is established by the supplied artifacts. The page clearly labels the stub path, real engine, CPU-only status, lack of deployment, absent cloning/design, and lack of human audio review. One limitation remains: the supplied run summary does not expose the claimed per-violation fields—rule ID, impact, node count, and first target—so D2 is asserted more strongly than it can be independently checked from the material shown here.
+
+Five most damaging flaws
+
+1. Product-level differentiation is absent  
+   Evidence: `hosted/M4-ACCEPTANCE.md`, “What is not here, and is not stubbed”; D8.  
+   This is a disciplined accessibility slice, not an original ElevenLabs competitor or voice-agent product.
+
+2. The M4 bug-fix scope is only partially evidenced  
+   Evidence: `hosted/M4-ACCEPTANCE.md`, opening milestone statement and Slice A description.  
+   The artifacts prove one accessibility defect class, but do not identify or close the full set of bugs found in M1–M3.
+
+3. The reviewer path is not truly fresh-clone runnable for the headline browser evidence  
+   Evidence: `hermes-reports/M4-slot104-coldclone-r1.log`, stating no `.venv`, `node_modules`, or model and that the browser paths cannot run.  
+   The cold clone validates guard tests, not the claimed real-engine accessibility suite.
+
+4. D2’s detailed violation-record claim is not independently inspectable from the supplied evidence  
+   Evidence: `hosted/M4-ACCEPTANCE.md`, D2 and the cited `M4-slot104-web-e2e-r2/result.json` summary.  
+   The material confirms zero violations and coverage counts, but does not show the per-violation schema containing rule ID, impact, node count, and first target.
+
+5. The acceptance page is overbuilt for its job  
+   Evidence: `hosted/M4-ACCEPTANCE.md` in full, especially the long narrative before and after the matrix.  
+   Its specificity is good, but the volume makes the reviewer work harder and weakens the “one clear thing” taste criterion.
+
+What would make it win: ship a genuinely differentiated, publicly runnable V0 capability—such as the voice-agent/phone workflow—with a short fresh-clone reviewer path and independently inspectable evidence for every claimed metric.
