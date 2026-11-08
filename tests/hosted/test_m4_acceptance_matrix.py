@@ -238,3 +238,38 @@ def test_the_axe_claim_is_the_run_s_own_counts():
     text = page_text()
     for stated in ("axe-core", "4.14.0", "MPL-2.0"):
         assert stated in text, f"the page never names {stated}"
+
+#: The run taken before this slice's fixes. It is the only artifact here that holds
+#: axe violations at all — the cited runs hold none, which is the point of the slice
+#: — so it is where D2's claim that the suite records each violation with its rule
+#: id, impact, node count and first target can be checked rather than taken on trust.
+DEFECT_RECORD = REPO_ROOT / "hermes-reports" / "M4-slot89-web-e2e-stub-before" / "result.json"
+
+
+def test_the_violation_record_the_page_describes_is_in_the_defect_record():
+    """D2 says what the suite writes down about a violation. Show the schema.
+
+    A cheap+ pass on this slice was right that the bundle proved the *absence* of
+    violations and nothing about their shape: a run with zero violations cannot
+    demonstrate that a violation would have been recorded with its rule id, its
+    impact, its node count and its first target. The defect record can, because it
+    was taken before the fixes and holds 64 of them, so the four rule ids the page
+    names and the four fields it promises are read out of that file here.
+    """
+    assert DEFECT_RECORD.is_file(), f"the defect record is gone: {DEFECT_RECORD}"
+    data = json.loads(DEFECT_RECORD.read_text())
+    recorded = [v for run in data["a11y"]["runs"] for v in (run.get("violations") or [])]
+    assert recorded, "the defect record holds no violations, so this page's claim is uncheckable"
+    for violation in recorded:
+        assert violation.get("id"), f"a recorded violation without a rule id: {violation}"
+        assert violation.get("impact"), f"a recorded violation without an impact: {violation}"
+        assert isinstance(violation.get("nodes"), int) and violation["nodes"] > 0, (
+            f"a recorded violation with no node count: {violation}"
+        )
+        assert violation.get("targets"), f"a recorded violation with no first target: {violation}"
+    text = page_text()
+    for rule_id in sorted({v["id"] for v in recorded}):
+        assert rule_id in text, (
+            f"the defect record holds {rule_id} and the page never names it, so a "
+            "reader cannot check the rule id this page claims was fixed"
+        )

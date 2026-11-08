@@ -34,7 +34,11 @@ committed as the defect record:
 `hermes-reports/M4-slot89-web-e2e-stub-before/result.json`, **172 passed, 26
 failed**, with four rule ids behind it: `color-contrast` (dark, all three widths),
 `label-content-name-mismatch`, `scrollable-region-focusable` (phone) and
-`link-in-text-block` (light).
+`link-in-text-block` (light). Every one of its 64 recorded violations carries the
+rule id, the impact, the number of nodes and the first target it hit — the four
+fields D2 below is about — and `tests/hosted/test_m4_acceptance_matrix.py` reads
+that schema and those four rule ids out of this file rather than trusting this
+sentence.
 
 **Four fixes, each where the tool said it was wrong**: dark `--fg-subtle`
 `#6f6b8c` → `#8a87a6` (labels, hints and table headers measured 3.95:1 on `--bg`,
@@ -73,14 +77,18 @@ nothing here claims the voice is good. That remains the owner's check.
 
 Every row names the code, the tests and a check in the browser run a reader can look
 at: the checks come from `hermes-reports/M4-slot104-web-e2e-r2/result.json`, taken
-with the real engine at `45af954bb` and a clean tree (the pair's stub path is
-`hermes-reports/M4-slot104-web-e2e-stub-r2/result.json`, taken at the same revision
-and the same revision the cold clone beside it is of). `tests/hosted/test_m4_acceptance_matrix.py`
+with the real engine at `45af954bb` over a clean tree, and the stub path beside it
+(`hermes-reports/M4-slot104-web-e2e-stub-r2/result.json`) was taken at the same
+revision — as was the cold clone recorded in
+`hermes-reports/V0-slot104-coldclone-r1.log`, so the browser pair and the clone are
+evidence about one state of the code. `tests/hosted/test_m4_acceptance_matrix.py`
 reads this table and fails if a path stops existing, a named check stops appearing
 in the run the page cites, or the code under the directories that run measured has
 changed since — so the table cannot quietly become a description of an earlier
 version of the code. `tests/hosted/test_axe_is_pinned.py` checks the pin, the
-licence and the injected bytes.
+licence and the injected bytes. The clone proves the guards and not the pages: a
+tree with no `.venv`, no `node_modules` and no model cannot run the browser suite,
+which is exactly what the two runs above are for.
 
 | The slice claims | Code | Tests | A check in the browser run |
 | --- | --- | --- | --- |

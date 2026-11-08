@@ -103,11 +103,44 @@ def newest(pattern: str) -> Path:
     return found[-1]
 
 
+def violation_schema(path: Path) -> str:
+    """Every violation the defect record holds, with the four fields D2 promises.
+
+    D2 says the suite writes down each violation's rule id, impact, node count and
+    first target. The cited runs hold none, so a bundle of them alone proves the
+    absence of violations and nothing about their shape; this prints the shape from
+    the run taken before the fixes, where 64 of them really were recorded.
+    """
+    if not path.exists():
+        raise SystemExit(f"missing defect record: {path}")
+    data = json.loads(path.read_text())
+    a11y = data.get("a11y") or {}
+    recorded = [v for run in (a11y.get("runs") or []) for v in (run.get("violations") or [])]
+    lines = [
+        f"{data.get('passed')} passed, {data.get('failed')} failed over "
+        f"{len(data.get('checks', []))} checks; {len(recorded)} violations recorded across "
+        f"{len(a11y.get('runs') or [])} axe passes",
+        "rule id | impact | nodes | first target",
+    ]
+    for violation in recorded:
+        first_target = (violation.get("targets") or [""])[0]
+        lines.append(
+            f"  {violation.get('id')} | {violation.get('impact')} | "
+            f"{violation.get('nodes')} | {first_target}"
+        )
+    return "\n".join(lines)
+
+
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
     real = REPORTS / f"{SLICE}-web-e2e-r2" / "result.json"
     stub = REPORTS / f"{SLICE}-web-e2e-stub-r2" / "result.json"
     before = REPORTS / "M4-slot99-web-e2e-before-real" / "result.json"
+    #: The run taken before the fixes. The cited runs hold no violations at all, so
+    #: this is the only artifact that can show the shape of one: a cheap+ pass was
+    #: right that a bundle with zero violations cannot demonstrate the per-violation
+    #: record D2 promises.
+    defect = REPORTS / "M4-slot89-web-e2e-stub-before" / "result.json"
     tests = newest("V0-slot104-tests-*.log")
     unit = REPORTS / "V0-slot104-web-unit-r1.log"
     pins = REPORTS / "V0-slot104-pins-r1.log"
@@ -175,6 +208,9 @@ def main() -> None:
         f"{before.parent.name}/result.json:\n",
         a11y_summary(before), "\n",
         "## The cited run's accessibility block, as numbers\n", a11y_summary(real), "\n",
+        "## The schema D2 promises, out of the run taken before the fixes (the only\n"
+        "artifact here that holds violations at all)\n",
+        f"{defect.parent.name}/result.json:\n", violation_schema(defect), "\n",
         "## The suites, from their own transcripts\n",
         f"### {tests.name}\n" + tests.read_text(encoding="utf-8", errors="replace")[-900:] + "\n",
         f"### {unit.name}\n" + unit.read_text(encoding="utf-8", errors="replace")[-500:] + "\n",
