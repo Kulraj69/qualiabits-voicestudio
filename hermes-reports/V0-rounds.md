@@ -2568,3 +2568,83 @@ fit rose to 4 and the screen-reader boundary is named as a flaw this page *state
 than one it hides. The rows under 4 are the owner's or structural, and the pass says so:
 originality is a product differentiator this lane may not invent, taste is an evidence
 archive by construction, and the reviewer path is the unbundled fork (owner decision #4).
+
+
+## Rotation slot 106 — V0-build — 2026-11-08 — M4 slice B: what a page shows when the plane refuses
+
+ROTATION. `lane-rotation.txt` ends at slot 105 (hackathon). Behind it: 104 V0-build, 103
+V0-growth, 102 V0-build, 105 hackathon — so 105 is position 2 of
+`[V0-build, hackathon, V0-build, V0-growth]` and this tick is **V0-build** (slot 106), the
+product lane. Branch `work/m1-headless` at `cacf8c514` (pushed, remote equal), tree clean.
+
+WHAT THIS SLICE IS, AND WHY IT IS M4'S. M4's brief is "Fix bugs found in M1-M3; add tests
+(backend + Playwright E2E for every page)". Slice A took one class a real tool finds —
+what an assistive-technology user gets. This slice takes a second class the width, theme
+and axe passes all walk past because every one of them drives a *healthy* plane: **what an
+authenticated page shows when the control plane answers with an error, or does not answer
+at all.** Read on the untouched tree, the eight pages that read the plane during the
+server render all do the same thing with a failed read — they fall back to the same value
+they use for a genuinely empty one:
+
+  * `/keys` — `initialKeys={status === 200 ? data?.api_keys ?? [] : []}`. A plane that
+    answers 500 renders "No keys yet. Create one above." A customer whose plane hiccuped
+    is told their keys are gone. The page never says the read failed.
+  * `/voices` — a failed read renders the heading "The engine did not answer; no voices to
+    offer." and, three lines under it, the body "The control plane reported no voices."
+    Two sentences about one failed read, and the second one is false.
+  * `/`, `/jobs`, `/projects`, `/dub`, `/speak`, `/usage` — same shape: the empty state, or
+    worse, real zeros. The home page's four meter tiles print `formatCount(0)` and
+    `formatSeconds(0)` for a usage read that failed, so the dashboard states "Requests 0 /
+    Characters 0 / Audio 0 / Failed 0" — invented numbers, which is the one thing this
+    repository refuses to do anywhere else.
+  * And a plane that is *unreachable* (`QUALI_CP_BASE_URL` pointing at a closed port)
+    makes `cpFetch` reject, the server component throws, and Next answers its own
+    "Application error: a server-side exception has occurred" page — the dashboard's
+    worst failure mode is a page with no product on it.
+
+Slice B's definition of done:
+
+  D1. One place decides the difference: `hosted/web/lib/planeRead.js` turns a `cpJson`
+      result or a transport error into `{ status, ok, failed, data, error }`, with unit
+      tests in the web suite (no browser, no server).
+  D2. Every page that reads the plane during its render — `/`, `/speak`, `/voices`,
+      `/transcribe`, `/dub`, `/jobs`, `/projects`, `/keys`, `/usage` — renders a visible
+      `notice--error` naming that the plane did not answer, and does not render the
+      empty-state sentence or an invented zero underneath it, for both failure modes
+      (an error status and a transport error). `/transcribe` reads no plane data and must
+      keep rendering its form: a failure elsewhere must not take the product down.
+  D3. The home page's meter is never invented: a failed `/v1/usage` read does not print
+      zeros in the four tiles.
+  D4. A guard makes the class hard to reintroduce: a test reads the browser run's own
+      result and fails if a page the run drove against a failing plane did not show the
+      notice, or showed its empty state anyway.
+  D5. The browser suite gains a real pass: the harness starts the same production build
+      against (a) a plane that answers 500 and (b) a port nothing listens on, loads every
+      page in a real Chromium in both modes, and records one check per page per mode in
+      the run's `result.json`.
+  D6. `hosted/M4-ACCEPTANCE.md` gains the slice's table rows and states the two boundaries
+      this slice does not cross (no retry/backoff design, no offline mode).
+  D7. Real tests, at one revision, all green: `tests/hosted`, the web unit suite, the
+      browser pair re-taken (stub + real engine) over clean trees with the cited runs
+      updated in `hosted/web/README.md` and the M3/M4 acceptance pages, and a cold clone
+      of the pushed revision.
+  D8. Self-loop: at least two cheap+ judge rounds on the real artifacts, a fix after each,
+      the last one with no honesty flaw. Not done until D1-D8 hold; the milestone's own
+      gate (originality, criteria fit, the owner's differentiator, deployment, GPU) is not
+      this lane's and is not claimed.
+
+Not in scope: no plane change, no deployment, no public URL, no provider call, no GPU, no
+model, no terms accepted, no spend, no message, no publication, no pricing.
+
+PLAN (before any edit): (1) baseline `tests/hosted` and the web unit suite on the untouched
+tree — 289 passed and the unit suite green, recorded; (2) build D1-D4; (3) extend
+`e2e/dashboard.mjs` with the failing-plane pass and its own stub, prove it fails against
+the unfixed pages and passes against the fixed ones; (4) run `tests/hosted`, the web unit
+suite, the stub browser run and the real-engine browser run, all at one revision over clean
+trees; (5) two or more cheap+ judge passes on the artifacts, fixing every flaw found;
+(6) cold clone at the pushed revision; (7) push and read the remote SHA back; (8) update
+the queue STATUS and SUMMARY-oct28.md.
+
+BASELINE, RUN BEFORE ANY EDIT: `tests/hosted` **289 passed** in 115.01 s on the untouched
+tree (`hermes-reports/V0-slot106-baseline-tests-r0.log`), web unit suite **119 pass / 0
+fail**, `git status --porcelain` empty.
