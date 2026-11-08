@@ -1,0 +1,38 @@
+Verdict: FAIL. The evidence is unusually honest and technically solid for an accessibility slice, but originality, taste, and reviewer path do not reach 4. The slice also does not establish the broader V0 product.
+
+Scores
+
+| Criterion | Score | Reason |
+|---|---:|---|
+| Originality | 2/5 | A pinned axe pass plus a complete keyboard walk is useful engineering, but not a memorable product idea or differentiator. |
+| Taste | 3/5 | The acceptance page is deliberate and specific, but it is extremely dense and evidence-heavy. The supplied artifacts do not show a polished, singular product experience. |
+| Human feel | 4/5 | The writing is unusually concrete and candid: it names the missing screen-reader session, undeployed state, unbuilt features, and CPU-only limitation. Some sections read like defensive audit prose rather than a human product story. |
+| Technical depth | 5/5 | Strong evidence: real engine run, 204/204 browser checks, 289 Python tests, 119 web-unit tests, exact axe hash, 54 axe passes, 283 keyboard controls, and a regression for the former 120-tab harness defect. |
+| Criteria fit | 4/5 | It directly addresses the first M4 slice: a real accessibility defect, backend coverage, and Playwright coverage across nine pages. There is no evidence here for the rest of M4’s full bug inventory, and no evidence for V0 deployment, agents, phone calls, or complete cloning/design flows. |
+| Reviewer path | 3/5 | The acceptance matrix is auditable, but the cold clone explicitly cannot run the browser suite without `node_modules`, `.venv`, and model assets. The supplied evidence does not establish a fresh-clone “do X → see Y” path for the full result. |
+| Honesty | 5/5 | Claims are generally tied to committed runs and tests. The page explicitly says no screen reader was driven, no human listened to audio, cloning/design are unbuilt, and nothing is deployed. No invented deployment, user, pricing, or performance claims appear. |
+
+Five most damaging flaws
+
+1. No actual screen-reader session  
+   `hosted/M4-ACCEPTANCE.md`, “What is not here, and is not stubbed”: “No screen reader was driven.” Axe and keyboard coverage are valuable proxies, but they do not prove NVDA, VoiceOver, or TalkBack output.
+
+2. The work is a narrow test slice, not a product differentiator  
+   `hosted/M4-ACCEPTANCE.md`, opening scope and D8 material: the work covers accessibility of nine existing dashboard pages. It does not demonstrate the V0 differentiator—voice agents, phone calls, or a live ElevenLabs competitor.
+
+3. Major product surfaces remain absent  
+   `hosted/M4-ACCEPTANCE.md`, “Voice cloning and voice design are still unbuilt”: those flows are explicitly not built or stubbed. This materially limits both product fit and originality.
+
+4. No deployable or hosted result  
+   `M4-slot104-web-e2e-r2/result.json`, generated `2026-11-07T23:24:20.648Z`: `"deployed": false`, `"public_url": null`, `"gpu": false`, and `"real_s3": false`. The artifact proves loopback functionality on one CPU machine, not the stated hosted SaaS goal.
+
+5. Full reproduction is not available from the cold clone  
+   `hermes-reports/V0-slot104-coldclone-r1.log`, `2026-11-08`: the clone has “no `.venv`,” “no hosted/web/node_modules,” and “no model download of its own”; it runs only the Python guard subset. That is honest, but it prevents a stranger from reproducing the central browser evidence in a few minutes from a fresh clone.
+
+Honesty note
+
+I do not find a fatal honesty flaw in the supplied claims: the missing screen-reader run and missing product/deployment work are plainly disclosed. The phrase that axe reads what “a screen reader actually consumes” should be treated as a proxy claim, not proof of actual screen-reader behavior, but the page separately and clearly disclaims having driven one.
+
+What would make it win
+
+Ship a focused, demonstrable accessibility experience with a reproducible one-command fresh-clone path, an actual NVDA/VoiceOver/TalkBack transcript, and one memorable user-facing accessibility innovation rather than only a stronger compliance harness.
