@@ -68,6 +68,9 @@ WORD_NUMBERS = {
     "one-hundred-sixty-five": 165,
     "one-hundred-ninety-eight": 198,
     "two-hundred-four": 204,
+    "two-hundred-seven": 207,
+    "two-hundred-thirteen": 213,
+    "one-hundred-thirty-two": 132,
     "one-hundred-nineteen": 119,
 }
 

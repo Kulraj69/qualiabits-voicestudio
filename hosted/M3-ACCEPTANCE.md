@@ -114,7 +114,7 @@ M3 names — Voice Clone with a consent checkbox and Voice Design — are
 in the place a reader would otherwise expect a link.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M4-slot104-web-e2e-r2/result.json`, taken
+at: the checks come from `hermes-reports/M4-slot106-web-e2e-r1/result.json`, taken
 with the real engine at the revision that file records. That pair carries the M4
 prefix because the slice that re-took it is M4's first one — it added the axe pass and
 the per-control keyboard walk to the same harness, over these same nine pages.
@@ -239,7 +239,7 @@ and what is not is exactly where a product page starts lying:
   used for, rather than leaving it to the reader: at 390px the usage page reported 11
   elements inside a scroll container and the jobs page 9, none of them outside it, and
   at 768px and 1440px no page needed the exception at all (the per-page `offender_count`
-  field of `hermes-reports/M4-slot104-web-e2e-r2/result.json`).
+  field of `hermes-reports/M4-slot106-web-e2e-r1/result.json`).
 - **The voice is machine-checked, never human-checked.** What the run proves about the
   audio is that bytes came back, what the header says about their length, and — with
   the real engine — that a second engine could hear words it had said. In the run this
@@ -247,7 +247,8 @@ and what is not is exactly where a product page starts lying:
   है — and a guard below reads that number back out of the run's own
   `transcript.shared_words` rather than trusting this sentence. The count moves
   between runs of the *same code*: the run before this one
-  (`hermes-reports/M4-slot104-web-e2e-r1`: यह, एक and है) came back with three, the one
+  (`hermes-reports/M4-slot104-web-e2e-r2`: एक, हिन्दी and है) came back with three, the one
+  before that (`hermes-reports/M4-slot104-web-e2e-r1`: यह, एक and है) with three, the one
   before that (`hermes-reports/M4-slot99-web-e2e-r1`: एक, हिन्दी and है) with three, the
   one before that (`hermes-reports/M3-slot88-web-e2e-r1`: एक and है) with two, the
   one before that (`hermes-reports/M3-slot81-web-e2e-r1`: एक, हिन्दी and है) with three, the

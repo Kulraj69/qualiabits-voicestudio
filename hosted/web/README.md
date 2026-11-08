@@ -28,8 +28,8 @@ material from there down is long on purpose: a judge pass called this page an ev
 dossier, and that is what the honesty claim costs in this repository.
 
 The fastest way to check the claims below without fetching a model: the two committed
-runs in this repository — `hermes-reports/M4-slot104-web-e2e-r2/result.json` (real
-engine, 204 checks) and `hermes-reports/M4-slot104-web-e2e-stub-r2/result.json` (stub, 198
+runs in this repository — `hermes-reports/M4-slot106-web-e2e-r1/result.json` (real
+engine, 213 checks) and `hermes-reports/M4-slot106-web-e2e-stub-r1/result.json` (stub, 207
 checks) — record every check's own verdict, the engine's identity and the
 sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) is the
 one command that re-takes the real one, and it refuses to run on weights other than
@@ -42,15 +42,19 @@ and jobs pages use it for and what `hosted/M3-ACCEPTANCE.md` spells out with the
 own per-page numbers. Both also run axe-core 4.14.0 (WCAG 2.1 level A and AA) over the
 same nine pages in both themes, and tab through every control on each page — the two
 findings and the numbers are on [`hosted/M4-ACCEPTANCE.md`](../M4-ACCEPTANCE.md).
+The run also drives every page against a plane that refuses to answer — a stub that
+answers 500 to every path, and then that same port once the stub is stopped, which is
+what an unreachable plane is — and checks that each page shows the plane's notice
+instead of its empty state. That pass is slice B on the same acceptance page.
 
 The numbers this page and `hosted/M3-ACCEPTANCE.md` quote come from commands run in
 this repository, and their transcripts are committed beside the two run files:
-`hermes-reports/V0-slot104-tests-r1.log` (the Python guard suite),
-`V0-slot104-web-unit-r1.log` (the web unit suite, 119 passed), `V0-slot104-pins-r1.log`
-(the pinned-bytes guard, 5 passed), `V0-slot104-coldclone-r1.log` (the same guards twice
+`hermes-reports/V0-slot106-tests-r1.log` (the Python guard suite),
+`V0-slot106-web-unit-r1.log` (the web unit suite, 132 passed), `V0-slot106-pins-r1.log`
+(the pinned-bytes guard, 5 passed), `V0-slot106-coldclone-r1.log` (the same guards twice
 from a clone of the revision below, with no `.venv`, no `node_modules` and no model),
-`V0-slot104-stub-run2.log` and
-`V0-slot104-real-run2.log` (the two browser runs the archives hold). A reader who
+`V0-slot106-stub-run2.log` and
+`V0-slot106-real-run1.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 
 ## Do this, see that
@@ -70,8 +74,8 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
     tests/hosted/test_web_pages_claims.py tests/hosted/test_real_engine_pins_are_enforced.py \
     tests/hosted/test_readme_measured_is_generated.py -q
 # 41 passed — no venv in that clone, no model, no browser. Transcript:
-# hermes-reports/V0-slot104-coldclone-r1.log, taken from a clone of the pushed
-# revision 45af954bb, whose first lines are the clone, the revision, the
+# hermes-reports/V0-slot106-coldclone-r1.log, taken from a clone of the pushed
+# revision a2a0b2a15, whose first lines are the clone, the revision, the
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
 # and what the clone does not have. That transcript records both
 # attempts, both the same: 41 passed, 0 skipped, because this box had room for
@@ -258,7 +262,7 @@ turn an answer into a `.srt` (including the case where the engine returned no
 segments), the voice search and kind filter the library uses, the grouping and
 keyboard rules of the select control below, and the five
 library claims the browser run is supposed to make, and the plane's own upload
-ceiling and the sentence it is refused with. One-hundred-nineteen checks, no browser —
+ceiling and the sentence it is refused with. One-hundred-thirty-two checks, no browser —
 sixteen of them read
 `e2e/dashboard.mjs` and `e2e/real-engine.sh` themselves, so the evidence the
 browser run is supposed to record cannot be deleted without a test failing.
@@ -275,16 +279,16 @@ records — the request count on the Usage page is compared with `GET /v1/usage`
 taken straight from the plane, and a revoked key is shown to be refused on the
 next request. The counts come from two committed runs taken in this repository — one
 per path, both with `--keep`, which is also what keeps the full-page screenshot of each
-of the nine pages: **one-hundred-ninety-eight checks on the stub path** and
-**two-hundred-four against the real engine**. Without `--keep` the two checks that
+of the nine pages: **two-hundred-seven checks on the stub path** and
+**two-hundred-thirteen against the real engine**. Without `--keep` the two checks that
 assert the screenshots have somewhere to be written have nowhere to write, so
 either path runs two checks fewer; `--no-build` skips one more on top of that, the
 check that the build succeeds. Only the two `--keep` runs are quoted as numbers here,
 because they are the two that are committed: a judge pass was right that the shorter
 forms' totals were arithmetic the page stated as though they had been measured. The
 kept runs
-are `hermes-reports/M4-slot104-web-e2e-stub-r2/result.json` and
-`hermes-reports/M4-slot104-web-e2e-r2/result.json`, and a test reads the counts, the
+are `hermes-reports/M4-slot106-web-e2e-stub-r1/result.json` and
+`hermes-reports/M4-slot106-web-e2e-r1/result.json`, and a test reads the counts, the
 two-check difference and the eight-and-two difference below back out of those files
 rather than trusting this paragraph. The real path adds eight checks a constant-size
 stub cannot pass — the engine's own answers about itself, from its identity and
