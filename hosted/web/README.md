@@ -28,8 +28,8 @@ material from there down is long on purpose: a judge pass called this page an ev
 dossier, and that is what the honesty claim costs in this repository.
 
 The fastest way to check the claims below without fetching a model: the two committed
-runs in this repository — `hermes-reports/M4-slot104-web-e2e-r1/result.json` (real
-engine, 204 checks) and `hermes-reports/M4-slot104-web-e2e-stub-r1/result.json` (stub, 198
+runs in this repository — `hermes-reports/M4-slot104-web-e2e-r2/result.json` (real
+engine, 204 checks) and `hermes-reports/M4-slot104-web-e2e-stub-r2/result.json` (stub, 198
 checks) — record every check's own verdict, the engine's identity and the
 sha256 of the weights it spoke with. [`e2e/real-engine.sh`](e2e/real-engine.sh) is the
 one command that re-takes the real one, and it refuses to run on weights other than
@@ -49,8 +49,8 @@ this repository, and their transcripts are committed beside the two run files:
 `V0-slot104-web-unit-r1.log` (the web unit suite, 119 passed), `V0-slot104-pins-r1.log`
 (the pinned-bytes guard, 5 passed), `V0-slot104-coldclone-r1.log` (the same guards twice
 from a clone of the revision below, with no `.venv`, no `node_modules` and no model),
-`V0-slot104-stub-run1.log` and
-`V0-slot104-real-run1.log` (the two browser runs the archives hold). A reader who
+`V0-slot104-stub-run2.log` and
+`V0-slot104-real-run2.log` (the two browser runs the archives hold). A reader who
 disagrees with a sentence here can read the command and its output instead.
 
 ## Do this, see that
@@ -71,7 +71,7 @@ git clone --branch work/m1-headless https://github.com/Kulraj69/qualiabits-voice
     tests/hosted/test_readme_measured_is_generated.py -q
 # 41 passed — no venv in that clone, no model, no browser. Transcript:
 # hermes-reports/V0-slot104-coldclone-r1.log, taken from a clone of the pushed
-# revision 5c9542217, whose first lines are the clone, the revision, the
+# revision 45af954bb, whose first lines are the clone, the revision, the
 # interpreter it borrowed (a sibling checkout's .venv — the clone itself has none)
 # and what the clone does not have. That transcript records both
 # attempts, both the same: 41 passed, 0 skipped, because this box had room for
@@ -283,8 +283,8 @@ check that the build succeeds. Only the two `--keep` runs are quoted as numbers 
 because they are the two that are committed: a judge pass was right that the shorter
 forms' totals were arithmetic the page stated as though they had been measured. The
 kept runs
-are `hermes-reports/M4-slot104-web-e2e-stub-r1/result.json` and
-`hermes-reports/M4-slot104-web-e2e-r1/result.json`, and a test reads the counts, the
+are `hermes-reports/M4-slot104-web-e2e-stub-r2/result.json` and
+`hermes-reports/M4-slot104-web-e2e-r2/result.json`, and a test reads the counts, the
 two-check difference and the eight-and-two difference below back out of those files
 rather than trusting this paragraph. The real path adds eight checks a constant-size
 stub cannot pass — the engine's own answers about itself, from its identity and

@@ -72,9 +72,10 @@ voice cloning and voice design stay unbuilt on this box for the engine reasons
 nothing here claims the voice is good. That remains the owner's check.
 
 Every row names the code, the tests and a check in the browser run a reader can look
-at: the checks come from `hermes-reports/M4-slot104-web-e2e-r1/result.json`, taken
-with the real engine at `21d7de111` and a clean tree (the pair's stub path is
-`hermes-reports/M4-slot104-web-e2e-stub-r1/result.json`). `tests/hosted/test_m4_acceptance_matrix.py`
+at: the checks come from `hermes-reports/M4-slot104-web-e2e-r2/result.json`, taken
+with the real engine at `45af954bb` and a clean tree (the pair's stub path is
+`hermes-reports/M4-slot104-web-e2e-stub-r2/result.json`, taken at the same revision
+and the same revision the cold clone beside it is of). `tests/hosted/test_m4_acceptance_matrix.py`
 reads this table and fails if a path stops existing, a named check stops appearing
 in the run the page cites, or the code under the directories that run measured has
 changed since — so the table cannot quietly become a description of an earlier

@@ -105,8 +105,8 @@ def newest(pattern: str) -> Path:
 
 def main() -> None:
     label = sys.argv[1] if len(sys.argv) > 1 else "round1"
-    real = REPORTS / f"{SLICE}-web-e2e-r1" / "result.json"
-    stub = REPORTS / f"{SLICE}-web-e2e-stub-r1" / "result.json"
+    real = REPORTS / f"{SLICE}-web-e2e-r2" / "result.json"
+    stub = REPORTS / f"{SLICE}-web-e2e-stub-r2" / "result.json"
     before = REPORTS / "M4-slot99-web-e2e-before-real" / "result.json"
     tests = newest("V0-slot104-tests-*.log")
     unit = REPORTS / "V0-slot104-web-unit-r1.log"
