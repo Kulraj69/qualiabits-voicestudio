@@ -12,7 +12,7 @@
  * evidence from quietly getting thinner between runs.
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -162,4 +162,58 @@ test("the keyboard walk covers a page's whole control set, not its first 120", (
   assert.match(HARNESS, /const truncated = controls\.length \+ 2 > MAX_TAB_PRESSES/);
   assert.match(HARNESS, /truncated,/);
   assert.match(HARNESS, /!truncated/);
+});
+
+test("the failing-plane pass drives a real second server and a real closed port", () => {
+  // M4 slice B. Two modes, and neither is simulated: a stub that answers every
+  // path with the status it was given, and the same port once the stub is
+  // stopped, where the connection is refused. A pass that asserted the pages'
+  // behaviour against a mocked `fetch` inside the browser would prove nothing,
+  // because these reads happen in the web server's own process.
+  assert.match(HARNESS, /const FAILED_PLANE_PAGES = \[/);
+  assert.match(HARNESS, /path\.join\(HERE, "plane_stub\.py"\)/);
+  assert.match(HARNESS, /"--status", "500", "--detail", STUB_DETAIL/);
+  assert.match(HARNESS, /QUALI_CP_BASE_URL: stubBase/);
+  assert.match(HARNESS, /if \(mode === "the plane is not there"\) await stop\(failedPlane\);/);
+  assert.match(HARNESS, /await waitFor\(stubBase, "\/healthz", \{ expect: 500 \}\)/);
+  assert.match(HARNESS, /data-testid=\"plane-failed\"/);
+  assert.match(HARNESS, /result\.failed_plane = \{/);
+});
+
+test("the failing-plane pass covers every page, and knows which one reads nothing", () => {
+  // /transcribe fetches nothing while it renders, so it must keep its form when
+  // the plane is gone: a failure elsewhere is not allowed to take the product
+  // down. Every other page must show the notice and must not show the control
+  // that would only be there if a failed read had been treated as empty.
+  const block = HARNESS.slice(
+    HARNESS.indexOf("const FAILED_PLANE_PAGES = ["),
+    HARNESS.indexOf("const PASSWORD"),
+  );
+  for (const route of ["/", "/speak", "/voices", "/transcribe", "/dub", "/jobs", "/projects", "/keys", "/usage"]) {
+    assert.match(block, new RegExp(`route: "${route === "/" ? "\\/" : route}"`), `${route} is not driven`);
+  }
+  assert.match(block, /route: "\/transcribe", reads: false, mustShow: 'input\[type="file"\]'/);
+  assert.equal((block.match(/reads: true/g) || []).length, 8, "eight pages read the plane while they render");
+  assert.match(block, /mustNotText: \["No keys yet"\]/);
+  assert.match(block, /mustNotText: \["reported no voices"\]/);
+  assert.match(block, /mustNot: \['\[aria-label="Usage at a glance"\]'\]/);
+});
+
+test("the dashboard's pages read the plane through one reader", () => {
+  // The defect was eight one-line fallbacks of the same shape. The fix is one
+  // reader, and this is what keeps a ninth page from going back to `cpJson`:
+  // no page under app/ may import it at all. Route handlers (app/api/**) may,
+  // because they proxy a request rather than decide what a page shows.
+  const pages = readdirSync(path.join(WEB, "app"), { recursive: true })
+    .filter((name) => String(name).endsWith("page.jsx"))
+    .map((name) => path.join(WEB, "app", String(name)));
+  assert.ok(pages.length >= 9, `expected every page, found ${pages.length}`);
+  for (const file of pages) {
+    const source = readFileSync(file, "utf8");
+    assert.doesNotMatch(
+      source,
+      /from "[.\/]*lib\/controlplane\.js"/,
+      `${path.relative(WEB, file)} reads the plane directly instead of through lib/planeRead.js`,
+    );
+  }
 });

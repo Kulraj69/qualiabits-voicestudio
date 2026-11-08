@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import DubView from "../../components/DubView.jsx";
-import { cpJson } from "../../lib/controlplane.js";
+import PlaneFailed from "../../components/PlaneFailed.jsx";
+import { firstFailure, readPlane } from "../../lib/planeRead.js";
 import { readSessionToken } from "../../lib/session.js";
 
 export const metadata = { title: "Dub — QualiaBits Voice" };
@@ -19,10 +20,11 @@ export default async function DubPage() {
   if (!token) redirect("/login");
 
   const [voices, dubs] = await Promise.all([
-    cpJson("/v1/voices", { token }),
-    cpJson("/v1/dubs?limit=20", { token }),
+    readPlane("/v1/voices", { token }),
+    readPlane("/v1/dubs?limit=20", { token }),
   ]);
   if (voices.status === 401 || dubs.status === 401) redirect("/login");
+  const failure = firstFailure(voices, dubs);
 
   return (
     <>
@@ -38,10 +40,11 @@ export default async function DubPage() {
           keep it.
         </p>
       </div>
-      <DubView
-        catalogue={voices.status === 200 ? voices.data : null}
-        initialDubs={dubs.status === 200 ? dubs.data?.dubs ?? [] : []}
-      />
+      {failure ? (
+        <PlaneFailed error={failure.error} />
+      ) : (
+        <DubView catalogue={voices.data} initialDubs={dubs.data?.dubs ?? []} />
+      )}
     </>
   );
 }

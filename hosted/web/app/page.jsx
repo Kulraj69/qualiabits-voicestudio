@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { cpJson } from "../lib/controlplane.js";
+import PlaneFailed from "../components/PlaneFailed.jsx";
 import { formatCount, formatSeconds } from "../lib/format.js";
+import { readPlane } from "../lib/planeRead.js";
 import { readSessionToken, readWorkspace } from "../lib/session.js";
 
 const TILES = [
@@ -57,9 +58,9 @@ const TILES = [
 ];
 
 async function loadUsage(token) {
-  const { status, data } = await cpJson("/v1/usage", { token });
-  if (status === 401) return { status, usage: null };
-  return { status, usage: data?.usage ?? null };
+  const read = await readPlane("/v1/usage", { token });
+  if (read.status === 401) return { status: read.status, read, usage: null };
+  return { status: read.status, read, usage: read.ok ? read.data?.usage ?? null : null };
 }
 
 export default async function HomePage() {
@@ -107,7 +108,7 @@ export default async function HomePage() {
   }
 
   const workspace = await readWorkspace();
-  const { status, usage } = await loadUsage(token);
+  const { status, read, usage } = await loadUsage(token);
   if (status === 401) redirect("/login");
 
   return (
@@ -120,7 +121,8 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <section className="grid grid--stats" aria-label="Usage at a glance" style={{ marginBottom: "var(--space-6)" }}>
+      {usage ? (
+        <section className="grid grid--stats" aria-label="Usage at a glance" style={{ marginBottom: "var(--space-6)" }}>
         <div className="stat">
           <p className="stat__label">Requests</p>
           <p className="stat__value">{formatCount(usage?.requests ?? 0)}</p>
@@ -142,6 +144,15 @@ export default async function HomePage() {
           <p className="stat__note">engine refusals and our own errors</p>
         </div>
       </section>
+      ) : (
+        <PlaneFailed
+          error={
+            read.failed
+              ? read.error
+              : "The control plane's usage reply carried no meter, so there are no numbers to show."
+          }
+        />
+      )}
 
       <div className="grid grid--cards">
         {TILES.map((tile) => (

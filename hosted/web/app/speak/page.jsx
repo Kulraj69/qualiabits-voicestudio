@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import SpeakView from "../../components/SpeakView.jsx";
-import { cpJson } from "../../lib/controlplane.js";
+import PlaneFailed from "../../components/PlaneFailed.jsx";
+import { readPlane } from "../../lib/planeRead.js";
 import { describeCatalogue } from "../../lib/voices.js";
 import { readSessionToken } from "../../lib/session.js";
 
@@ -19,9 +20,9 @@ export default async function SpeakPage({ searchParams }) {
   const token = await readSessionToken();
   if (!token) redirect("/login");
 
-  const { status, data } = await cpJson("/v1/voices", { token });
-  if (status === 401) redirect("/login");
-  const catalogue = status === 200 ? data : null;
+  const read = await readPlane("/v1/voices", { token });
+  if (read.status === 401) redirect("/login");
+  const catalogue = read.ok ? read.data : null;
 
   const params = await searchParams;
   const wanted = typeof params?.voice === "string" ? params.voice : "";
@@ -32,9 +33,13 @@ export default async function SpeakPage({ searchParams }) {
       <div className="page-head">
         <p className="page-head__eyebrow">Text to speech</p>
         <h1>Speak</h1>
-        <p className="page-head__lede">{describeCatalogue(catalogue)}</p>
+        <p className="page-head__lede">{read.failed ? "" : describeCatalogue(catalogue)}</p>
       </div>
-      <SpeakView catalogue={catalogue} initialVoice={known ? wanted : ""} />
+      {read.failed ? (
+        <PlaneFailed error={read.error} />
+      ) : (
+        <SpeakView catalogue={catalogue} initialVoice={known ? wanted : ""} />
+      )}
     </>
   );
 }

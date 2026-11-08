@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import ProjectsView from "../../components/ProjectsView.jsx";
-import { cpJson } from "../../lib/controlplane.js";
+import PlaneFailed from "../../components/PlaneFailed.jsx";
+import { firstFailure, readPlane } from "../../lib/planeRead.js";
 import { readSessionToken } from "../../lib/session.js";
 
 export const metadata = { title: "Projects — QualiaBits Voice" };
@@ -20,13 +21,14 @@ export default async function ProjectsPage() {
   if (!token) redirect("/login");
 
   const [voices, projects, health] = await Promise.all([
-    cpJson("/v1/voices", { token }),
-    cpJson("/v1/projects?limit=20", { token }),
-    cpJson("/healthz"),
+    readPlane("/v1/voices", { token }),
+    readPlane("/v1/projects?limit=20", { token }),
+    readPlane("/healthz"),
   ]);
   if (voices.status === 401 || projects.status === 401) redirect("/login");
+  const failure = firstFailure(voices, projects);
 
-  const limits = health.status === 200 ? health.data : null;
+  const limits = health.ok ? health.data : null;
 
   return (
     <>
@@ -40,11 +42,15 @@ export default async function ProjectsPage() {
           can download. Every chapter is metered the same way the queue meters a job.
         </p>
       </div>
-      <ProjectsView
-        catalogue={voices.status === 200 ? voices.data : null}
-        initialProjects={projects.status === 200 ? projects.data?.projects ?? [] : []}
-        limits={limits}
-      />
+      {failure ? (
+        <PlaneFailed error={failure.error} />
+      ) : (
+        <ProjectsView
+          catalogue={voices.data}
+          initialProjects={projects.data?.projects ?? []}
+          limits={limits}
+        />
+      )}
     </>
   );
 }

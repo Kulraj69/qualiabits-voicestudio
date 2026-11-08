@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import JobsView from "../../components/JobsView.jsx";
-import { cpJson } from "../../lib/controlplane.js";
+import PlaneFailed from "../../components/PlaneFailed.jsx";
+import { firstFailure, readPlane } from "../../lib/planeRead.js";
 import { readSessionToken } from "../../lib/session.js";
 
 export const metadata = { title: "Jobs — QualiaBits Voice" };
@@ -11,10 +12,11 @@ export default async function JobsPage() {
   if (!token) redirect("/login");
 
   const [voices, jobs] = await Promise.all([
-    cpJson("/v1/voices", { token }),
-    cpJson("/v1/jobs?limit=50", { token }),
+    readPlane("/v1/voices", { token }),
+    readPlane("/v1/jobs?limit=50", { token }),
   ]);
   if (voices.status === 401 || jobs.status === 401) redirect("/login");
+  const failure = firstFailure(voices, jobs);
 
   return (
     <>
@@ -26,10 +28,14 @@ export default async function JobsPage() {
           it and stores the audio, and this page plays back exactly what the plane kept.
         </p>
       </div>
-      <JobsView
-        catalogue={voices.status === 200 ? voices.data : null}
-        initialJobs={jobs.status === 200 ? jobs.data?.jobs ?? [] : []}
-      />
+      {failure ? (
+        <PlaneFailed error={failure.error} />
+      ) : (
+        <JobsView
+          catalogue={voices.data}
+          initialJobs={jobs.data?.jobs ?? []}
+        />
+      )}
     </>
   );
 }

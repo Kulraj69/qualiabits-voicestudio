@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import KeysView from "../../components/KeysView.jsx";
-import { cpJson } from "../../lib/controlplane.js";
+import PlaneFailed from "../../components/PlaneFailed.jsx";
+import { readPlane } from "../../lib/planeRead.js";
 import { readSessionToken } from "../../lib/session.js";
 
 export const metadata = { title: "API keys — QualiaBits Voice" };
@@ -10,8 +11,8 @@ export default async function KeysPage() {
   const token = await readSessionToken();
   if (!token) redirect("/login");
 
-  const { status, data } = await cpJson("/v1/api-keys", { token });
-  if (status === 401) redirect("/login");
+  const read = await readPlane("/v1/api-keys", { token });
+  if (read.status === 401) redirect("/login");
 
   return (
     <>
@@ -24,7 +25,11 @@ export default async function KeysPage() {
           its public id and its label, and revoke it — nothing more.
         </p>
       </div>
-      <KeysView initialKeys={status === 200 ? data?.api_keys ?? [] : []} />
+      {read.failed ? (
+        <PlaneFailed error={read.error} />
+      ) : (
+        <KeysView initialKeys={read.data?.api_keys ?? []} />
+      )}
     </>
   );
 }

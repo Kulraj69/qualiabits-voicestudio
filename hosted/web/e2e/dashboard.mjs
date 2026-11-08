@@ -97,6 +97,26 @@ function words(text) {
 }
 
 const EMAIL = "browser-e2e@example.com";
+/**
+ * What the failing-plane pass drives, and what each page must not render then.
+ *
+ * `reads` is false for /transcribe alone: it fetches nothing while it renders, so
+ * an unreachable plane must not take it down. `mustNot` is the control that would
+ * be on the page if the failed read had been treated as an empty one, and
+ * `mustNotText` is the sentence that would say so. Both are the page's own, read
+ * from the component that renders them, not invented here.
+ */
+const FAILED_PLANE_PAGES = [
+  { route: "/", reads: true, mustNot: ['[aria-label="Usage at a glance"]'] },
+  { route: "/speak", reads: true, mustNot: ['[data-testid="speak-text"]'] },
+  { route: "/voices", reads: true, mustNot: ["[data-voice-id]"], mustNotText: ["reported no voices"] },
+  { route: "/transcribe", reads: false, mustShow: 'input[type="file"]' },
+  { route: "/dub", reads: true, mustNot: ['[data-testid="dub-file"]'] },
+  { route: "/jobs", reads: true, mustNot: ['[data-testid="job-text"]'], mustNotText: ["Nothing queued yet"] },
+  { route: "/projects", reads: true, mustNot: ['[data-testid="project-text"]'] },
+  { route: "/keys", reads: true, mustNot: ['[data-testid="key-label"]'], mustNotText: ["No keys yet"] },
+  { route: "/usage", reads: true, mustNot: ['[data-testid="limits"]'], mustNotText: ["The plane did not return a meter"] },
+];
 const PASSWORD = "correct horse battery staple";
 const DISPLAY_NAME = "Browser E2E";
 const VOICE = "hf_alpha";
@@ -2446,6 +2466,107 @@ async function main() {
 
     // ── no uncaught page errors along the way ───────────────────────────────
     check("no uncaught JavaScript errors on any page", pageErrors.length === 0, pageErrors.join(" | "));
+
+    // ── what every page shows when the plane refuses (M4 slice B) ────────────
+    // Everything above drives a healthy plane. A customer's is not always healthy,
+    // and the defect this pass exists for is that a failed read used to render as
+    // an empty one: /keys said "No keys yet", /voices said the plane reported no
+    // voices, and the home page printed four zeros for a meter it never read.
+    //
+    // Two modes are run, and both are real rather than simulated:
+    //   * a plane that answers 500 — `e2e/plane_stub.py`, with the run recording
+    //     the sentence it answered with, so a reader can see the dashboard showed
+    //     the plane's own words and not a paraphrase;
+    //   * a plane that is not there at all — that stub is stopped, its port is
+    //     closed, and the dashboard's reads fail at the socket, which is what an
+    //     unreachable plane is.
+    //
+    // A second web server runs from the same production build against that stub:
+    // the plane's address is read per request, so the first server stays healthy
+    // for every check above. Cookies are scoped to the host and not the port, so
+    // this server sees the session the signup form created and renders the
+    // signed-in state a customer would see.
+    const stubPort = await freePort();
+    const stubBase = `http://127.0.0.1:${stubPort}`;
+    const stubWebPort = await freePort();
+    const stubWebBase = `http://127.0.0.1:${stubWebPort}`;
+    const STUB_DETAIL = "The plane could not read its own storage.";
+    const failedPlane = start(
+      "failed-plane",
+      PYTHON,
+      [path.join(HERE, "plane_stub.py"), "--port", String(stubPort), "--status", "500", "--detail", STUB_DETAIL],
+      {},
+      REPO,
+    );
+    processes.push(failedPlane);
+    await waitFor(stubBase, "/healthz", { expect: 500 });
+    const failedPlaneWeb = start(
+      "web-failed-plane",
+      "node",
+      [NEXT_BIN, "start", "-p", String(stubWebPort), "-H", "127.0.0.1"],
+      { QUALI_CP_BASE_URL: stubBase },
+      WEB,
+    );
+    processes.push(failedPlaneWeb);
+    await waitFor(stubWebBase, "/login");
+
+    const MODES = [
+      { mode: "the plane answers 500", expect: STUB_DETAIL },
+      { mode: "the plane is not there", expect: "is not answering" },
+    ];
+    const observed = [];
+    for (const { mode, expect } of MODES) {
+      // Stopping the stub is the second mode: the listener is gone, so nothing is
+      // listening on that port and the connection is refused.
+      if (mode === "the plane is not there") await stop(failedPlane);
+      for (const entry of FAILED_PLANE_PAGES) {
+        const response = await page.goto(stubWebBase + entry.route, { waitUntil: "load" });
+        const status = response ? response.status() : 0;
+        const notice = ((await page.textContent('[data-testid="plane-failed"]').catch(() => "")) || "").trim();
+        const body = await page.evaluate(() => (document.body?.innerText || "").slice(0, 6000));
+        const problems = [];
+        if (status !== 200) problems.push(`status ${status}`);
+        if (/Application error|server-side exception/i.test(body)) problems.push("Next's own error page");
+        if (entry.reads) {
+          if (!notice) problems.push("no plane-failed notice");
+          else if (!notice.includes(expect)) problems.push(`the notice did not name the failure: ${notice.slice(0, 140)}`);
+          for (const selector of entry.mustNot || []) {
+            if (await page.$(selector)) problems.push(`${selector} is still on the page`);
+          }
+          for (const sentence of entry.mustNotText || []) {
+            if (body.includes(sentence)) problems.push(`the page still said ${JSON.stringify(sentence)}`);
+          }
+        } else {
+          if (notice) problems.push(`it reads nothing, yet it showed a notice: ${notice.slice(0, 80)}`);
+          if (!(await page.$(entry.mustShow))) problems.push(`${entry.mustShow} is missing`);
+        }
+        observed.push({
+          mode,
+          route: entry.route,
+          reads: entry.reads,
+          status,
+          notice: notice.slice(0, 240),
+          problems,
+        });
+      }
+    }
+    result.failed_plane = {
+      stub_detail: STUB_DETAIL,
+      stub_status: 500,
+      modes: MODES.map((entry) => entry.mode),
+      pages: observed,
+    };
+    for (const entry of FAILED_PLANE_PAGES) {
+      const rows = observed.filter((row) => row.route === entry.route);
+      check(
+        `with the plane refusing to answer, ${entry.route} ` +
+          (entry.reads
+            ? "shows the plane's notice and not its empty state"
+            : "still renders its form, because it reads nothing to render"),
+        rows.every((row) => row.problems.length === 0),
+        JSON.stringify(rows.map((row) => [row.mode, row.status, row.notice, row.problems])),
+      );
+    }
 
     await context.close();
     } catch (error) {

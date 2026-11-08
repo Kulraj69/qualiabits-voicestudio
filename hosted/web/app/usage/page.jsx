@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 
 import LimitsView from "../../components/LimitsView.jsx";
-import { cpJson } from "../../lib/controlplane.js";
+import PlaneFailed from "../../components/PlaneFailed.jsx";
 import { formatBytes, formatCount, formatDateTime, formatSeconds, keyPrefix } from "../../lib/format.js";
+import { readPlane } from "../../lib/planeRead.js";
 import { readSessionToken } from "../../lib/session.js";
 
 export const metadata = { title: "Usage — QualiaBits Voice" };
@@ -11,14 +12,14 @@ export default async function UsagePage() {
   const token = await readSessionToken();
   if (!token) redirect("/login");
 
-  const { status, data } = await cpJson("/v1/usage", { token });
-  if (status === 401) redirect("/login");
-  const usage = status === 200 ? data?.usage ?? null : null;
-  const readVia = data?.read_via;
+  const read = await readPlane("/v1/usage", { token });
+  if (read.status === 401) redirect("/login");
+  const usage = read.ok ? read.data?.usage ?? null : null;
+  const readVia = read.data?.read_via;
   // Slice G: the same page shows the limits the meter is measured against, read
   // from the plane rather than computed here, so the two cannot disagree.
-  const limitRead = await cpJson("/v1/limits", { token });
-  const limits = limitRead.status === 200 ? limitRead.data?.limits ?? null : null;
+  const limitRead = await readPlane("/v1/limits", { token });
+  const limits = limitRead.ok ? limitRead.data?.limits ?? null : null;
 
   if (!usage) {
     return (
@@ -27,7 +28,13 @@ export default async function UsagePage() {
           <p className="page-head__eyebrow">The meter</p>
           <h1>Usage</h1>
         </div>
-        <p className="notice notice--error">The plane did not return a meter.</p>
+        <PlaneFailed
+          error={
+            read.failed
+              ? read.error
+              : "The control plane's usage reply carried no meter, so there are no numbers to show."
+          }
+        />
       </>
     );
   }
